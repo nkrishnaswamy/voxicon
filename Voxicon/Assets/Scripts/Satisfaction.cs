@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -24,7 +24,7 @@ namespace Satisfaction {
 			if (predString == "put") {	// satisfy put
 				GameObject obj = GameObject.Find(argsStrings[0] as String);
 				//Debug.Log(Helper.ConvertVectorToParsable(obj.transform.position) + " " + (String)argsStrings[1]);
-				if (obj.transform.position == Helper.ConvertParsableToVector((String)argsStrings[1])) {
+				if (obj.transform.position == Helper.ParsableToVector((String)argsStrings[1])) {
 					satisfied = true;
 				}
 			}
@@ -44,7 +44,7 @@ namespace Satisfaction {
 				object arg = argsStrings.Dequeue ();
 				
 				if (Helper.v.IsMatch((String)arg)) {	// if arg is vector form
-					objs.Add (Helper.ConvertParsableToVector((String)arg));
+					objs.Add (Helper.ParsableToVector((String)arg));
 				}
 				else if (arg is String) {	// if arg is String
 					objs.Add (GameObject.Find (arg as String));

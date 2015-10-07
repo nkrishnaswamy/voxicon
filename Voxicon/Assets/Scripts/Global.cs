@@ -81,17 +81,25 @@ namespace Global {
 				Debug.Log(entry.Key + " : " + entry.Value);
 		}
 		
-		public static String ConvertVectorToParsable(Vector3 vector) {
+		public static String VectorToParsable(Vector3 vector) {
 			return ("<"+vector.x.ToString ()+"; "+
 			       	vector.y.ToString ()+"; "+
 			        vector.z.ToString ()+">");
 		}
 		
-		public static Vector3 ConvertParsableToVector(String parsable) {
+		public static Vector3 ParsableToVector(String parsable) {
 			List<String> components = new List<String> ((((String)parsable).Replace("<","").Replace(">","")).Split (new char[] {';'}));
 			return new Vector3(System.Convert.ToSingle(components[0]),
 			                   System.Convert.ToSingle(components[1]),
 			                   System.Convert.ToSingle(components[2]));
+		}
+
+		public static String IntToString(int inInt) {
+			return System.Convert.ToString(inInt);
+		}
+
+		public static int StringToInt(String inString) {
+			return System.Convert.ToInt16(inString);
 		}
 
 		public static Triple<String,String,String> MakeRDFTriples(String formula) {		// fix for multiple RDF triples

@@ -1,0 +1,26 @@
+-x
+c++
+-arch
+x86_64
+-fretain-comments-from-system-headers
+-gmodules
+-fpascal-strings
+-O0
+-isysroot
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk
+-fasm-blocks
+-mmacosx-version-min=10.11
+-g
+-fvisibility-inlines-hidden
+-iquote
+-iquote
+-I/Users/nikhil2/Documents/Homework/Brandeis/Dissertation/LBSR Group/trunk/voxicon/XCodePlugin/build/CommBridgeMacPlugin/Build/Products/Debug/include
+-F/Users/nikhil2/Documents/Homework/Brandeis/Dissertation/LBSR Group/trunk/voxicon/XCodePlugin/build/CommBridgeMacPlugin/Build/Products/Debug
+-ferror-limit=10
+-working-directory=/Users/nikhil2/Documents/Homework/Brandeis/Dissertation/LBSR Group/trunk/voxicon/XCodePlugin
+-Xclang
+-detailed-preprocessing-record
+x86_64-apple-darwin14.5.0
+"4.2.1 Compatible Apple LLVM 7.0.0 (clang-700.0.72)"
+SDK_PRODUCT_BUILD_VERSION=15A278
+15A278

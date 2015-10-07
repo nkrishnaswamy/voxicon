@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -61,7 +61,7 @@ public class EventManager : MonoBehaviour {
 			object arg = argsStrings.Dequeue ();
 			
 			if (Helper.v.IsMatch((String)arg)) {	// if arg is vector form
-				objs.Add (Helper.ConvertParsableToVector((String)arg));
+				objs.Add (Helper.ParsableToVector((String)arg));
 			}
 			else if (arg is String) {	// if arg is String
 				objs.Add (GameObject.Find (arg as String));

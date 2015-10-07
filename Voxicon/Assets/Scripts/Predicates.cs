@@ -224,8 +224,8 @@ public class Predicates : MonoBehaviour {
 						}
 					}
 
-					Debug.Log (Helper.ConvertVectorToParsable(bounds.center));
-					Debug.Log (Helper.ConvertVectorToParsable(bounds.min));
+					Debug.Log (Helper.VectorToParsable(bounds.center));
+					Debug.Log (Helper.VectorToParsable(bounds.min));
 					Debug.Log ("put_on: " + (bounds.center.y - bounds.min.y).ToString ());
 					targetPosition = new Vector3 (((Vector3)args [1]).x,
 					                              ((Vector3)args [1]).y + (bounds.center.y - bounds.min.y),
@@ -291,7 +291,7 @@ public class Predicates : MonoBehaviour {
 
 		if (args[args.Length-1] is bool) {
 			if ((bool)args[args.Length-1] == false) {
-				eventManager.eventsStatus.Add ("put("+(args [0] as GameObject).name+","+Helper.ConvertVectorToParsable(targetPosition)+")", false);
+				eventManager.eventsStatus.Add ("put("+(args [0] as GameObject).name+","+Helper.VectorToParsable(targetPosition)+")", false);
 			}
 		}
 
