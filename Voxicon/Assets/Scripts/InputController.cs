@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -212,7 +212,7 @@ public class InputController : MonoBehaviour {
 		//do{
 			foreach (DictionaryEntry kv in skolems) {
 				if (kv.Value is Vector3) {
-					outString = (String)outString.Replace((String)kv.Key,Helper.ConvertVectorToParsable((Vector3)kv.Value));
+					outString = (String)outString.Replace((String)kv.Key,Helper.VectorToParsable((Vector3)kv.Value));
 					//Debug.Log (outString);
 				}
 				else {
@@ -250,7 +250,7 @@ public class InputController : MonoBehaviour {
 						object arg = argsStrings.Dequeue ();
 
 						if (Helper.v.IsMatch((String)arg)) {	// if arg is vector form
-							objs.Add (Helper.ConvertParsableToVector((String)arg));
+							objs.Add (Helper.ParsableToVector((String)arg));
 						}
 						else if (arg is String) {	// if arg is String
 							objs.Add (GameObject.Find (arg as String));
@@ -282,7 +282,7 @@ public class InputController : MonoBehaviour {
 					Debug.Log (replaceWith.GetType ());
 					//String replaced = ((String)skolems [kv.Key]).Replace ((String)argsMatch.Groups [0].Value,
 					//	replaceWith.ToString ().Replace (',', ';').Replace ('(', '<').Replace (')', '>'));
-					String replaced = ((String)skolems [kv.Key]).Replace ((String)argsMatch.Groups [0].Value, Helper.ConvertVectorToParsable((Vector3)replaceWith));
+					String replaced = ((String)skolems [kv.Key]).Replace ((String)argsMatch.Groups [0].Value, Helper.VectorToParsable((Vector3)replaceWith));
 					Debug.Log (replaced);
 					//if (replace is Vector3) {
 					skolems [kv.Key] = replaced;
