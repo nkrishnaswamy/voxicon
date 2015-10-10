@@ -1,6 +1,6 @@
 fileFormatVersion: 2
 guid: 46855c54a07d8414bb8393b42d4b5117
-timeCreated: 1434827397
+timeCreated: 1436417453
 licenseType: Free
 ModelImporter:
   serializedVersion: 18
@@ -12,6 +12,7 @@ ModelImporter:
     100008: Point
     100010: Stem
     100012: Sun
+    100014: Point.001
     400000: Apple
     400002: //RootNode
     400004: Camera
@@ -19,12 +20,15 @@ ModelImporter:
     400008: Point
     400010: Stem
     400012: Sun
+    400014: Point.001
     2300000: Apple
     2300002: Leaf
     2300004: Stem
+    2300006: //RootNode
     3300000: Apple
     3300002: Leaf
     3300004: Stem
+    3300006: //RootNode
     4300000: Apple
     4300002: Leaf
     4300004: Stem

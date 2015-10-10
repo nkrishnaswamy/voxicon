@@ -1,0 +1,110 @@
+fileFormatVersion: 2
+guid: 3507d6c12b6022f498b637eb815a2386
+timeCreated: 1439307753
+licenseType: Free
+ModelImporter:
+  serializedVersion: 18
+  fileIDToRecycleName:
+    100000: //RootNode
+    100002: computer_Keyboard
+    100004: computer_keyboard_keys
+    100006: computer_monitor_screen
+    100008: computer_monitor_stand
+    100010: Computer_mouse
+    100012: computer_mouse_scroll
+    100014: Desktop
+    100016: Desktop_CD
+    400000: //RootNode
+    400002: computer_Keyboard
+    400004: computer_keyboard_keys
+    400006: computer_monitor_screen
+    400008: computer_monitor_stand
+    400010: Computer_mouse
+    400012: computer_mouse_scroll
+    400014: Desktop
+    400016: Desktop_CD
+    2300000: //RootNode
+    2300002: computer_Keyboard
+    2300004: computer_keyboard_keys
+    2300006: computer_monitor_screen
+    2300008: computer_monitor_stand
+    2300010: Computer_mouse
+    2300012: computer_mouse_scroll
+    2300014: Desktop
+    2300016: Desktop_CD
+    3300000: //RootNode
+    3300002: computer_Keyboard
+    3300004: computer_keyboard_keys
+    3300006: computer_monitor_screen
+    3300008: computer_monitor_stand
+    3300010: Computer_mouse
+    3300012: computer_mouse_scroll
+    3300014: Desktop
+    3300016: Desktop_CD
+    4300000: computer_monitor
+    4300002: Desktop_CD
+    4300004: Desktop
+    4300006: computer_mouse_scroll
+    4300008: Computer_mouse
+    4300010: computer_keyboard_keys
+    4300012: computer_Keyboard
+    4300014: computer_monitor_screen
+    4300016: computer_monitor_stand
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    optimizeGameObjects: 0
+    motionNodeName: 
+    animationCompression: 1
+    animationRotationError: .5
+    animationPositionError: .5
+    animationScaleError: .5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    importBlendShapes: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    splitTangentsAcrossUV: 1
+    normalImportMode: 0
+    tangentImportMode: 1
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    human: []
+    skeleton: []
+    armTwist: .5
+    foreArmTwist: .5
+    upperLegTwist: .5
+    legTwist: .5
+    armStretch: .0500000007
+    legStretch: .0500000007
+    feetSpacing: 0
+    rootMotionBoneName: 
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 0
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

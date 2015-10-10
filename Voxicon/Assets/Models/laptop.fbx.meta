@@ -1,0 +1,100 @@
+fileFormatVersion: 2
+guid: 1c101fcd58a785f4d92846cb31b4871b
+timeCreated: 1439307990
+licenseType: Free
+ModelImporter:
+  serializedVersion: 18
+  fileIDToRecycleName:
+    100000: //RootNode
+    100002: Laptop Hinges
+    100004: Laptop_Keyboard
+    100006: Laptop_Keys
+    100008: Laptop_MouseKeys
+    100010: Laptop_Off_button
+    100012: Laptop_Screen
+    400000: //RootNode
+    400002: Laptop Hinges
+    400004: Laptop_Keyboard
+    400006: Laptop_Keys
+    400008: Laptop_MouseKeys
+    400010: Laptop_Off_button
+    400012: Laptop_Screen
+    2300000: //RootNode
+    2300002: Laptop Hinges
+    2300004: Laptop_Keyboard
+    2300006: Laptop_Keys
+    2300008: Laptop_MouseKeys
+    2300010: Laptop_Off_button
+    2300012: Laptop_Screen
+    3300000: //RootNode
+    3300002: Laptop Hinges
+    3300004: Laptop_Keyboard
+    3300006: Laptop_Keys
+    3300008: Laptop_MouseKeys
+    3300010: Laptop_Off_button
+    3300012: Laptop_Screen
+    4300000: Laptop_Monitor
+    4300002: Laptop Hinges
+    4300004: Laptop_Screen
+    4300006: Laptop_MouseKeys
+    4300008: Laptop_Off_button
+    4300010: Laptop_Keys
+    4300012: Laptop_Keyboard
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    optimizeGameObjects: 0
+    motionNodeName: 
+    animationCompression: 1
+    animationRotationError: .5
+    animationPositionError: .5
+    animationScaleError: .5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    importBlendShapes: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    splitTangentsAcrossUV: 1
+    normalImportMode: 0
+    tangentImportMode: 1
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    human: []
+    skeleton: []
+    armTwist: .5
+    foreArmTwist: .5
+    upperLegTwist: .5
+    legTwist: .5
+    armStretch: .0500000007
+    legStretch: .0500000007
+    feetSpacing: 0
+    rootMotionBoneName: 
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 0
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
