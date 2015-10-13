@@ -1,4 +1,5 @@
-
 extern "C" {
-    bool OpenPort(int);
+    bool OpenPort(char *port);
+    unsigned char *Process();
+    bool ClosePort(char *);
 }
