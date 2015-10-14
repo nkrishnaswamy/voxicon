@@ -40,8 +40,17 @@ public class Launcher : MonoBehaviour {
 				}
 			}
 		}
-#else
+#endif 
+#if UNITY_STANDALONE
+		TextAsset scenesList = (TextAsset)Resources.Load("ScenesList", typeof(TextAsset));
+		string[] scenes = scenesList.text.Split ('\n');
+		foreach (string s in scenes) {
+			if (s.Length > 0) {
+				availableScenes.Add(s);
+			}
+		}
 #endif
+
 		listItems = availableScenes.ToArray ();
 	}
 	
