@@ -34,7 +34,7 @@ public class PluginImport : MonoBehaviour {
 		string input = Marshal.PtrToStringAuto (Process ());
 		if (input != "") {
 			Debug.Log (input);
-			((InputController)(GameObject.Find ("InputController").GetComponent ("InputController"))).inputString = input;
+			((InputController)(GameObject.Find ("InputController").GetComponent ("InputController"))).inputString = input.Trim();
 		}
 	}
 
