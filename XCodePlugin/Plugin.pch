@@ -1,5 +1,6 @@
 extern "C" {
     bool OpenPort(char *port);
+    void SelfHandshake(char *port);
     unsigned char *Process();
     bool ClosePort(char *);
 }

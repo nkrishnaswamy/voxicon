@@ -111,6 +111,14 @@ bool OpenPort(char *port) {
     return r;
 }
 
+void SelfHandshake(char *port) {
+    char cmd[64] = "echo \"\" | nc -w 0 localhost ";
+    strcat(cmd,port);
+    system(cmd);
+    
+    return;
+}
+
 unsigned char *Process() {
     memset(buf,0,sizeof(buf));
     

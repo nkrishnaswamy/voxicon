@@ -14,6 +14,9 @@ public class PluginImport : MonoBehaviour {
 	private static extern bool OpenPort(string id);
 
 	[DllImport ("CommunicationsBridge")]
+	private static extern void SelfHandshake(string port);
+
+	[DllImport ("CommunicationsBridge")]
 	private static extern IntPtr Process();
 
 	[DllImport ("CommunicationsBridge")]
@@ -24,6 +27,7 @@ public class PluginImport : MonoBehaviour {
 
 		if (OpenPort (port)) {
 			Debug.Log ("Listening on port " + port);
+			SelfHandshake(port);
 		}
 		else {
 			Debug.Log ("Failed to open port " + port);
