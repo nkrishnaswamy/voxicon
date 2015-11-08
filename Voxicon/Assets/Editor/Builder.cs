@@ -30,6 +30,7 @@ public class Builder : Editor {
 				}
 			}
 			BuildPipeline.BuildPlayer(scenes.ToArray(),"Build/mac/"+buildName,BuildTarget.StandaloneOSXUniversal,BuildOptions.None);
+			BuildPipeline.BuildPlayer(scenes.ToArray(),"Build/web/"+buildName,BuildTarget.WebPlayer,BuildOptions.None);
 		}
 	}
 }

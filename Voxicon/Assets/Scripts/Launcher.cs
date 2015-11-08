@@ -41,7 +41,7 @@ public class Launcher : MonoBehaviour {
 			}
 		}
 #endif 
-#if UNITY_STANDALONE
+#if UNITY_STANDALONE || UNITY_WEBPLAYER
 		TextAsset scenesList = (TextAsset)Resources.Load("ScenesList", typeof(TextAsset));
 		string[] scenes = scenesList.text.Split ('\n');
 		foreach (string s in scenes) {
@@ -65,7 +65,7 @@ public class Launcher : MonoBehaviour {
 		bgWidth = 4*Screen.width/6;
 		bgHeight = 10*Screen.height/12;
 		
-		GUI.Box (new Rect (bgLeft, bgTop, bgWidth, bgHeight), "Voxicon");
+		GUI.Box (new Rect (bgLeft, bgTop, bgWidth, bgHeight), "");
 		
 		GUI.Label (new Rect (bgLeft + 10, bgTop + 35, 90, 25), "Listener Port");
 		inPort = GUI.TextField (new Rect (bgLeft+100, bgTop+35, 60, 25), inPort);
@@ -100,6 +100,9 @@ public class Launcher : MonoBehaviour {
 				Application.LoadLevel(sceneSelected);
 			}
 		}
+
+		textDimensions = GUI.skin.label.CalcSize (new GUIContent ("Voxicon"));
+		GUI.Label (new Rect (((2 * bgLeft + bgWidth) / 2) - textDimensions.x / 2, bgTop, textDimensions.x, 25), "Voxicon");
 	}
 	
 	void LoadPrefs() {

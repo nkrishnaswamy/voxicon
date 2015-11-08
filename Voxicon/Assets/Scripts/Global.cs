@@ -135,5 +135,61 @@ namespace Global {
 				Debug.Log (triple.Item1 + " " + triple.Item2 + " " + triple.Item3);
 			}
 		}
+
+		public static bool PointInRect(Vector2 point, Rect rect) {
+			return (point.x >= rect.xMin && point.x <= rect.xMax && point.y >= rect.yMin && point.y <= rect.yMax);
+		}
+
+		public static bool PointOutsideMaskedAreas(Vector2 point, Rect[] rects) {
+			bool outside = true;
+			
+			foreach (Rect r in rects) {
+				if (PointInRect(point,r)) {
+					outside = false;
+				}
+			}
+			
+			return outside;
+		}
+
+		public static Bounds GetObjectSize(GameObject obj) {
+			Renderer[] renderers = obj.GetComponentsInChildren<Renderer>();
+
+			Bounds combinedBounds = new Bounds ();
+			
+			foreach (Renderer renderer in renderers) {
+				combinedBounds.Encapsulate(renderer.gameObject.GetComponent<MeshFilter> ().mesh.bounds);
+			}
+			
+			return combinedBounds;
+		}
+
+		public static Bounds GetObjectSize(object[] objs) {
+			Bounds starterBounds = (objs [0] as GameObject).GetComponentsInChildren<BoxCollider> ()[0].bounds;
+			Bounds combinedBounds = starterBounds;
+			//Debug.Log (combinedBounds.size);
+
+			foreach (object obj in objs) {
+				if (obj is GameObject) {
+					//Debug.Log ((obj as GameObject).name);
+					Renderer[] renderers = (obj as GameObject).GetComponentsInChildren<Renderer> ();
+
+					foreach (Renderer renderer in renderers) {
+						//Bounds bounds = new Bounds(renderer.bounds.center,
+						//                           renderer.bounds.size);
+						//localBounds.center = renderer.gameObject.transform.position;
+						//localBounds.size = new Vector3(localBounds.size.x * renderer.gameObject.transform.localScale.x,
+						//                               localBounds.size.y * renderer.gameObject.transform.localScale.y,
+						//                               localBounds.size.z * renderer.gameObject.transform.localScale.z);
+						combinedBounds.Encapsulate (renderer.bounds);
+
+						//Debug.Log (combinedBounds.center);
+						//Debug.Log (combinedBounds.size);
+					}
+				}
+			}
+			
+			return combinedBounds;
+		}
 	}
 }

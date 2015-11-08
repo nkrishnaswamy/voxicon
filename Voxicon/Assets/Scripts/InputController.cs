@@ -38,37 +38,39 @@ public class InputController : MonoBehaviour {
 		Event e = Event.current;
 		if (e.keyCode == KeyCode.Return) {
 			if (inputString != "") {
-				eventManager.ClearEvents();
-				foreach (KeyValuePair<String,String> kv in macros.commandMacros) {
-					if (inputString == kv.Key) {
-						inputString = kv.Value;
-						break;
+				if (inputString.Count (x => x == '(') == inputString.Count (x => x == ')')) {
+					eventManager.ClearEvents ();
+					foreach (KeyValuePair<String,String> kv in macros.commandMacros) {
+						if (inputString == kv.Key) {
+							inputString = kv.Value;
+							break;
+						}
 					}
-				}
-				Debug.Log("User entered: " + inputString);
-				commands = inputString.Split (';');
-				//String commandString = inputString;
-				foreach (String commandString in commands) {
-					ClearRDFTriples();
-					ClearSkolems();
-					ParseCommand(commandString);
-					FinishSkolemization ();
-					skolemized = Skolemize (commandString);
-					Debug.Log ("Skolemized command: " + skolemized);
-					//EvaluateSkolemizedCommand(skolemized);
-					EvaluateSkolemConstants();
-					evaluated = ApplySkolems (skolemized);
-					Debug.Log ("Evaluated command: " + evaluated);
-					eventManager.events.Add (evaluated);
-				}
+					Debug.Log ("User entered: " + inputString);
+					commands = inputString.Split (';');
+					//String commandString = inputString;
+					foreach (String commandString in commands) {
+						ClearRDFTriples ();
+						ClearSkolems ();
+						ParseCommand (commandString);
+						FinishSkolemization ();
+						skolemized = Skolemize (commandString);
+						Debug.Log ("Skolemized command: " + skolemized);
+						//EvaluateSkolemizedCommand(skolemized);
+						EvaluateSkolemConstants ();
+						evaluated = ApplySkolems (skolemized);
+						Debug.Log ("Evaluated command: " + evaluated);
+						eventManager.events.Add (evaluated);
+					}
 
-				//foreach (String ev in eventManager.events) {
-				SatisfactionTest.ComputeSatisfactionConditions(eventManager.events[0]);
-				//}
+					//foreach (String ev in eventManager.events) {
+					SatisfactionTest.ComputeSatisfactionConditions (eventManager.events [0]);
+					//}
 
-				eventManager.ExecuteNextCommand();
+					eventManager.ExecuteNextCommand ();
+				}
+				inputString = GUI.TextField (new Rect (0, 0, 600, 25), "");
 			}
-			inputString = GUI.TextField (new Rect (0, 0, 600, 25), "");
 		}
 		else
 			inputString = GUI.TextField (new Rect (0, 0, 600, 25), inputString);

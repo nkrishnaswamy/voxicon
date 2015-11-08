@@ -30,9 +30,11 @@ public class Predicates : MonoBehaviour {
 			Bounds bounds = new Bounds();
 
 			bool isConcave = false;
-			SupportingSurface supportingSurface = obj.GetComponent<SupportingSurface>();
-			if (supportingSurface != null) {
-				if (supportingSurface.surfaceType == SupportingSurface.SupportingSurfaceType.Concave) {
+			SupportingSurface[] supportingSurface = GameObject.Find (obj.name).GetComponentsInChildren<SupportingSurface>();
+			Debug.Log (obj.name);
+			Debug.Log (supportingSurface);
+			if (supportingSurface.Length != 0) {
+				if (supportingSurface[0].surfaceType == SupportingSurface.SupportingSurfaceType.Concave) {
 					isConcave = true;
 				}
 			}
@@ -392,6 +394,18 @@ public class Predicates : MonoBehaviour {
 		//Vector3 targetRotation;
 		
 		//Helper.PrintRDFTriples (rdfTriples);
+		bool r = false;
+		foreach (object arg in args) {
+			if (arg == null) {
+				r = true;
+				break;
+			}
+		}
+
+		if (r) {
+			return;
+		}
+
 		GameObject container = null;
 
 		if (args [args.Length - 1] is bool) {
@@ -403,22 +417,37 @@ public class Predicates : MonoBehaviour {
 					container.transform.position = Vector3.zero;
 				}
 
-				float x = 0.0f;
-				float y = 0.0f;
-				float z = 0.0f;
-
-				foreach (object arg in args)
-				{
+				Bounds bounds = new Bounds();
+				Vector3 min = (args[0] as GameObject).transform.position;
+				Vector3 max = (args[0] as GameObject).transform.position;
+				foreach (object arg in args) {
 					if (arg is GameObject) {
-						x += (arg as GameObject).transform.position.x;
-						y += (arg as GameObject).transform.position.y;
-						z += (arg as GameObject).transform.position.z;
+						GameObject obj = (arg as GameObject);
+						bounds = Helper.GetObjectSize(obj);
+						//Debug.Log (bounds.max * obj.transform.localScale);
+						if (obj.transform.position.x+(bounds.min.x * obj.transform.localScale.x) < min.x) {
+							min = new Vector3(obj.transform.position.x+(bounds.min.x * obj.transform.localScale.x),min.y,min.z);
+						}
+						if (obj.transform.position.y+(bounds.min.y * obj.transform.localScale.y) < min.y) {
+							min = new Vector3(min.x,obj.transform.position.y+(bounds.min.y * obj.transform.localScale.y),min.z);
+						}
+						if (obj.transform.position.z+(bounds.min.z * obj.transform.localScale.z) < min.z) {
+							min = new Vector3(min.x,min.y,obj.transform.position.z+(bounds.min.z * obj.transform.localScale.z));
+						}
+						if (obj.transform.position.x+(bounds.max.x * obj.transform.localScale.x) > max.x) {
+							max = new Vector3(obj.transform.position.x+(bounds.max.x * obj.transform.localScale.x),max.y,max.z);
+						}
+						if (obj.transform.position.y+(bounds.max.y * obj.transform.localScale.y) > max.y) {
+							max = new Vector3(max.x,obj.transform.position.y+(bounds.max.y * obj.transform.localScale.y),max.z);
+						}
+						if (obj.transform.position.z+(bounds.max.z * obj.transform.localScale.z) > max.z) {
+							max = new Vector3(max.x,max.y,obj.transform.position.z+(bounds.max.z * obj.transform.localScale.z));
+						}
 					}
 				}
-				//Debug.Log (x.ToString() + " " + y.ToString() + " " + z.ToString());
-				container.transform.position = new Vector3(x / (float)(args.Length-1), y / (float)(args.Length-1), z / (float)(args.Length-1));
-				//Debug.Log (container.transform.position.x.ToString() + " " + container.transform.position.y.ToString() + " " +
-				//           container.transform.position.z.ToString());
+
+				container.transform.position = new Vector3((min.x+max.x)*.5f,(min.y+max.y)*.5f,(min.z+max.z)*.5f);
+				//Debug.Log (container.transform.position);
 
 				foreach (object arg in args) {
 					if (arg is GameObject) {
@@ -432,6 +461,11 @@ public class Predicates : MonoBehaviour {
 
 		if (container != null) {
 			container.AddComponent<Entity> ();
+			Bounds bounds = Helper.GetObjectSize(args);
+			//Debug.Log (bounds.center);
+			//Debug.Log (bounds.size);
+			BoxCollider collider = container.AddComponent<BoxCollider>();
+			collider.size = new Vector3(bounds.size.x,bounds.size.y,bounds.size.z);
 		}
 	}
 

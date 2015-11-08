@@ -1,0 +1,48 @@
+ManifestFileVersion: 0
+CRC: 1869904219
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: be176500ae6e14b46c386f0386aafaea
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: c9bfb786bf859913062d54fcc3083f7f
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 23
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 33
+  Script: {instanceID: 0}
+- Class: 43
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 90
+  Script: {instanceID: 0}
+- Class: 95
+  Script: {instanceID: 0}
+Assets:
+- Assets/Prefabs/block.prefab
+- Assets/Prefabs/knife.prefab
+- Assets/Prefabs/table.prefab
+- Assets/Prefabs/spoon.prefab
+- Assets/Prefabs/blackboard.prefab
+- Assets/Prefabs/bowl.prefab
+- Assets/Prefabs/bottle.prefab
+- Assets/Prefabs/pencil.prefab
+- Assets/Prefabs/plate.prefab
+- Assets/Prefabs/book.prefab
+- Assets/Prefabs/ball.prefab
+- Assets/Prefabs/apple.prefab
+- Assets/Prefabs/paper.prefab
+- Assets/Prefabs/cup.prefab
+- Assets/Prefabs/banana.prefab
+Dependencies: []
