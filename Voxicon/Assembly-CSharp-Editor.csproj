@@ -46,9 +46,11 @@
 	</Reference>
   </ItemGroup>
   <ItemGroup>
+     <Compile Include="Assets\Editor\AssetBundleBuilder.cs" />
      <Compile Include="Assets\Editor\AssetsBuilder.cs" />
      <Compile Include="Assets\Editor\Builder.cs" />
      <Compile Include="Assets\Editor\CrossPlatformInput\CrossPlatformInputInitialize.cs" />
+     <Compile Include="Assets\Editor\StandaloneBuilder.cs" />
      <Compile Include="Assets\Scripts\Editor\CustomEntityInspector.cs" />
      <Compile Include="Assets\Scripts\Editor\CustomPredicateParserInspector.cs" />
      <None Include="Assets\Resources\block1.xml" />
