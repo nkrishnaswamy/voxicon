@@ -18,18 +18,21 @@ public class Help : MonoBehaviour {
 	}	
 
 	void OnGUI () {
-		if (GUI.Button (new Rect (Screen.width-50, Screen.height-50, 40, 40), "help"))
+		if (GUI.Button (new Rect (Screen.width-50, Screen.height-30, 38, 22), "Help"))
 			render = true;
 //			print ("You clicked the help button!");
 
 		if (render) {
 			//GUILayout automatically lays out the GUI window to contain all the text
-			windowRect = GUILayout.Window (0, windowRect, DoMyWindow, "help window");
+			windowRect = GUILayout.Window (0, windowRect, DoMyWindow, "Help");
+			//prevents GUI window from dragging off window screen
+			windowRect.x = Mathf.Clamp(windowRect.x,0,Screen.width-windowRect.width);
+			windowRect.y = Mathf.Clamp(windowRect.y,0,Screen.height-windowRect.height);
 		} 
 	}
 
 	void DoMyWindow(int windowID){
-		if (GUI.Button (new Rect (95, 5, 20, 17), "X"))
+		if (GUI.Button (new Rect (95, 2, 23, 16), "X"))
 			render = false;
 //			print ("You closed the help window");
 		//makes GUI window scrollable
