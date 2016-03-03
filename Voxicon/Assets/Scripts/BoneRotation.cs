@@ -4,7 +4,6 @@ using System.Collections;
 public class BoneRotation : MonoBehaviour 
 {
 	Animator anim;
-	GameObject spine;
 	private float x;
 	private float y;
 	private float z;
