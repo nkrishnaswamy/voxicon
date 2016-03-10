@@ -94,6 +94,21 @@ namespace Global {
 			                   System.Convert.ToSingle(components[2]));
 		}
 
+		public static String QuaternionToParsable(Quaternion quat) {
+			return ("<"+quat.x.ToString ()+"; "+
+			        quat.y.ToString ()+"; "+
+			        quat.z.ToString ()+"; "+
+			        quat.w.ToString ()+">");
+		}
+		
+		public static Quaternion ParsableToQuaternion(String parsable) {
+			List<String> components = new List<String> ((((String)parsable).Replace("<","").Replace(">","")).Split (new char[] {';'}));
+			return new Quaternion(System.Convert.ToSingle(components[0]),
+								System.Convert.ToSingle(components[1]),
+			                  	System.Convert.ToSingle(components[2]),
+			                  	System.Convert.ToSingle(components[3]));
+		}
+
 		public static String IntToString(int inInt) {
 			return System.Convert.ToString(inInt);
 		}

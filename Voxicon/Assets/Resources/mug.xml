@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<Voxeme xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Lex>
+    <Pred>mug</Pred>
+    <Type>physobj*artifact</Type>
+  </Lex>
+  <Type>
+    <Head>cylindroid</Head>
+    <Components>
+      <Component Value="cup" />
+      <Component Value="handle" />
+    </Components>
+    <Concavity>Concave</Concavity>
+    <RotatSym />
+    <ReflSym>YZ</ReflSym>
+  </Type>
+  <Habitat>
+    <Intrinsic />
+    <Extrinsic />
+  </Habitat>
+  <Afford_Str>
+    <Affordances />
+  </Afford_Str>
+  <Embodiment>
+    <Scale>agent</Scale>
+    <Movable>true</Movable>
+  </Embodiment>
+</Voxeme>
