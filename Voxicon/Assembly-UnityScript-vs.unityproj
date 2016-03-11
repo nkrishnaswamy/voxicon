@@ -5,11 +5,11 @@
 	<Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
 	<ProductVersion>10.0.20506</ProductVersion>
 	<SchemaVersion>2.0</SchemaVersion>
-	<ProjectGuid>{8866E7C7-E6D3-9350-B3E7-C578E71FE454}</ProjectGuid>
+	<ProjectGuid>{51026DF1-676B-973E-8320-E6AE12603BAD}</ProjectGuid>
 	<OutputType>Library</OutputType>
 	<AppDesignerFolder>Properties</AppDesignerFolder>
 	<RootNamespace></RootNamespace>
-	<AssemblyName>Assembly-CSharp</AssemblyName>
+	<AssemblyName>Assembly-UnityScript</AssemblyName>
 	<TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
 	<FileAlignment>512</FileAlignment>
 	<BaseDirectory>Assets</BaseDirectory>
@@ -46,40 +46,7 @@
 	</Reference>
   </ItemGroup>
   <ItemGroup>
-     <Compile Include="Assets\JSON Tests\CSharp\Test_CSharp.cs" />
-     <Compile Include="Assets\Scripts\Behavior.cs" />
-     <Compile Include="Assets\Scripts\BehaviorTypes.cs" />
-     <Compile Include="Assets\Scripts\Behaviors\Cross.cs" />
-     <Compile Include="Assets\Scripts\Behaviors\Reach.cs" />
-     <Compile Include="Assets\Scripts\Behaviors\Roll.cs" />
-     <Compile Include="Assets\Scripts\Behaviors\Slide.cs" />
-     <Compile Include="Assets\Scripts\Behaviors\Spin.cs" />
-     <Compile Include="Assets\Scripts\BoneRotation.cs" />
-     <Compile Include="Assets\Scripts\Boundary.cs" />
-     <Compile Include="Assets\Scripts\Entities\Ball.cs" />
-     <Compile Include="Assets\Scripts\Entities\Box.cs" />
-     <Compile Include="Assets\Scripts\Entity.cs" />
-     <Compile Include="Assets\Scripts\EventManager.cs" />
-     <Compile Include="Assets\Scripts\GhostFreeRoamCamera.cs" />
-     <Compile Include="Assets\Scripts\Global.cs" />
-     <Compile Include="Assets\Scripts\GraspScript.cs" />
-     <Compile Include="Assets\Scripts\Help.cs" />
-     <Compile Include="Assets\Scripts\InputController.cs" />
-     <Compile Include="Assets\Scripts\Launcher.cs" />
-     <Compile Include="Assets\Scripts\Macros.cs" />
-     <Compile Include="Assets\Scripts\MajorAxes.cs" />
-     <Compile Include="Assets\Scripts\ObjectSelector.cs" />
-     <Compile Include="Assets\Scripts\OldEntityClass.cs" />
-     <Compile Include="Assets\Scripts\PluginImport.cs" />
-     <Compile Include="Assets\Scripts\Predicate.cs" />
-     <Compile Include="Assets\Scripts\PredicateParser.cs" />
-     <Compile Include="Assets\Scripts\Predicates.cs" />
-     <Compile Include="Assets\Scripts\SRIInterpreter.cs" />
-     <Compile Include="Assets\Scripts\Satisfaction.cs" />
-     <Compile Include="Assets\Scripts\SupportingSurface.cs" />
-     <Compile Include="Assets\Scripts\SurfaceContactTypes.cs" />
-     <Compile Include="Assets\Scripts\Voxeme.cs" />
-     <Compile Include="Assets\Scripts\VoxemeInspector.cs" />
+     <Compile Include="Assets\JSON Tests\UnityScript\Test_UnityScript.js" />
      <None Include="Assets\Resources\block1.xml" />
      <None Include="Assets\Resources\mug.xml" />
      <None Include="Assets\Resources\raf.xml" />
@@ -115,8 +82,8 @@
  </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="Assembly-CSharp-firstpass.csproj">
-      <Project>{7B187D19-D972-9B5E-EC82-1C5A33280B6F}</Project>      <Name>Assembly-CSharp-firstpass</Name>    </ProjectReference>
+    <ProjectReference Include="Assembly-CSharp-firstpass-vs.csproj">
+      <Project>{7B187D19-D972-9B5E-EC82-1C5A33280B6F}</Project>      <Name>Assembly-CSharp-firstpass-vs</Name>    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
