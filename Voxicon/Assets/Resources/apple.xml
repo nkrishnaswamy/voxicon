@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<Voxeme xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Lex>
+    <Pred>apple</Pred>
+    <Type>physobj</Type>
+  </Lex>
+  <Type>
+    <Head>ellipsoid</Head>
+    <Components>
+      <Component Value="fruit" />
+      <Component Value="stem" />
+      <Component Value="leaf" />
+    </Components>
+    <Concavity>Convex</Concavity>
+    <RotatSym>Y</RotatSym>
+    <ReflSym>XY,YZ</ReflSym>
+  </Type>
+  <Habitat>
+    <Intrinsic />
+    <Extrinsic />
+  </Habitat>
+  <Afford_Str>
+    <Affordances />
+  </Afford_Str>
+  <Embodiment>
+    <Scale>agent</Scale>
+    <Movable>true</Movable>
+  </Embodiment>
+</Voxeme>

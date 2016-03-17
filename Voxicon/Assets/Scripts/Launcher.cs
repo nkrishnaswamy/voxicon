@@ -6,6 +6,7 @@ using System.IO;
 public class Launcher : MonoBehaviour {
 	
 	string inPort;
+	string sriUrl;
 	
 	int bgLeft = Screen.width/6;
 	int bgTop = Screen.height/12;
@@ -69,6 +70,9 @@ public class Launcher : MonoBehaviour {
 		
 		GUI.Label (new Rect (bgLeft + 10, bgTop + 35, 90, 25), "Listener Port");
 		inPort = GUI.TextField (new Rect (bgLeft+100, bgTop+35, 60, 25), inPort);
+
+		GUI.Label (new Rect (bgLeft + 10, bgTop + 65, 90, 25), "SRI URL");
+		sriUrl = GUI.TextField (new Rect (bgLeft+100, bgTop+65, 150, 25), sriUrl);
 		
 		GUILayout.BeginArea(new Rect(13*Screen.width/24, bgTop + 35, 3*Screen.width/12, 3*Screen.height/6), GUI.skin.window);
 		scrollPosition = GUILayout.BeginScrollView(scrollPosition, false, false); 
@@ -107,10 +111,12 @@ public class Launcher : MonoBehaviour {
 	
 	void LoadPrefs() {
 		inPort = PlayerPrefs.GetString("Listener Port");
+		sriUrl = PlayerPrefs.GetString("SRI URL");
 	}
 	
 	void SavePrefs() {
 		PlayerPrefs.SetString("Listener Port", inPort);
+		PlayerPrefs.SetString("SRI URL", sriUrl);
 	}
 }
 

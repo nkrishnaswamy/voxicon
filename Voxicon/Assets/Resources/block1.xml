@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<Voxeme xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Lex>
+    <Pred>block</Pred>
+    <Type>physobj*artifact</Type>
+  </Lex>
+  <Type>
+    <Head>rectangular_prism</Head>
+    <Components>
+      <Component Value="C1" />
+      <Component Value="C2" />
+    </Components>
+    <Concavity>Flat</Concavity>
+    <RotatSym>X,Y,Z</RotatSym>
+    <ReflSym>XY,XZ,YZ</ReflSym>
+  </Type>
+  <Habitat>
+    <Intrinsic>
+      <Intr Name="I1" Value="F1" />
+      <Intr Name="I2" Value="F2" />
+    </Intrinsic>
+    <Extrinsic>
+      <Extr Name="E1" Value="F3" />
+      <Extr Name="E2" Value="F4" />
+    </Extrinsic>
+  </Habitat>
+  <Afford_Str>
+    <Affordances>
+      <Affordance Formula="A0" />
+      <Affordance Formula="A1" />
+    </Affordances>
+  </Afford_Str>
+  <Embodiment>
+    <Scale>agent</Scale>
+    <Movable>true</Movable>
+  </Embodiment>
+</Voxeme>

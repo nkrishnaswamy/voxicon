@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<Voxeme xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Lex>
+    <Pred>table</Pred>
+    <Type>physobj*artifact</Type>
+  </Lex>
+  <Type>
+    <Head>sheet</Head>
+    <Components>
+      <Component Value="surface" />
+      <Component Value="leg+" />
+    </Components>
+    <Concavity>Flat</Concavity>
+    <RotatSym>Y</RotatSym>
+    <ReflSym>XY,YZ</ReflSym>
+  </Type>
+  <Habitat>
+    <Intrinsic>
+      <Intr Name="UP" Value="align(Y,E_y)" />
+      <Intr Name="TOP" Value="top(+Y)" />
+    </Intrinsic>
+    <Extrinsic />
+  </Habitat>
+  <Afford_Str>
+    <Affordances>
+      <Affordance Formula="H1 -&gt; [E1]R" />
+      <Affordance Formula="A2" />
+      <Affordance Formula="A3" />
+    </Affordances>
+  </Afford_Str>
+  <Embodiment>
+    <Scale>agent</Scale>
+    <Movable>true</Movable>
+  </Embodiment>
+</Voxeme>
