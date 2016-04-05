@@ -90,24 +90,24 @@ public class GhostFreeRoamCamera : MonoBehaviour
 			}
 		}
 		
-		//if (cursorToggleAllowed)
-		//{
-		//	if (Input.GetKey(cursorToggleButton))
-		//	{
-		//		if (!togglePressed)
-		//		{
-		//			togglePressed = true;
-		//			Screen.lockCursor = !Screen.lockCursor;
-		//			Cursor.visible = !Cursor.visible;
-		//		}
-		//	}
-		//	else togglePressed = false;
-		//}
-		//else
-		//{
-		//	togglePressed = false;
-		//	Cursor.visible = true;
-		//}
+//		if (cursorToggleAllowed)
+//		{
+//			if (Input.GetKey(cursorToggleButton))
+//			{
+//				if (!togglePressed)
+//				{
+//					togglePressed = true;
+//					Screen.lockCursor = !Screen.lockCursor;
+//					Cursor.visible = !Cursor.visible;
+//				}
+//			}
+//			else togglePressed = false;
+//		}
+//		else
+//		{
+//			togglePressed = false;
+//			Cursor.visible = true;
+//		}
 		
 	}
 
