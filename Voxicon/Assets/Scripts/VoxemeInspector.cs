@@ -125,7 +125,7 @@ public class VoxemeInspector : MonoBehaviour {
 	bool mlMovable = false;
 	
 	bool markupCleared = false;
-	Voxeme loadedObject = new Voxeme();
+	VoxML loadedObject = new VoxML();
 	
 	// Use this for initialization
 	void Start () {
@@ -208,7 +208,7 @@ public class VoxemeInspector : MonoBehaviour {
 			else {
 				if (!markupCleared) {
 					InitNewMarkup ();
-					loadedObject = new Voxeme ();
+					loadedObject = new VoxML ();
 				}
 			}
 //#endif
@@ -416,11 +416,11 @@ public class VoxemeInspector : MonoBehaviour {
 		markupCleared = true;
 	}
 	
-	Voxeme LoadMarkup(GameObject obj) {
-		Voxeme voxml = new Voxeme();
+	VoxML LoadMarkup(GameObject obj) {
+		VoxML voxml = new VoxML();
 		
 		try {
-			voxml = Voxeme.Load (obj.name + ".xml");
+			voxml = VoxML.Load (obj.name + ".xml");
 			
 			// assign VoxML values
 			// PRED
@@ -484,11 +484,11 @@ public class VoxemeInspector : MonoBehaviour {
 		return voxml;
 	}
 
-	Voxeme LoadMarkup(string text) {
-		Voxeme voxml = new Voxeme();
+	VoxML LoadMarkup(string text) {
+		VoxML voxml = new VoxML();
 		
 		try {
-			voxml = Voxeme.LoadFromText (text);
+			voxml = VoxML.LoadFromText (text);
 			
 			// assign VoxML values
 			// PRED
@@ -556,7 +556,7 @@ public class VoxemeInspector : MonoBehaviour {
 		bool r = false;
 
 		try {
-			r = ((Voxeme.Load (obj.name + ".xml")).Lex.Pred == loadedObject.Lex.Pred);
+			r = ((VoxML.Load (obj.name + ".xml")).Lex.Pred == loadedObject.Lex.Pred);
 		}
 		catch (FileNotFoundException ex) {
 		}
@@ -568,7 +568,7 @@ public class VoxemeInspector : MonoBehaviour {
 		bool r = false;
 
 		try {
-			r = ((Voxeme.LoadFromText (text)).Lex.Pred == loadedObject.Lex.Pred);
+			r = ((VoxML.LoadFromText (text)).Lex.Pred == loadedObject.Lex.Pred);
 		}
 		catch (FileNotFoundException ex) {
 		}

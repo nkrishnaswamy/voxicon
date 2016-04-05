@@ -25,24 +25,46 @@ public class PluginImport : MonoBehaviour {
 	void Start () {
 		port = PlayerPrefs.GetString ("Listener Port");
 
-		if (OpenPort (port)) {
-			Debug.Log ("Listening on port " + port);
-			SelfHandshake(port);
+		if (port != "") {
+			if (OpenPort (port)) {
+				Debug.Log ("Listening on port " + port);
+				SelfHandshake (port);
+			}
+			else {
+				Debug.Log ("Failed to open port " + port);
+			}
 		}
 		else {
-			Debug.Log ("Failed to open port " + port);
+			Debug.Log ("No listener port specified.  Skipping interface startup.");
 		}
 	}
 
 	void Update () {
+		if (port == "") {
+			return;
+		}
+
 		string input = Marshal.PtrToStringAuto (Process ());
 		if (input != "") {
 			Debug.Log (input);
-			((InputController)(GameObject.Find ("InputController").GetComponent ("InputController"))).inputString = input.Trim();
+			((InputController)(GameObject.Find ("IOController").GetComponent ("InputController"))).inputString = input.Trim();
+			((InputController)(GameObject.Find ("IOController").GetComponent ("InputController"))).MessageReceived(input.Trim());
 		}
 	}
 
+	void OnDestroy () {
+		if (port == "") {
+			return;
+		}
+
+		ClosePort (port);
+	}
+
 	void OnApplicationQuit () {
+		if (port == "") {
+			return;
+		}
+
 		ClosePort (port);
 	}
 }

@@ -2,8 +2,10 @@ using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 using Global;
+using RCC;
 
 /// <summary>
 /// Semantics of each predicate should be explicated within the method itself
@@ -14,57 +16,74 @@ using Global;
 public class Predicates : MonoBehaviour {
 	public List<Triple<String,String,String>> rdfTriples = new List<Triple<String,String,String>>();
 	EventManager eventManager;
+	AStarSearch aStarSearch;
 
 	void Start () {
 		eventManager = gameObject.GetComponent<EventManager> ();
+		aStarSearch = GameObject.Find ("BlocksWorld").GetComponent<AStarSearch> ();
 	}
+
+	/// <summary>
+	/// Relations
+	/// </summary>
 
 	// IN: Object (single element array)
 	// OUT: Location
-	public Vector3 on(object[] args)
+	public Vector3 ON(object[] args)
 	{
 		Vector3 outValue = Vector3.zero;
 		if (args [0] is GameObject) {	// on an object
-			GameObject obj = ((GameObject)args[0]);
-			Renderer[] renderers = obj.GetComponentsInChildren<Renderer>();
-			Bounds bounds = new Bounds();
+			GameObject obj = ((GameObject)args [0]);
+			Bounds bounds = new Bounds ();
 
+			// check if object is concave
 			bool isConcave = false;
-			SupportingSurface[] supportingSurface = GameObject.Find (obj.name).GetComponentsInChildren<SupportingSurface>();
-			Debug.Log (obj.name);
-			Debug.Log (supportingSurface);
-			if (supportingSurface.Length != 0) {
-				if (supportingSurface[0].surfaceType == SupportingSurface.SupportingSurfaceType.Concave) {
-					isConcave = true;
-				}
+			Voxeme voxeme = obj.GetComponent<Voxeme> ();
+			if (voxeme != null) {
+				isConcave = (voxeme.voxml.Type.Concavity == "Concave");
+				isConcave = (isConcave && Vector3.Dot(obj.transform.up,Vector3.up) > 0.5f);
 			}
+			//Debug.Log (isConcave);
 
-			Debug.Log (isConcave);
+			if (isConcave) {	// on concave object
+				// get surface with concavity
+				// which side is concavity on? - assume +Y for now
+				bounds = Helper.GetObjectWorldSize (obj);
 
-			if (isConcave) {
-				foreach (Renderer renderer in renderers) {
-					if (renderer.bounds.min.y > bounds.min.y) {
-						bounds = renderer.bounds;
+				float concavityMinY = bounds.min.y;
+				foreach (Renderer renderer in obj.GetComponentsInChildren<Renderer>()) {
+					Debug.Log (renderer.gameObject.name + " " + Helper.GetObjectWorldSize (renderer.gameObject).min.y);
+					if (Helper.GetObjectWorldSize (renderer.gameObject).min.y > concavityMinY) {
+						concavityMinY = Helper.GetObjectWorldSize (renderer.gameObject).min.y;
 					}
 				}
-			}
-			else {
-				foreach (Renderer renderer in renderers) {
-					if (renderer.bounds.max.y > bounds.max.y) {
-						bounds = renderer.bounds;
-					}
-				}
-			}
-			Debug.Log("on: " + bounds.max.y);
 
-			//Debug.Log (bounds.ToString());
-			//Debug.Log (obj.transform.position.ToString());
-			if (isConcave) {
-				outValue = new Vector3(bounds.center.x,bounds.min.y,bounds.center.z);
+				// **check if concavity exposed
+				// flip(plate), try to put object on
+
+				outValue = new Vector3 (obj.transform.position.x,
+					concavityMinY,//bounds.min.y,
+					obj.transform.position.z);
 			}
-			else {
-				outValue = new Vector3(bounds.center.x,bounds.max.y,bounds.center.z);
+			else {	// on convex or flat object
+				/*bounds = Helper.GetObjectWorldSize (obj);
+
+				Debug.Log (Helper.VectorToParsable(bounds.center));
+				Debug.Log (Helper.VectorToParsable(bounds.min));
+				Debug.Log (Helper.VectorToParsable(bounds.max));*/
+
+				bounds = Helper.GetObjectWorldSize (obj);
+
+				outValue = new Vector3 (obj.transform.position.x,
+					bounds.max.y,
+					obj.transform.position.z);
+
+				//GameObject mark = GameObject.CreatePrimitive(PrimitiveType.Plane);
+				//mark.transform.position = outValue;
+				//mark.transform.localScale = new Vector3 (.07f, .07f, .07f);
+				//mark.GetComponent<MeshCollider> ().enabled = false;
 			}
+			Debug.Log ("on: " + Helper.VectorToParsable (outValue));
 		}
 		else if (args [0] is Vector3) {	// on a location
 			outValue = (Vector3)args[0];
@@ -75,21 +94,68 @@ public class Predicates : MonoBehaviour {
 
 	// IN: Object (single element array)
 	// OUT: Location
-	public Vector3 over(object[] args)
+	public Vector3 IN(object[] args)
+	{
+		Vector3 outValue = Vector3.zero;
+		if (args [0] is GameObject) {	// on an object
+			GameObject obj = ((GameObject)args [0]);
+			Bounds bounds = new Bounds ();
+
+			// check if object is concave
+			bool isConcave = false;
+			Voxeme voxeme = obj.GetComponent<Voxeme> ();
+			if (voxeme != null) {
+				isConcave = (voxeme.voxml.Type.Concavity == "Concave");
+				isConcave = (isConcave && Vector3.Dot(obj.transform.up,Vector3.up) > 0.5f);
+			}
+			//Debug.Log (isConcave);
+
+			if (isConcave) {	// concavity activated
+				// get surface with concavity
+				// which side is concavity on? - assume +Y for now
+				bounds = Helper.GetObjectWorldSize (obj);
+
+				float concavityMinY = bounds.min.y;
+				foreach (Renderer renderer in obj.GetComponentsInChildren<Renderer>()) {
+					Debug.Log (renderer.gameObject.name + " " + Helper.GetObjectWorldSize (renderer.gameObject).min.y);
+					if (Helper.GetObjectWorldSize (renderer.gameObject).min.y > concavityMinY) {
+						concavityMinY = Helper.GetObjectWorldSize (renderer.gameObject).min.y;
+					}
+				}
+					
+				outValue = new Vector3 (obj.transform.position.x,
+					concavityMinY,
+					obj.transform.position.z);
+			}
+			else {	// concavity deactivated
+				outValue = new Vector3(float.NaN,float.NaN,float.NaN);
+			}
+			Debug.Log ("in: " + Helper.VectorToParsable (outValue));
+		}
+		else if (args [0] is Vector3) {	// on a location
+			outValue = (Vector3)args[0];
+		}
+
+		return outValue;
+	}
+
+	// IN: Object (single element array)
+	// OUT: Location
+	public Vector3 OVER(object[] args)
 	{
 		return ((GameObject)args[0]).transform.position;
 	}
 
 	// IN: Object (single element array)
 	// OUT: Location
-	public Vector3 under(object[] args)
+	public Vector3 UNDER(object[] args)
 	{
 		return ((GameObject)args[0]).transform.position;
 	}
 
 	// IN: Object (single element array)
 	// OUT: Location
-	public Vector3 behind(object[] args)
+	public Vector3 BEHIND(object[] args)
 	{
 		Vector3 outValue = Vector3.zero;
 		if (args [0] is GameObject) {	// on an object
@@ -117,7 +183,23 @@ public class Predicates : MonoBehaviour {
 
 	// IN: Object (single element array)
 	// OUT: Location
-	public Vector3 in_front(object[] args)
+	public Vector3 TO(object[] args)
+	{
+		Vector3 outValue = Vector3.zero;
+		if (args [0] is GameObject) {	// to an object
+			GameObject obj = args [0] as GameObject;
+			outValue = obj.transform.position;
+		}
+		else if (args [0] is Vector3) {	// to a location
+			outValue = (Vector3)args[0];
+		}
+
+		return outValue;
+	}
+
+	// IN: Object (single element array)
+	// OUT: Location
+	public Vector3 IN_FRONT(object[] args)
 	{
 		Vector3 outValue = Vector3.zero;
 		if (args [0] is GameObject) {	// on an object
@@ -145,28 +227,32 @@ public class Predicates : MonoBehaviour {
 
 	// IN: Object (single element array)
 	// OUT: Location
-	public Vector3 left(object[] args)
+	public Vector3 LEFT(object[] args)
 	{
 		return ((GameObject)args[0]).transform.position;
 	}
 
 	// IN: Object (single element array)
 	// OUT: Location
-	public Vector3 right(object[] args)
+	public Vector3 RIGHT(object[] args)
+	{
+		return ((GameObject)args[0]).transform.position;
+	}
+
+	/// <summary>
+	/// Functions
+	/// </summary>
+
+	// IN: Object (single element array)
+	// OUT: Location
+	public Vector3 CENTER(object[] args)
 	{
 		return ((GameObject)args[0]).transform.position;
 	}
 
 	// IN: Object (single element array)
 	// OUT: Location
-	public Vector3 center(object[] args)
-	{
-		return ((GameObject)args[0]).transform.position;
-	}
-
-	// IN: Object (single element array)
-	// OUT: Location
-	public Vector3 top(object[] args)
+	public Vector3 TOP(object[] args)
 	{
 		Vector3 outValue = Vector3.zero;
 		if (args [0] is GameObject) {
@@ -190,51 +276,140 @@ public class Predicates : MonoBehaviour {
 	}
 
 	// IN: Object (single element array)
-	// OUT: Location
-	public Vector3 to(object[] args)
+	// OUT: String
+	public String AS(object[] args)
 	{
-		Vector3 outValue = Vector3.zero;
-		if (args [0] is GameObject) {	// to an object
-			GameObject obj = args [0] as GameObject;
-			outValue = obj.transform.position;
-		}
-		else if (args [0] is Vector3) {	// to a location
-			outValue = (Vector3)args[0];
-		}
-
-		return outValue;
+		return args[0].ToString();
 	}
+
+	/// <summary>
+	/// Programs
+	/// </summary>
 
 	// IN: Objects, Location
 	// OUT: none
-	public void put(object[] args)
+	public void PUT(object[] args)
 	{
+		// override physics rigging
+		foreach (object arg in args) {
+			if (arg is GameObject) {
+				(arg as GameObject).GetComponent<Rigging> ().ActivatePhysics(false);
+			}
+		}
+
 		Vector3 targetPosition = Vector3.zero;
+		Vector3 targetRotation = Vector3.zero;
 
 		Helper.PrintRDFTriples (rdfTriples);
 
 		if (rdfTriples [0].Item2.Contains ("_on")) {	// fix for multiple RDF triples
 			if (args [0] is GameObject) {
 				if (args [1] is Vector3) {
-					GameObject obj = args [0] as GameObject;
-					Renderer[] renderers = obj.GetComponentsInChildren<Renderer> ();
-					Bounds bounds = new Bounds ();
+					GameObject theme = args [0] as GameObject;	// get theme obj ("apple" in "put apple on plate")
+					GameObject dest = GameObject.Find (rdfTriples [0].Item3);	// get destination obj ("plate" in "put apple on plate")
+					//Renderer[] renderers = obj.GetComponentsInChildren<Renderer> ();
+					/*Bounds bounds = new Bounds ();
 					
 					foreach (Renderer renderer in renderers) {
 						if (renderer.bounds.min.y - renderer.bounds.center.y < bounds.min.y - bounds.center.y) {
 							bounds = renderer.bounds;
 						}
+					}*/
+
+					Bounds themeBounds = Helper.GetObjectWorldSize (theme);	// bounds of theme obj
+					Bounds destBounds = Helper.GetObjectWorldSize (dest);	// bounds of dest obj => alter to get interior enumerated by VoxML structure
+
+					//Debug.Log (Helper.VectorToParsable(bounds.center));
+					//Debug.Log (Helper.VectorToParsable(bounds.min));
+
+					Debug.Log ("Y-size = " + (themeBounds.center.y-themeBounds.min.y));
+					Debug.Log ("put_on: " + (theme.transform.position.y - themeBounds.min.y).ToString ());
+
+					// compose computed on(a) into put(x,y) formula
+					// if the glove don't fit, you must acquit! (recompute)
+					Vector3 loc = ((Vector3)args [1]);	// coord of "on"
+					if (dest.GetComponent<Voxeme> ().voxml.Type.Concavity == "Concave") {
+						if (!Helper.FitsIn(themeBounds,destBounds)) {
+							loc = new Vector3 (dest.transform.position.x,
+								destBounds.max.y,
+								dest.transform.position.z);
+							Debug.Log (destBounds.max.y);
+						}
 					}
 
-					Debug.Log (Helper.VectorToParsable(bounds.center));
-					Debug.Log (Helper.VectorToParsable(bounds.min));
-					Debug.Log ("put_on: " + (bounds.center.y - bounds.min.y).ToString ());
-					targetPosition = new Vector3 (((Vector3)args [1]).x,
-					                              ((Vector3)args [1]).y + (bounds.center.y - bounds.min.y),
-					                              ((Vector3)args [1]).z);
+					targetPosition = new Vector3 (loc.x,
+						loc.y + (theme.transform.position.y - themeBounds.min.y),
+					    loc.z);
+					Debug.Log (Helper.VectorToParsable(targetPosition));
 					if (args[args.Length-1] is bool) {
 						if ((bool)args[args.Length-1] == true) {
-							obj.GetComponent<Entity> ().targetPosition = targetPosition;
+							theme.GetComponent<Voxeme> ().targetPosition = targetPosition;
+						}
+					}
+				}
+			}
+		}
+		else if (rdfTriples [0].Item2.Contains ("_in")) {	// fix for multiple RDF triples
+			if (args [0] is GameObject) {
+				if (args [1] is Vector3) {
+					GameObject theme = args [0] as GameObject;	// get theme obj ("apple" in "put apple in plate")
+					GameObject dest = GameObject.Find (rdfTriples [0].Item3);	// get destination obj ("plate" in "put apple in plate")
+
+					Bounds themeBounds = Helper.GetObjectWorldSize (theme);	// bounds of theme obj
+					Bounds destBounds = Helper.GetObjectWorldSize (dest);	// bounds of dest obj
+
+					//Debug.Log (Helper.VectorToParsable(bounds.center));
+					//Debug.Log (Helper.VectorToParsable(bounds.min));
+
+					Debug.Log ("Y-size = " + (themeBounds.center.y-themeBounds.min.y));
+					Debug.Log ("put_in: " + (theme.transform.position.y - themeBounds.min.y).ToString ());
+
+					// compose computed in(a) into put(x,y) formula
+					Vector3 loc = ((Vector3)args [1]);	// coord of "in"
+					if ((dest.GetComponent<Voxeme> ().voxml.Type.Concavity == "Concave") &&
+					    (Concavity.IsEnabled (dest)) && (Vector3.Dot (dest.transform.up, Vector3.up) > 0.5f)) {	// check if concavity is active
+						if (!Helper.FitsIn (themeBounds, destBounds)) {	// if the glove don't fit, you must acquit! (rotate)
+							// rotate to align longest major axis with container concavity axis
+							Vector3 majorAxis = Helper.GetObjectMajorAxis (theme);
+							Quaternion adjust = Quaternion.LookRotation (majorAxis);
+							//Debug.Log (Helper.VectorToParsable (themeBounds.size));
+							//Debug.Log (Helper.VectorToParsable (adjust * themeBounds.size));
+							// create new test bounds with vector*quat
+							Bounds testBounds = new Bounds (themeBounds.center, adjust * themeBounds.size);
+							//if (args[args.Length-1] is bool) {
+							//	if ((bool)args[args.Length-1] == true) {
+							//		theme.GetComponent<Voxeme> ().targetRotation = Quaternion.LookRotation(majorAxis).eulerAngles;
+							//	}
+							//}
+							if (Helper.FitsIn (testBounds, destBounds)) {	// check fit again
+								targetRotation = Quaternion.LookRotation (majorAxis).eulerAngles;
+							} else {	// if still won't fit, return garbage (NaN) rotation to signal that you can't do that
+								targetRotation = new Vector3 (float.NaN, float.NaN, float.NaN);
+							}
+							loc = new Vector3 (dest.transform.position.x,
+								destBounds.max.y,
+								dest.transform.position.z);
+							Debug.Log (destBounds.max.y);
+						}
+					}
+					else {
+						targetRotation = new Vector3 (float.NaN, float.NaN, float.NaN);
+					}
+
+					if (!Helper.VectorIsNaN (targetRotation)) {
+						targetPosition = new Vector3 (loc.x,
+							loc.y + (theme.transform.position.y - themeBounds.min.y),
+							loc.z);
+						Debug.Log (Helper.VectorToParsable (targetPosition));
+					}
+					else {
+						targetPosition = new Vector3 (float.NaN, float.NaN, float.NaN);
+					}
+
+					if (args[args.Length-1] is bool) {
+						if ((bool)args[args.Length-1] == true) {
+							theme.GetComponent<Voxeme> ().targetPosition = targetPosition;
+							theme.GetComponent<Voxeme> ().targetRotation = targetRotation;
 						}
 					}
 				}
@@ -259,7 +434,7 @@ public class Predicates : MonoBehaviour {
 					                              ((Vector3)args [1]).z + (bounds.center.z - bounds.min.z));
 					if (args[args.Length-1] is bool) {
 						if ((bool)args[args.Length-1] == true) {
-							obj.GetComponent<Entity> ().targetPosition = targetPosition;
+							obj.GetComponent<Voxeme> ().targetPosition = targetPosition;
 						}
 					}
 				}
@@ -284,16 +459,31 @@ public class Predicates : MonoBehaviour {
 					                              ((Vector3)args [1]).z + (bounds.center.z - bounds.max.z));
 					if (args[args.Length-1] is bool) {
 						if ((bool)args[args.Length-1] == true) {
-							obj.GetComponent<Entity> ().targetPosition = targetPosition;
+							obj.GetComponent<Voxeme> ().targetPosition = targetPosition;
 						}
 					}
 				}
 			}
 		}
 
+		// add to events manager
 		if (args[args.Length-1] is bool) {
 			if ((bool)args[args.Length-1] == false) {
-				eventManager.eventsStatus.Add ("put("+(args [0] as GameObject).name+","+Helper.VectorToParsable(targetPosition)+")", false);
+				//eventManager.eventsStatus.Add ("put("+(args [0] as GameObject).name+","+Helper.VectorToParsable(targetPosition)+")", false);
+				eventManager.events[0] = "put("+(args [0] as GameObject).name+","+Helper.VectorToParsable(targetPosition)+")";
+			}
+		}
+
+		// plan path to destination
+		if (!Helper.VectorIsNaN (targetPosition)) { 
+			if (aStarSearch.plannedPath.Count == 0) {
+				aStarSearch.start = (args [0] as GameObject).transform.position;
+				aStarSearch.goal = targetPosition;
+				aStarSearch.PlanPath (aStarSearch.start, aStarSearch.goal, out aStarSearch.plannedPath, (args [0] as GameObject));
+
+				foreach (Vector3 node in aStarSearch.plannedPath) {
+					(args [0] as GameObject).GetComponent<Voxeme> ().interTargetPositions.Enqueue (node);
+				}
 			}
 		}
 
@@ -302,8 +492,15 @@ public class Predicates : MonoBehaviour {
 
 	// IN: Objects, Location
 	// OUT: none
-	public void move(object[] args)
+	public void MOVE(object[] args)
 	{
+		// override physics rigging
+		foreach (object arg in args) {
+			if (arg is GameObject) {
+				(arg as GameObject).GetComponent<Rigging> ().ActivatePhysics(false);
+			}
+		}
+
 		Vector3 targetPosition;
 
 		Helper.PrintRDFTriples (rdfTriples);
@@ -325,17 +522,56 @@ public class Predicates : MonoBehaviour {
 					targetPosition = new Vector3 (((Vector3)args [1]).x,
 					                              ((Vector3)args [1]).y + (bounds.center.y - bounds.min.y),
 					                              ((Vector3)args [1]).z);
-					obj.GetComponent<Entity> ().targetPosition = targetPosition;
+					obj.GetComponent<Voxeme> ().targetPosition = targetPosition;
 				}
 			}
 		}
 		return;
 	}
 
+	// IN: Objects
+	// OUT: none
+	public void SLIDE(object[] args)
+	{
+		// override physics rigging
+		/*foreach (object arg in args) {
+			if (arg is GameObject) {
+				(arg as GameObject).GetComponent<Rigging> ().ActivatePhysics(false);
+			}
+		}*/
+
+		Vector3 targetPosition = Vector3.zero;
+
+		if (args [0] is GameObject) {
+			GameObject obj = (args [0] as GameObject);
+			targetPosition = new Vector3 (obj.transform.position.x+UnityEngine.Random.insideUnitSphere.x,
+				obj.transform.position.y, obj.transform.position.z+UnityEngine.Random.insideUnitSphere.z);
+			//Debug.Log (targetPosition);
+			//targetPosition = new Vector3 (obj.transform.position.x+1.0f, obj.transform.position.y, obj.transform.position.z);
+			obj.GetComponent<Voxeme> ().targetPosition = targetPosition;
+		}
+
+		// add to events manager
+		if (args[args.Length-1] is bool) {
+			if ((bool)args[args.Length-1] == false) {
+				eventManager.events[0] = "slide("+(args [0] as GameObject).name+","+Helper.VectorToParsable(targetPosition)+")";
+			}
+		}
+
+		return;
+	}
+
 	// IN: Objects, Location
 	// OUT: none
-	public void roll(object[] args)
+	public void ROLL(object[] args)
 	{
+		// override physics rigging
+		foreach (object arg in args) {
+			if (arg is GameObject) {
+				(arg as GameObject).GetComponent<Rigging> ().ActivatePhysics(false);
+			}
+		}
+
 		Vector3 targetPosition;
 
 		Helper.PrintRDFTriples (rdfTriples);
@@ -357,7 +593,7 @@ public class Predicates : MonoBehaviour {
 					targetPosition = new Vector3 (((Vector3)args [1]).x,
 					                              ((Vector3)args [1]).y + (bounds.center.y - bounds.min.y),
 					                              ((Vector3)args [1]).z);
-					obj.GetComponent<Entity> ().targetPosition = targetPosition;
+					obj.GetComponent<Voxeme> ().targetPosition = targetPosition;
 				}
 			}
 		}
@@ -366,9 +602,16 @@ public class Predicates : MonoBehaviour {
 
 	// IN: Objects
 	// OUT: none
-	public void flip(object[] args)
+	public void FLIP(object[] args)
 	{
-		Vector3 targetRotation;
+		// override physics rigging
+		foreach (object arg in args) {
+			if (arg is GameObject) {
+				(arg as GameObject).GetComponent<Rigging> ().ActivatePhysics(false);
+			}
+		}
+
+		Vector3 targetRotation = Vector3.zero;
 
 		Helper.PrintRDFTriples (rdfTriples);
 
@@ -383,13 +626,23 @@ public class Predicates : MonoBehaviour {
 			//targetY = (rotation.y+180.0f < 0.0f) ? rotation.y+180.0f + 360.0f : rotation.y+180.0f;
 			//targetZ = (rotation.z+180.0f < 0.0f) ? rotation.z+180.0f + 360.0f : rotation.z+180.0f;
 			targetRotation = new Vector3 (targetX,targetY,targetZ);
-			obj.GetComponent<Entity> ().targetRotation = targetRotation;
+			obj.GetComponent<Voxeme> ().targetRotation = targetRotation;
 		}
+
+		// add to events manager
+		if (args[args.Length-1] is bool) {
+			if ((bool)args[args.Length-1] == false) {
+				//eventManager.eventsStatus.Add ("flip("+(args [0] as GameObject).name+","+Helper.VectorToParsable(targetRotation)+")", false);
+				eventManager.events[0] = "flip("+(args [0] as GameObject).name+","+Helper.VectorToParsable(targetRotation)+")";
+			}
+		}
+
+		return;
 	}
 
 	// IN: Objects
 	// OUT: none
-	public void bind(object[] args)
+	public void BIND(object[] args)
 	{
 		//Vector3 targetRotation;
 		
@@ -407,67 +660,179 @@ public class Predicates : MonoBehaviour {
 		}
 
 		GameObject container = null;
+		Vector3 boundsCenter = Vector3.zero,boundsSize = Vector3.zero;
 
 		if (args [args.Length - 1] is bool) {
 			if ((bool)args [args.Length - 1] == true) {
-				container = new GameObject ("bind");
-				//container.transform.parent = GameObject.Find("Room").transform;
+				if (args [args.Length - 2] is String) {
+					container = new GameObject ((args [args.Length - 2] as String).Replace("\"",""));
+				}
+				else {
+					container = new GameObject ("bind");
+				}
 
 				if (args.Length-1 == 0) {
 					container.transform.position = Vector3.zero;
 				}
 
-				Bounds bounds = new Bounds();
-				Vector3 min = (args[0] as GameObject).transform.position;
-				Vector3 max = (args[0] as GameObject).transform.position;
+				// get bounds of composite to be created
+				List<GameObject> objs = new List<GameObject> ();
 				foreach (object arg in args) {
 					if (arg is GameObject) {
-						GameObject obj = (arg as GameObject);
-						bounds = Helper.GetObjectSize(obj);
-						//Debug.Log (bounds.max * obj.transform.localScale);
-						if (obj.transform.position.x+(bounds.min.x * obj.transform.localScale.x) < min.x) {
-							min = new Vector3(obj.transform.position.x+(bounds.min.x * obj.transform.localScale.x),min.y,min.z);
-						}
-						if (obj.transform.position.y+(bounds.min.y * obj.transform.localScale.y) < min.y) {
-							min = new Vector3(min.x,obj.transform.position.y+(bounds.min.y * obj.transform.localScale.y),min.z);
-						}
-						if (obj.transform.position.z+(bounds.min.z * obj.transform.localScale.z) < min.z) {
-							min = new Vector3(min.x,min.y,obj.transform.position.z+(bounds.min.z * obj.transform.localScale.z));
-						}
-						if (obj.transform.position.x+(bounds.max.x * obj.transform.localScale.x) > max.x) {
-							max = new Vector3(obj.transform.position.x+(bounds.max.x * obj.transform.localScale.x),max.y,max.z);
-						}
-						if (obj.transform.position.y+(bounds.max.y * obj.transform.localScale.y) > max.y) {
-							max = new Vector3(max.x,obj.transform.position.y+(bounds.max.y * obj.transform.localScale.y),max.z);
-						}
-						if (obj.transform.position.z+(bounds.max.z * obj.transform.localScale.z) > max.z) {
-							max = new Vector3(max.x,max.y,obj.transform.position.z+(bounds.max.z * obj.transform.localScale.z));
-						}
+						objs.Add (arg as GameObject);
+					}
+				}
+				Bounds bounds = Helper.GetObjectWorldSize (objs);
+				boundsCenter = container.transform.position = bounds.center;
+				boundsSize = bounds.size;
+
+				// nuke any relations between objects to be bound
+				RelationTracker relationTracker = (RelationTracker)GameObject.Find("BehaviorController").GetComponent("RelationTracker");
+				List<object> toRemove = new List<object>();
+
+				foreach (DictionaryEntry pair in relationTracker.relations) {
+					if (objs.Contains ((pair.Key as List<GameObject>) [0]) && objs.Contains ((pair.Key as List<GameObject>) [1])) {
+						toRemove.Add (pair.Key);
 					}
 				}
 
-				container.transform.position = new Vector3((min.x+max.x)*.5f,(min.y+max.y)*.5f,(min.z+max.z)*.5f);
-				//Debug.Log (container.transform.position);
+				foreach (object key in toRemove) {
+					relationTracker.RemoveRelation (key as List<GameObject>);
+				}
 
+				// bind objects
 				foreach (object arg in args) {
 					if (arg is GameObject) {
-						(arg as GameObject).GetComponent<Entity>().enabled = false;
-						container.name = container.name + " " + (arg as GameObject).name;
+						(arg as GameObject).GetComponent<Voxeme>().enabled = false;
+						(arg as GameObject).GetComponent<Rigging>().ActivatePhysics(false);
+
+						Collider[] colliders = (arg as GameObject).GetComponentsInChildren<Collider> ();
+						foreach (Collider collider in colliders) {
+							collider.isTrigger = false;
+						}
+
 						(arg as GameObject).transform.parent = container.transform;
+						if (!(args [args.Length - 2] is String)) {
+							container.name = container.name + " " + (arg as GameObject).name;
+						}
 					}
 				}
 			}
 		}
 
 		if (container != null) {
-			container.AddComponent<Entity> ();
-			Bounds bounds = Helper.GetObjectSize(args);
-			//Debug.Log (bounds.center);
-			//Debug.Log (bounds.size);
-			BoxCollider collider = container.AddComponent<BoxCollider>();
-			collider.size = new Vector3(bounds.size.x,bounds.size.y,bounds.size.z);
+			container.AddComponent<Voxeme> ();
+			container.AddComponent<Rigging> ();
+			BoxCollider collider = container.AddComponent<BoxCollider> ();
+			//collider.center = boundsCenter;
+			collider.size = boundsSize;
+			collider.isTrigger = true;
 		}
 	}
 
-	// put on side
+	// IN: Objects
+	// OUT: none
+	public void UNBIND(object[] args)
+	{
+		if (args [0] is GameObject) {
+			GameObject obj = (args [0] as GameObject);
+
+			foreach (Transform transform in obj.GetComponentsInChildren<Transform>()) {
+				transform.parent = null;
+				if (transform.gameObject.GetComponent<Rigging> () != null) {
+					transform.gameObject.GetComponent<Rigging> ().ActivatePhysics (true);
+					transform.gameObject.GetComponent<Voxeme> ().enabled = true;
+				}
+			}
+
+			GameObject.Destroy (obj);
+		}
+	}
+
+	// IN: Objects
+	// OUT: none
+	public void ENABLE(object[] args)
+	{	// it no work
+		foreach (object obj in args) {
+			if (obj is GameObject) {
+				foreach (Renderer renderer in (obj as GameObject).GetComponentsInChildren<Renderer>()) {
+					renderer.enabled = true;
+				}
+			}
+		}
+	}
+
+	// IN: Objects
+	// OUT: none
+	public void DISABLE(object[] args)
+	{
+		foreach (object obj in args) {
+			if (obj is GameObject) {
+				foreach (Renderer renderer in (obj as GameObject).GetComponentsInChildren<Renderer>()) {
+					renderer.enabled = false;
+				}
+			}
+		}
+	}
+
+	/* AGENT-DEPENDENT BEHAVIORS */
+
+	// IN: Objects
+	// OUT: none
+	public void GRASP(object[] args)
+	{
+		GameObject agent = GameObject.FindGameObjectWithTag ("Agent");
+		if (agent != null) {
+			Animator anim = agent.GetComponent<Animator> ();
+			GameObject grasper = anim.GetBoneTransform (HumanBodyBones.RightHand).transform.gameObject;
+			//anim["Grasp_3"].wrapMode = WrapMode.Once;
+			if (args [args.Length - 1] is bool) {
+				if ((bool)args [args.Length - 1] == true) {
+					foreach (object arg in args) {
+						if (arg is GameObject) {
+							if ((grasper.transform.position - (arg as GameObject).transform.position).magnitude <
+							    (Helper.GetObjectWorldSize ((arg as GameObject)).max - Helper.GetObjectWorldSize ((arg as GameObject)).center).magnitude) {
+								//if (RCC8.EC (Helper.GetObjectWorldSize((arg as GameObject)), Helper.GetObjectWorldSize(grasper)) ||	// do actual touching test
+								//	RCC8.PO (Helper.GetObjectWorldSize((arg as GameObject)), Helper.GetObjectWorldSize(grasper))) {
+								anim.Play ("Grasp_3");
+								anim.SetInteger ("grasp", 3);
+								(arg as GameObject).GetComponent<Rigging> ().ActivatePhysics (false);
+								RiggingHelper.RigTo ((arg as GameObject), grasper);
+							}
+							else {
+								OutputHelper.PrintOutput("I can't grasp the " + (arg as GameObject).name + ".  I'm not touching it."); 
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// IN: Objects
+	// OUT: none
+	public void DROP(object[] args)
+	{
+		GameObject agent = GameObject.FindGameObjectWithTag ("Agent");
+		if (agent != null) {
+			Animator anim = agent.GetComponent<Animator> ();
+			if (args [args.Length - 1] is bool) {
+				if ((bool)args [args.Length - 1] == true) {
+					anim.CrossFade ("idle",0.2f);
+					anim.SetInteger ("grasp", 0);
+					foreach (object arg in args) {
+						if (arg is GameObject) {
+							if ((arg as GameObject).transform.IsChildOf (anim.GetBoneTransform (HumanBodyBones.RightHand).transform)) {
+								(arg as GameObject).GetComponent<Rigging> ().ActivatePhysics (true);
+								RiggingHelper.UnRig ((arg as GameObject), anim.GetBoneTransform (HumanBodyBones.RightHand).transform.gameObject);
+							}
+							else {
+								OutputHelper.PrintOutput("I can't drop the " + (arg as GameObject).name + ".  I'm not holding it."); 
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }

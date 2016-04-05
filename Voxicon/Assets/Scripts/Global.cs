@@ -63,10 +63,12 @@ namespace Global {
 			Hashtable predArgs = new Hashtable ();
 			
 			Queue<String> split = new Queue<String>(predicate.Split (new char[] {'('},2,StringSplitOptions.None));
-			String pred = split.ElementAt(0);
-			String args = split.ElementAt(1);
-			args = args.Remove(args.Length - 1);
-			predArgs.Add (pred, args);
+			if (split.Count > 1) {
+				String pred = split.ElementAt (0);
+				String args = split.ElementAt (1);
+				args = args.Remove (args.Length - 1);
+				predArgs.Add (pred, args);
+			}
 			
 			return predArgs;
 		}
@@ -75,12 +77,12 @@ namespace Global {
 			Queue<String> split = new Queue<String>(formula.Split (new char[] {'('},2,StringSplitOptions.None));
 			return split.ElementAt (0);
 		}
-		
+
 		public static void PrintKeysAndValues(Hashtable ht)  {
 			foreach (DictionaryEntry entry in ht)
 				Debug.Log(entry.Key + " : " + entry.Value);
 		}
-		
+
 		public static String VectorToParsable(Vector3 vector) {
 			return ("<"+vector.x.ToString ()+"; "+
 			       	vector.y.ToString ()+"; "+
@@ -151,6 +153,10 @@ namespace Global {
 			}
 		}
 
+		public static bool VectorIsNaN(Vector3 vec) {
+			return (float.IsNaN (vec.x) || float.IsNaN (vec.y) || float.IsNaN (vec.z));
+		}
+
 		public static bool PointInRect(Vector2 point, Rect rect) {
 			return (point.x >= rect.xMin && point.x <= rect.xMax && point.y >= rect.yMin && point.y <= rect.yMax);
 		}
@@ -170,12 +176,63 @@ namespace Global {
 		public static Bounds GetObjectSize(GameObject obj) {
 			Renderer[] renderers = obj.GetComponentsInChildren<Renderer>();
 
-			Bounds combinedBounds = new Bounds ();
+			Bounds combinedBounds = new Bounds (obj.transform.position, Vector3.zero);
 			
 			foreach (Renderer renderer in renderers) {
-				combinedBounds.Encapsulate(renderer.gameObject.GetComponent<MeshFilter> ().mesh.bounds);
+				Bounds temp = renderer.gameObject.GetComponent<MeshFilter> ().mesh.bounds;
+				Vector3 min = new Vector3 (temp.min.x * renderer.gameObject.transform.localScale.x,
+					              temp.min.y * renderer.gameObject.transform.localScale.y,
+					              temp.min.z * renderer.gameObject.transform.localScale.z);
+				Vector3 max = new Vector3 (temp.max.x * renderer.gameObject.transform.localScale.x,
+					temp.max.y * renderer.gameObject.transform.localScale.y,
+					temp.max.z * renderer.gameObject.transform.localScale.z);
+				temp.SetMinMax (min, max);
+				combinedBounds.Encapsulate(temp);
 			}
 			
+			return combinedBounds;
+		}
+
+		// get the bounds of the object in the current world
+		public static Bounds GetObjectWorldSize(GameObject obj) {
+			Renderer[] renderers = obj.GetComponentsInChildren<Renderer>();
+
+			Bounds combinedBounds = new Bounds (obj.transform.position, Vector3.zero);
+
+			foreach (Renderer renderer in renderers) {
+				combinedBounds.Encapsulate(renderer.bounds);
+			}
+
+			return combinedBounds;
+		}
+
+		// get the bounds of the object in the current world, excluding any children listed
+		public static Bounds GetObjectWorldSize(GameObject obj, List<GameObject> exclude) {
+			Renderer[] renderers = obj.GetComponentsInChildren<Renderer>();
+
+			Bounds combinedBounds = new Bounds (obj.transform.position, Vector3.zero);
+
+			foreach (Renderer renderer in renderers) {
+				if (!exclude.Contains (renderer.transform.gameObject)) {
+					combinedBounds.Encapsulate (renderer.bounds);
+				}
+			}
+
+			return combinedBounds;
+		}
+
+		// get the collective bounds of the objects in the current world
+		public static Bounds GetObjectWorldSize(List<GameObject> objs) {
+			Bounds combinedBounds = new Bounds (objs[0].transform.position, Vector3.zero);
+
+			foreach (GameObject obj in objs) {
+				Renderer[] renderers = obj.GetComponentsInChildren<Renderer> ();
+
+				foreach (Renderer renderer in renderers) {
+					combinedBounds.Encapsulate (renderer.bounds);
+				}
+			}
+
 			return combinedBounds;
 		}
 
@@ -205,6 +262,55 @@ namespace Global {
 			}
 			
 			return combinedBounds;
+		}
+
+		public static Vector3 GetObjectMajorAxis (GameObject obj) {
+			Bounds bounds = GetObjectSize (obj);
+
+			List<float> dims = new List<float>(new float[]{bounds.size.x, bounds.size.y, bounds.size.z});
+
+			int longest = dims.IndexOf(dims.Max());
+
+			Vector3 axis = Vector3.zero;
+			if (longest == 0) {			// x
+				axis = Vector3.right;
+			}
+			else if (longest == 1) {	// y
+				axis = Vector3.up;
+			}
+			else if (longest == 2) {	// z
+				axis = Vector3.forward;
+			}
+
+			return axis;
+		}
+
+		// if obj1 fits inside obj2
+		public static bool FitsIn(Bounds obj1, Bounds obj2) {
+			bool fits = true;
+
+			if ((obj1.size.x >= obj2.size.x) ||	// check for object bounds exceeding along all axes but the axis of major orientaton
+				//(obj1.size.y > obj2.size.y) ||
+			    (obj1.size.z >= obj2.size.z)) {
+				fits = false;
+			}
+
+			return fits;
+		}
+
+		public static GameObject GetMostImmediateParentVoxeme(GameObject obj) {
+			GameObject voxObject = obj;
+
+			while (voxObject.transform.parent != null) {
+				voxObject = voxObject.transform.parent.gameObject;
+				if (voxObject.GetComponent<Rigging> () != null) {
+					if (voxObject.GetComponent<Rigging> ().enabled) {
+						break;
+					}
+				}
+			}
+
+			return voxObject;
 		}
 	}
 }

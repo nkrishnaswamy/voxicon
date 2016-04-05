@@ -24,6 +24,5 @@ public class GraspScript : MonoBehaviour {
 			grasper = 0;
 		}
 		anim.SetInteger ("grasp", grasper);
-		Debug.Log (grasper);
 	}
 }

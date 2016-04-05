@@ -2,17 +2,29 @@
 using System.Collections;
 
 public class Help : MonoBehaviour {
-	public Rect windowRect = new Rect(0, 0, 120, 20);
-	public string stringToEdit = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum";
+	public Rect windowRect;
+	string helpText = "Available behaviors:\n" +
+		"- put(x,f(y)), where f={on,in} -- places object x at position f(y)\n" +
+		"- flip(x) -- flips object x over\n" +
+		"- slide(x) -- slide object x in random direction\n\n" +
+		"- grasp(x) -- agent grasps object x, if touching x\n" +
+		"- drop(x) -- agent drops (releases) object x, if holding x\n\n" +
+		"- disable(x) -- hide object x (use \"disable(human1)\" to hide agent)\n" +
+		"- reset -- reload scene\n\n" +
+		"Objects must be invoked by name.  " +
+		"Right-click an object to inspect its semantic markup in VoxML.  " +
+		"Object name displays in inspector title bar.\n\n" +
+		"Click and drag to rotate camera.  Use arrow keys to move camera.  " +
+		"Use S/W to raise/lower agent arm when visible.";
 	public Vector2 scrollPosition;
 	public bool render = false;
 	bool isResizing = false;
 	Rect resizeStart = new Rect();
-	Vector2 minWindowSize = new Vector2(200,100);
+	public Vector2 minWindowSize;
 
 	// Use this for initialization
 	void Start () {
-		windowRect = new Rect(50, 50, 200, 100);
+		//windowRect = new Rect(50, 50, 200, 200);
 	}
 	
 	// Update is called once per frame
@@ -40,7 +52,7 @@ public class Help : MonoBehaviour {
 			render = false;
 		//makes GUI window scrollable
 		scrollPosition = GUILayout.BeginScrollView (scrollPosition);
-		GUILayout.Label (stringToEdit);
+		GUILayout.Label (helpText);
 		GUILayout.EndScrollView ();
 		//makes GUI window draggable
 		GUI.DragWindow (new Rect (0, 0, 10000, 20));

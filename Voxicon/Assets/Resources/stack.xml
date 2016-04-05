@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<VoxML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Lex>
+    <Pred>stack</Pred>
+    <Type>physobj</Type>
+  </Lex>
+  <Type>
+    <Head>assembly[1]</Head>
+    <Components>
+      <Component Value="base" />
+      <Component Value="mid*" />
+      <Component Value="top[2]" />
+    </Components>
+    <Concavity>Flat</Concavity>
+    <RotatSym>Y</RotatSym>
+    <ReflSym>XY,YZ</ReflSym>
+  </Type>
+  <Habitat>
+    <Intrinsic>
+      <Intr Name="UP" Value="align(Y,E_y)" />
+      <Intr Name="TOP" Value="top(+Y)" />
+    </Intrinsic>
+    <Extrinsic />
+  </Habitat>
+  <Afford_Str>
+    <Affordances>
+      <Affordance Formula="support" />
+      <Affordance Formula="H[3]-&gt;[put(x,[1])]on([2],x)" />
+      <Affordance Formula="H[3]-&gt;[put(x,[1])]comp_of([1],x)" />
+      <Affordance Formula="H[3]-&gt;[put(x,[1])]extends([1],x)" />
+    </Affordances>
+  </Afford_Str>
+  <Embodiment>
+    <Scale>&lt;agent</Scale>
+    <Movable>true</Movable>
+  </Embodiment>
+</VoxML>

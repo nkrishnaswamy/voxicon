@@ -1,0 +1,543 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		310D02281CA436060077D2C1 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 310D02271CA436060077D2C1 /* main.m */; };
+		310D022B1CA436060077D2C1 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 310D022A1CA436060077D2C1 /* AppDelegate.m */; };
+		310D022E1CA436060077D2C1 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 310D022D1CA436060077D2C1 /* ViewController.m */; };
+		310D02311CA436060077D2C1 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 310D022F1CA436060077D2C1 /* Main.storyboard */; };
+		310D02331CA436060077D2C1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 310D02321CA436060077D2C1 /* Assets.xcassets */; };
+		310D02361CA436060077D2C1 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 310D02341CA436060077D2C1 /* LaunchScreen.storyboard */; };
+		310D02411CA436060077D2C1 /* VoxSim_CommanderTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 310D02401CA436060077D2C1 /* VoxSim_CommanderTests.m */; };
+		310D024C1CA436060077D2C1 /* VoxSim_CommanderUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 310D024B1CA436060077D2C1 /* VoxSim_CommanderUITests.m */; };
+		311B250B1CA82105002517C1 /* glossybutton.png in Resources */ = {isa = PBXBuildFile; fileRef = 311B250A1CA82105002517C1 /* glossybutton.png */; };
+		317C23C21CA47BE5004DA09C /* prefs.txt in Resources */ = {isa = PBXBuildFile; fileRef = 317C23C11CA47BE5004DA09C /* prefs.txt */; };
+		317C23C41CA48180004DA09C /* presets.txt in Resources */ = {isa = PBXBuildFile; fileRef = 317C23C31CA48180004DA09C /* presets.txt */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		310D023D1CA436060077D2C1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 310D021B1CA436050077D2C1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 310D02221CA436050077D2C1;
+			remoteInfo = "VoxSim Commander";
+		};
+		310D02481CA436060077D2C1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 310D021B1CA436050077D2C1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 310D02221CA436050077D2C1;
+			remoteInfo = "VoxSim Commander";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		310D02231CA436060077D2C1 /* VoxSim.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VoxSim.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		310D02271CA436060077D2C1 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		310D02291CA436060077D2C1 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		310D022A1CA436060077D2C1 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		310D022C1CA436060077D2C1 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
+		310D022D1CA436060077D2C1 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
+		310D02301CA436060077D2C1 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		310D02321CA436060077D2C1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		310D02351CA436060077D2C1 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		310D02371CA436060077D2C1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		310D023C1CA436060077D2C1 /* VoxSim CommanderTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "VoxSim CommanderTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		310D02401CA436060077D2C1 /* VoxSim_CommanderTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VoxSim_CommanderTests.m; sourceTree = "<group>"; };
+		310D02421CA436060077D2C1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		310D02471CA436060077D2C1 /* VoxSim CommanderUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "VoxSim CommanderUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		310D024B1CA436060077D2C1 /* VoxSim_CommanderUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VoxSim_CommanderUITests.m; sourceTree = "<group>"; };
+		310D024D1CA436060077D2C1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		311B250A1CA82105002517C1 /* glossybutton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = glossybutton.png; path = "VoxSim Commander/glossybutton.png"; sourceTree = "<group>"; };
+		317C23C11CA47BE5004DA09C /* prefs.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = prefs.txt; path = "VoxSim Commander/prefs.txt"; sourceTree = "<group>"; };
+		317C23C31CA48180004DA09C /* presets.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = presets.txt; path = "VoxSim Commander/presets.txt"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		310D02201CA436050077D2C1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		310D02391CA436060077D2C1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		310D02441CA436060077D2C1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		310D021A1CA436050077D2C1 = {
+			isa = PBXGroup;
+			children = (
+				310D02251CA436060077D2C1 /* VoxSim Commander */,
+				310D023F1CA436060077D2C1 /* VoxSim CommanderTests */,
+				310D024A1CA436060077D2C1 /* VoxSim CommanderUITests */,
+				310D02241CA436060077D2C1 /* Products */,
+				317C23C11CA47BE5004DA09C /* prefs.txt */,
+				317C23C31CA48180004DA09C /* presets.txt */,
+				311B250A1CA82105002517C1 /* glossybutton.png */,
+			);
+			sourceTree = "<group>";
+		};
+		310D02241CA436060077D2C1 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				310D02231CA436060077D2C1 /* VoxSim.app */,
+				310D023C1CA436060077D2C1 /* VoxSim CommanderTests.xctest */,
+				310D02471CA436060077D2C1 /* VoxSim CommanderUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		310D02251CA436060077D2C1 /* VoxSim Commander */ = {
+			isa = PBXGroup;
+			children = (
+				310D02291CA436060077D2C1 /* AppDelegate.h */,
+				310D022A1CA436060077D2C1 /* AppDelegate.m */,
+				310D022C1CA436060077D2C1 /* ViewController.h */,
+				310D022D1CA436060077D2C1 /* ViewController.m */,
+				310D022F1CA436060077D2C1 /* Main.storyboard */,
+				310D02321CA436060077D2C1 /* Assets.xcassets */,
+				310D02341CA436060077D2C1 /* LaunchScreen.storyboard */,
+				310D02371CA436060077D2C1 /* Info.plist */,
+				310D02261CA436060077D2C1 /* Supporting Files */,
+			);
+			path = "VoxSim Commander";
+			sourceTree = "<group>";
+		};
+		310D02261CA436060077D2C1 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				310D02271CA436060077D2C1 /* main.m */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		310D023F1CA436060077D2C1 /* VoxSim CommanderTests */ = {
+			isa = PBXGroup;
+			children = (
+				310D02401CA436060077D2C1 /* VoxSim_CommanderTests.m */,
+				310D02421CA436060077D2C1 /* Info.plist */,
+			);
+			path = "VoxSim CommanderTests";
+			sourceTree = "<group>";
+		};
+		310D024A1CA436060077D2C1 /* VoxSim CommanderUITests */ = {
+			isa = PBXGroup;
+			children = (
+				310D024B1CA436060077D2C1 /* VoxSim_CommanderUITests.m */,
+				310D024D1CA436060077D2C1 /* Info.plist */,
+			);
+			path = "VoxSim CommanderUITests";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		310D02221CA436050077D2C1 /* VoxSim Commander */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 310D02501CA436060077D2C1 /* Build configuration list for PBXNativeTarget "VoxSim Commander" */;
+			buildPhases = (
+				310D021F1CA436050077D2C1 /* Sources */,
+				310D02201CA436050077D2C1 /* Frameworks */,
+				310D02211CA436050077D2C1 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "VoxSim Commander";
+			productName = "VoxSim Commander";
+			productReference = 310D02231CA436060077D2C1 /* VoxSim.app */;
+			productType = "com.apple.product-type.application";
+		};
+		310D023B1CA436060077D2C1 /* VoxSim CommanderTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 310D02531CA436060077D2C1 /* Build configuration list for PBXNativeTarget "VoxSim CommanderTests" */;
+			buildPhases = (
+				310D02381CA436060077D2C1 /* Sources */,
+				310D02391CA436060077D2C1 /* Frameworks */,
+				310D023A1CA436060077D2C1 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				310D023E1CA436060077D2C1 /* PBXTargetDependency */,
+			);
+			name = "VoxSim CommanderTests";
+			productName = "VoxSim CommanderTests";
+			productReference = 310D023C1CA436060077D2C1 /* VoxSim CommanderTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		310D02461CA436060077D2C1 /* VoxSim CommanderUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 310D02561CA436060077D2C1 /* Build configuration list for PBXNativeTarget "VoxSim CommanderUITests" */;
+			buildPhases = (
+				310D02431CA436060077D2C1 /* Sources */,
+				310D02441CA436060077D2C1 /* Frameworks */,
+				310D02451CA436060077D2C1 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				310D02491CA436060077D2C1 /* PBXTargetDependency */,
+			);
+			name = "VoxSim CommanderUITests";
+			productName = "VoxSim CommanderUITests";
+			productReference = 310D02471CA436060077D2C1 /* VoxSim CommanderUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		310D021B1CA436050077D2C1 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0720;
+				ORGANIZATIONNAME = "Nikhil Krishnaswamy";
+				TargetAttributes = {
+					310D02221CA436050077D2C1 = {
+						CreatedOnToolsVersion = 7.2.1;
+						DevelopmentTeam = 2FADSP24FM;
+					};
+					310D023B1CA436060077D2C1 = {
+						CreatedOnToolsVersion = 7.2.1;
+						TestTargetID = 310D02221CA436050077D2C1;
+					};
+					310D02461CA436060077D2C1 = {
+						CreatedOnToolsVersion = 7.2.1;
+						TestTargetID = 310D02221CA436050077D2C1;
+					};
+				};
+			};
+			buildConfigurationList = 310D021E1CA436050077D2C1 /* Build configuration list for PBXProject "VoxSim Commander" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 310D021A1CA436050077D2C1;
+			productRefGroup = 310D02241CA436060077D2C1 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				310D02221CA436050077D2C1 /* VoxSim Commander */,
+				310D023B1CA436060077D2C1 /* VoxSim CommanderTests */,
+				310D02461CA436060077D2C1 /* VoxSim CommanderUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		310D02211CA436050077D2C1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				310D02361CA436060077D2C1 /* LaunchScreen.storyboard in Resources */,
+				317C23C41CA48180004DA09C /* presets.txt in Resources */,
+				311B250B1CA82105002517C1 /* glossybutton.png in Resources */,
+				310D02331CA436060077D2C1 /* Assets.xcassets in Resources */,
+				310D02311CA436060077D2C1 /* Main.storyboard in Resources */,
+				317C23C21CA47BE5004DA09C /* prefs.txt in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		310D023A1CA436060077D2C1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		310D02451CA436060077D2C1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		310D021F1CA436050077D2C1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				310D022E1CA436060077D2C1 /* ViewController.m in Sources */,
+				310D022B1CA436060077D2C1 /* AppDelegate.m in Sources */,
+				310D02281CA436060077D2C1 /* main.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		310D02381CA436060077D2C1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				310D02411CA436060077D2C1 /* VoxSim_CommanderTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		310D02431CA436060077D2C1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				310D024C1CA436060077D2C1 /* VoxSim_CommanderUITests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		310D023E1CA436060077D2C1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 310D02221CA436050077D2C1 /* VoxSim Commander */;
+			targetProxy = 310D023D1CA436060077D2C1 /* PBXContainerItemProxy */;
+		};
+		310D02491CA436060077D2C1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 310D02221CA436050077D2C1 /* VoxSim Commander */;
+			targetProxy = 310D02481CA436060077D2C1 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		310D022F1CA436060077D2C1 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				310D02301CA436060077D2C1 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		310D02341CA436060077D2C1 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				310D02351CA436060077D2C1 /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		310D024E1CA436060077D2C1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.2;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		310D024F1CA436060077D2C1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.2;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		310D02511CA436060077D2C1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				INFOPLIST_FILE = "VoxSim Commander/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.NikhilKrishnaswamy.VoxSim-Commander";
+				PRODUCT_NAME = VoxSim;
+				PROVISIONING_PROFILE = "";
+			};
+			name = Debug;
+		};
+		310D02521CA436060077D2C1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				INFOPLIST_FILE = "VoxSim Commander/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.NikhilKrishnaswamy.VoxSim-Commander";
+				PRODUCT_NAME = VoxSim;
+				PROVISIONING_PROFILE = "";
+			};
+			name = Release;
+		};
+		310D02541CA436060077D2C1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				INFOPLIST_FILE = "VoxSim CommanderTests/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.NikhilKrishnaswamy.VoxSim-CommanderTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VoxSim Commander.app/VoxSim Commander";
+			};
+			name = Debug;
+		};
+		310D02551CA436060077D2C1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				INFOPLIST_FILE = "VoxSim CommanderTests/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.NikhilKrishnaswamy.VoxSim-CommanderTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VoxSim Commander.app/VoxSim Commander";
+			};
+			name = Release;
+		};
+		310D02571CA436060077D2C1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = "VoxSim CommanderUITests/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.NikhilKrishnaswamy.VoxSim-CommanderUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_TARGET_NAME = "VoxSim Commander";
+				USES_XCTRUNNER = YES;
+			};
+			name = Debug;
+		};
+		310D02581CA436060077D2C1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = "VoxSim CommanderUITests/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.NikhilKrishnaswamy.VoxSim-CommanderUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_TARGET_NAME = "VoxSim Commander";
+				USES_XCTRUNNER = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		310D021E1CA436050077D2C1 /* Build configuration list for PBXProject "VoxSim Commander" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				310D024E1CA436060077D2C1 /* Debug */,
+				310D024F1CA436060077D2C1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		310D02501CA436060077D2C1 /* Build configuration list for PBXNativeTarget "VoxSim Commander" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				310D02511CA436060077D2C1 /* Debug */,
+				310D02521CA436060077D2C1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		310D02531CA436060077D2C1 /* Build configuration list for PBXNativeTarget "VoxSim CommanderTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				310D02541CA436060077D2C1 /* Debug */,
+				310D02551CA436060077D2C1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		310D02561CA436060077D2C1 /* Build configuration list for PBXNativeTarget "VoxSim CommanderUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				310D02571CA436060077D2C1 /* Debug */,
+				310D02581CA436060077D2C1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 310D021B1CA436050077D2C1 /* Project object */;
+}

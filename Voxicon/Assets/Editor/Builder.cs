@@ -6,7 +6,7 @@ using System.IO;
 [CustomEditor(typeof(Builder))]
 public class Builder : Editor {
 
-	public string buildName = "Voxicon_Build2";
+	public string buildName = "Voxicon_Build3";
 	List<string> scenes = new List<string>(){"Assets/Scenes/VoxiconMenu.unity"};
 
 	public override void OnInspectorGUI () 

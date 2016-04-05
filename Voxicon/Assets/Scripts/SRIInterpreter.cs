@@ -27,7 +27,7 @@ public class SRIInterpreter : MonoBehaviour {
 		GameObject table = GameObject.Find ("square_table");
 		Predicates preds = bc.GetComponent<Predicates> ();
 
-		yOffset = preds.top (new object[]{table}).y;
+		yOffset = preds.TOP (new object[]{table}).y;
 
 		// Create poll timer
 		// Create a timer
@@ -50,41 +50,43 @@ public class SRIInterpreter : MonoBehaviour {
 	}
 
 	IEnumerator GetApparatusData() {
-		using (WWW www = new WWW(url)) {
+		using (WWW www = new WWW (url)) {
 			yield return www;
 			
 			string content = www.text;
 
-			JSONNode blockStates = JSONNode.Parse(content);
+			JSONNode blockStates = JSONNode.Parse (content);
 
-			for (int i = 0; i < blockStates["BlockStates"].Count; i++) {
-				float temp;
+			if (blockStates != null) {
+				for (int i = 0; i < blockStates ["BlockStates"].Count; i++) {
+					float temp;
 
-				GameObject block = InstantiateObject("block");
-				block.tag = "Block";
-				//GameObject block = GameObject.Find("block"+blockStates["BlockStates"][i]["ID"]);
+					GameObject block = InstantiateObject ("block");
+					block.tag = "Block";
+					//GameObject block = GameObject.Find("block"+blockStates["BlockStates"][i]["ID"]);
 
-				Vector3 targetPosition = Global.Helper.ParsableToVector(((String)blockStates["BlockStates"][i]["Position"]).Replace(",",";"));
-				temp = targetPosition.y;
-				targetPosition.y = targetPosition.z;
-				targetPosition.z = temp;
+					Vector3 targetPosition = Global.Helper.ParsableToVector (((String)blockStates ["BlockStates"] [i] ["Position"]).Replace (",", ";"));
+					temp = targetPosition.y;
+					targetPosition.y = targetPosition.z;
+					targetPosition.z = temp;
 
-				targetPosition.x *= voxTableSize.x/sriTableSize.x;
-				targetPosition.y += yOffset;
-				targetPosition.z *= voxTableSize.y/sriTableSize.y;
+					targetPosition.x *= voxTableSize.x / sriTableSize.x;
+					targetPosition.y += yOffset;
+					targetPosition.z *= voxTableSize.y / sriTableSize.y;
 
-				Quaternion targetRotation = Global.Helper.ParsableToQuaternion(((String)blockStates["BlockStates"][i]["Rotation"]).Replace(",",";"));
-				//temp = targetRotation.y;
-				//targetRotation.y = targetRotation.z;
-				//targetRotation.z = temp;
+					Quaternion targetRotation = Global.Helper.ParsableToQuaternion (((String)blockStates ["BlockStates"] [i] ["Rotation"]).Replace (",", ";"));
+					//temp = targetRotation.y;
+					//targetRotation.y = targetRotation.z;
+					//targetRotation.z = temp;
 
-				block.transform.position = targetPosition;
-				block.transform.rotation = targetRotation;
-				//block.transform.rotation = targetRotation;
-				block.transform.Rotate(Vector3.right, 90, Space.World);
-				block.transform.localScale = new Vector3 (0.152439f, 0.152439f, 0.152439f);
-				//block.GetComponent<Entity>().targetPosition = targetPosition;
-				//block.GetComponent<Entity>().targetRotation = targetRotation;
+					block.transform.position = targetPosition;
+					block.transform.rotation = targetRotation;
+					//block.transform.rotation = targetRotation;
+					block.transform.Rotate (Vector3.right, 90, Space.World);
+					block.transform.localScale = new Vector3 (0.152439f, 0.152439f, 0.152439f);
+					//block.GetComponent<Entity>().targetPosition = targetPosition;
+					//block.GetComponent<Entity>().targetRotation = targetRotation;
+				}
 			}
 		}
 	}

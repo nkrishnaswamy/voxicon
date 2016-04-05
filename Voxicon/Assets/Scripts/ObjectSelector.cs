@@ -63,7 +63,8 @@ public class ObjectSelector : MonoBehaviour {
 					inspector.DrawInspector = true;
 					inspector.ScrollPosition = new Vector2 (0, 0);
 					inspector.InspectorChoice = -1;
-					inspector.InspectorObject = hit.transform.root.gameObject;
+					inspector.InspectorObject = Helper.GetMostImmediateParentVoxeme (hit.transform.gameObject);
+					//inspector.InspectorObject = hit.transform.root.gameObject;
 					inspector.InspectorPosition = new Vector2 (Input.mousePosition.x, Screen.height - Input.mousePosition.y);
 				}
 			}

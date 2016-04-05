@@ -101,7 +101,7 @@ public class Launcher : MonoBehaviour {
 		if (GUI.Button (new Rect (Screen.width / 2 - 50, bgTop + bgHeight - 60, 100, 50), "Launch")) {
 			if (sceneSelected != "") {
 				SavePrefs ();
-				Application.LoadLevel(sceneSelected);
+				UnityEngine.SceneManagement.SceneManager.LoadScene (sceneSelected);
 			}
 		}
 

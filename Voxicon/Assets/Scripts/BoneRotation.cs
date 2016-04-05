@@ -8,8 +8,8 @@ public class BoneRotation : MonoBehaviour
 	private float y;
 	private float z;
 	private float speed = 5.0f;
-	private float minLimit = -180.00f;
-	private float maxLimit = 180.00f;
+	private float minLimit = 0.00f;		//-180.0f
+	private float maxLimit = 60.00f;	//180.0f
 	Quaternion rotation_bone;
 	public HumanBodyBones testBone;
 
@@ -30,19 +30,24 @@ public class BoneRotation : MonoBehaviour
 //		y = ClampAngle (y, minLimit, maxLimit);
 //		rotation_bone = Quaternion.Euler(0, 0, x);
 //		anim.GetBoneTransform(testBone).transform.localRotation = rotation_bone;
-		if (Input.GetKey (KeyCode.A)) {
-			x -= speed;
-		} 
-		if (Input.GetKey (KeyCode.D)) {
-			x += speed;
-		}
-		if (Input.GetKey (KeyCode.E)) {
-			y -= speed;
-		} 
-		if (Input.GetKey (KeyCode.Q)) {
-			y += speed;
-		}
-		if (Input.GetKey (KeyCode.S)) { 
+
+		// hack to set demo bone positions
+		// sorry Paul!
+		anim.GetBoneTransform (HumanBodyBones.RightShoulder).localRotation = Quaternion.Euler(new Vector3 (295.0f,20.0f,270.0f));
+
+		//if (Input.GetKey (KeyCode.A)) {
+		//	x -= speed;
+		//} 
+		//if (Input.GetKey (KeyCode.D)) {
+		//	x += speed;
+		//}
+		//if (Input.GetKey (KeyCode.E)) {
+		//	y -= speed;
+		//} 
+		//if (Input.GetKey (KeyCode.Q)) {
+		//	y += speed;
+		//}
+		if (Input.GetKey (KeyCode.S)) { // demo: don't go pressing any wrong keys!
 			z += speed;
 		}
 		if (Input.GetKey (KeyCode.W)) {

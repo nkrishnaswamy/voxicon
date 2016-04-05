@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="us-ascii"?>
-<Voxeme xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<VoxML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Lex>
     <Pred>mug</Pred>
     <Type>physobj*artifact</Type>
@@ -19,10 +19,14 @@
     <Extrinsic />
   </Habitat>
   <Afford_Str>
-    <Affordances />
+    <Affordances>
+      <Affordance Formula="contain" />
+	  <Affordance Formula="support" />
+      <Affordance Formula="grasp" />
+    </Affordances>
   </Afford_Str>
   <Embodiment>
     <Scale>agent</Scale>
     <Movable>true</Movable>
   </Embodiment>
-</Voxeme>
+</VoxML>
