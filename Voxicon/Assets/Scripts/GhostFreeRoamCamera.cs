@@ -35,9 +35,9 @@ public class GhostFreeRoamCamera : MonoBehaviour
 
 	private void OnEnable()
 	{
-		help = GameObject.Find ("Help").GetComponent<Help> ();
-		inputController = GameObject.Find ("IOController").GetComponent<InputController> ();
-		outputController = GameObject.Find ("IOController").GetComponent<OutputController> ();
+//		help = GameObject.Find ("Help").GetComponent<Help> ();
+//		inputController = GameObject.Find ("IOController").GetComponent<InputController> ();
+//		outputController = GameObject.Find ("IOController").GetComponent<OutputController> ();
 
 		if (cursorToggleAllowed)
 		{
@@ -75,12 +75,12 @@ public class GhostFreeRoamCamera : MonoBehaviour
 		
 		if (allowRotation)
 		{
-			if ((!Helper.PointOutsideMaskedAreas (new Vector2 (Input.mousePosition.x, Screen.height - Input.mousePosition.y), 
-				    new Rect[]{ inputController.inputRect, outputController.outputRect })) ||
-			    (!Helper.PointOutsideMaskedAreas (new Vector2 (Input.mousePosition.x, Screen.height - Input.mousePosition.y), 
-				    new Rect[]{ help.windowRect }) && (help.render))) {
-				return;
-			}
+//			if ((!Helper.PointOutsideMaskedAreas (new Vector2 (Input.mousePosition.x, Screen.height - Input.mousePosition.y), 
+//				    new Rect[]{ inputController.inputRect, outputController.outputRect })) ||
+//			    (!Helper.PointOutsideMaskedAreas (new Vector2 (Input.mousePosition.x, Screen.height - Input.mousePosition.y), 
+//				    new Rect[]{ help.windowRect }) && (help.render))) {
+//				return;
+//			}
 
 			if (Input.GetMouseButton (0)) {
 				Vector3 eulerAngles = transform.eulerAngles;
