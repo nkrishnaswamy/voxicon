@@ -2,5 +2,6 @@ extern "C" {
     bool OpenPort(char *port);
     void SelfHandshake(char *port);
     unsigned char *Process();
-    bool ClosePort(char *);
+    bool ClosePort(char *port);
+    unsigned char *PythonCall(char *path, char *mod, char *func, char *args[], int numArgs);
 }

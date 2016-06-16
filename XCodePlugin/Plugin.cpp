@@ -3,6 +3,7 @@
 */
 
 #include <CoreFoundation/CoreFoundation.h>
+#include <Python/Python.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -180,6 +181,61 @@ bool ClosePort(char *port) {
     //}
     
     return r;
+}
+
+unsigned char *PythonCall(char *path, char *mod, char *func, char *args[], int numArgs) {
+    PyObject *pName, *pModule, *pDict, *pFunc, *pValue;
+    
+    //if (argc < 3)
+    //{
+    //    printf("Usage: exe_name python_source function_name\n");
+    //    return 1;
+    //}
+    
+    Py_SetProgramName(path);
+    
+    // Initialize the Python Interpreter
+    Py_Initialize();
+    
+    PySys_SetPath(path); // must call this to get sys.argv and relative imports
+    
+    // Build the name object
+    pName = PyString_FromString(mod);
+    
+    // Load the module object
+    pModule = PyImport_Import(pName);
+    
+    // pDict is a borrowed reference
+    pDict = PyModule_GetDict(pModule);
+    
+    // pFunc is also a borrowed reference
+    pFunc = PyDict_GetItemString(pDict, func);
+    
+    if (PyCallable_Check(pFunc)) {
+        if (args != NULL) {
+            PyObject *tupleObj = PyTuple_New(numArgs);
+            
+            for (int i = 0; i < PyTuple_Size(tupleObj); i++) {
+                PyTuple_SetItem(tupleObj, i, PyString_FromString(args[i]));
+            }
+            
+            pValue = PyObject_CallObject(pFunc, tupleObj);
+        }
+        else {
+            pValue = PyObject_CallObject(pFunc, NULL);
+        }
+    } else {
+        PyErr_Print();
+    }
+    
+    // Clean up
+    Py_DECREF(pModule);
+    Py_DECREF(pName);
+    
+    // Finish the Python Interpreter
+    Py_Finalize();
+    
+    return (unsigned char *)PyString_AsString(pValue);
 }
 
 

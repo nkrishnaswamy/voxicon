@@ -7,12 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		31C7F6CF1D07B31D00E4348B /* Python.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 31C7F6CE1D07B31D00E4348B /* Python.framework */; };
 		6A3F7F8310AC147200948A73 /* Plugin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6A3F7D2310AAFB3D00948A73 /* Plugin.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		089C167EFE841241C02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		08EA7FFBFE8413EDC02AAC07 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
+		31C7F6CE1D07B31D00E4348B /* Python.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Python.framework; path = System/Library/Frameworks/Python.framework; sourceTree = SDKROOT; };
 		32BAE0B30371A71500C91783 /* Plugin.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Plugin.pch; sourceTree = "<group>"; };
 		6A3F7D2310AAFB3D00948A73 /* Plugin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Plugin.cpp; sourceTree = "<group>"; };
 		6A3F7F7E10AC146D00948A73 /* CommunicationsBridge.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CommunicationsBridge.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -25,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				31C7F6CF1D07B31D00E4348B /* Python.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -34,6 +37,7 @@
 		089C166AFE841209C02AAC07 /* XCodePlugin */ = {
 			isa = PBXGroup;
 			children = (
+				31C7F6CE1D07B31D00E4348B /* Python.framework */,
 				08FB77ADFE841716C02AAC07 /* Source */,
 				089C167CFE841241C02AAC07 /* Resources */,
 				089C1671FE841209C02AAC07 /* External Frameworks and Libraries */,
