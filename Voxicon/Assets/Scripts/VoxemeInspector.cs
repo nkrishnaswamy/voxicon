@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -6,9 +7,11 @@ using System.IO;
 using Global;
 
 public class VoxemeInspector : MonoBehaviour {
-	public int inspectorWidth = 200;
-	public int inspectorHeight = 300;
-	public int inspectorMargin = 150;
+	public int inspectorWidth;
+	public int inspectorHeight;
+	public int inspectorMargin;
+
+	string inspectorTitle = "";
 
 	Vector2 scrollPosition;
 	public Vector2 ScrollPosition {
@@ -65,6 +68,9 @@ public class VoxemeInspector : MonoBehaviour {
 	Color[] colors;
 	
 	// Markup vars
+	// ENTITY
+	Entity.EntityType mlEntityType = Entity.EntityType.None;
+
 	// LEX
 	string mlPred = "";
 	
@@ -98,6 +104,12 @@ public class VoxemeInspector : MonoBehaviour {
 	bool mlReflSymXY = false;
 	bool mlReflSymXZ = false;
 	bool mlReflSymYZ = false;
+
+	int mlArgCount = 0;
+	List<string> mlArgs = new List<string>();
+
+	int mlSubeventCount = 0;
+	List<string> mlSubevents = new List<string>();
 	
 	// HABITAT
 	int mlAddIntrHabitat = -1;
@@ -179,9 +191,6 @@ public class VoxemeInspector : MonoBehaviour {
 				inspectorRect = new Rect (inspectorPosition.x, inspectorPosition.y, inspectorWidth, inspectorHeight);
 			}
 
-			GUILayout.BeginArea (inspectorRect, GUI.skin.window);
-			scrollPosition = GUILayout.BeginScrollView (scrollPosition, false, false);
-
 /*#if UNITY_EDITOR || UNITY_STANDALONE
 			if (File.Exists (inspectorObject.name + ".xml")) {
 				if (!ObjectLoaded (inspectorObject)) {
@@ -192,7 +201,7 @@ public class VoxemeInspector : MonoBehaviour {
 			else {
 				if (!markupCleared) {
 					InitNewMarkup ();
-					loadedObject = new Voxeme ();
+					loadedObject = new VoxML ();
 				}
 			}
 #endif
@@ -202,6 +211,7 @@ public class VoxemeInspector : MonoBehaviour {
 			if (markup != null) {
 				if (!ObjectLoaded (markup.text)) {
 					loadedObject = LoadMarkup (markup.text);
+					inspectorTitle = inspectorObject.name;
 					markupCleared = false;
 				}
 			}
@@ -212,152 +222,365 @@ public class VoxemeInspector : MonoBehaviour {
 				}
 			}
 //#endif
-			
-			inspectorStyle = GUI.skin.box;
-			inspectorStyle.wordWrap = true;
-			inspectorStyle.alignment = TextAnchor.MiddleLeft;
-			GUILayout.BeginVertical (inspectorStyle);
-			GUILayout.Label ("LEX");
-			GUILayout.BeginHorizontal (inspectorStyle);
-			GUILayout.Label ("Pred");
-			GUILayout.Box (mlPred, GUILayout.Width (100));
-			GUILayout.EndHorizontal ();
-			GUILayout.BeginVertical (inspectorStyle);
-			GUILayout.BeginHorizontal ();
-			GUILayout.Label ("Type");
-			
-			GUILayout.BeginVertical ();
-			for (int i = 0; i < mlTypeCount; i++) {
-				GUILayout.BeginHorizontal ();
 
-				GUILayout.Box (mlTypes [i], GUILayout.Width (70), GUILayout.ExpandWidth (true));
+			GUILayout.BeginArea (inspectorRect, GUI.skin.window);
 
-				GUILayout.EndHorizontal ();
-			}
-			GUILayout.EndVertical ();
-			
-			GUILayout.EndHorizontal ();
-			
-			GUILayout.EndVertical ();
-			GUILayout.EndVertical ();
-			
-			GUILayout.BeginVertical (inspectorStyle);
-			GUILayout.Label ("TYPE");
-			GUILayout.BeginHorizontal (inspectorStyle);
-			GUILayout.Label ("Head");
+			switch (mlEntityType) {
+			case	Entity.EntityType.Object:
+				DisplayObjectMarkup ();
+				break;
 
-			GUILayout.Box (mlHead, GUILayout.Width (70), GUILayout.ExpandWidth (true));
-			
-			GUILayout.EndHorizontal ();
-			GUILayout.BeginVertical (inspectorStyle);
-			GUILayout.BeginHorizontal ();
-			GUILayout.Label ("Components");
-			GUILayout.EndHorizontal ();
-			
-			for (int i = 0; i < mlComponentCount; i++) {
-				GUILayout.BeginHorizontal ();
-				GUILayout.Box (mlComponents [i], GUILayout.Width (115));
-				GUILayout.EndHorizontal ();
+			case	Entity.EntityType.Program:
+				DisplayProgramMarkup ();
+				break;
+
+			case	Entity.EntityType.Attribute:
+				DisplayAttributeMarkup ();
+				break;
+
+			case	Entity.EntityType.Relation:
+				DisplayRelationMarkup ();
+				break;
+
+			case	Entity.EntityType.Function:
+				DisplayFunctionMarkup ();
+				break;
+
+			default:
+				break;
 			}
 
-			GUILayout.EndVertical ();
-			
-			GUILayout.BeginHorizontal (inspectorStyle);
-			GUILayout.Label ("Concavity");
-
-			GUILayout.Box (mlConcavity, GUILayout.Width (70), GUILayout.ExpandWidth (true));
-
-			GUILayout.EndHorizontal ();
-			
-			GUILayout.BeginVertical (inspectorStyle);
-			GUILayout.Label ("Rotational Symmetry");
-			GUILayout.BeginHorizontal ();
-			GUILayout.Toggle (mlRotatSymX, "X");
-			GUILayout.Toggle (mlRotatSymY, "Y");
-			GUILayout.Toggle (mlRotatSymZ, "Z");
-			GUILayout.EndHorizontal ();
-			GUILayout.EndVertical ();
-			
-			GUILayout.BeginVertical (inspectorStyle);
-			GUILayout.Label ("Reflectional Symmetry");
-			GUILayout.BeginHorizontal ();
-			GUILayout.Toggle (mlReflSymXY, "XY");
-			GUILayout.Toggle (mlReflSymXZ, "XZ");
-			GUILayout.Toggle (mlReflSymYZ, "YZ");
-			GUILayout.EndHorizontal ();
-			GUILayout.EndVertical ();
-			GUILayout.EndVertical ();
-			
-			GUILayout.BeginVertical (inspectorStyle);
-			GUILayout.Label ("HABITAT");
-			GUILayout.BeginVertical (inspectorStyle);
-			GUILayout.BeginHorizontal ();
-			GUILayout.Label ("Intrinsic");
-			
-			GUILayout.EndHorizontal ();
-			
-			for (int i = 0; i < mlIntrHabitatCount; i++) {
-				GUILayout.BeginHorizontal ();
-				GUILayout.Box (mlIntrHabitats [i].Split (new char[]{'='}) [0], GUILayout.Width (50));
-				GUILayout.Box (mlIntrHabitats [i].Split (new char[]{'='}) [1], GUILayout.Width (60));
-				GUILayout.EndHorizontal ();
-			}
-			
-			GUILayout.EndVertical ();
-			
-			GUILayout.BeginVertical (inspectorStyle);
-			GUILayout.BeginHorizontal ();
-			GUILayout.Label ("Extrinsic");
-			
-			GUILayout.EndHorizontal ();
-			
-			for (int i = 0; i < mlExtrHabitatCount; i++) {
-				GUILayout.BeginHorizontal ();
-				GUILayout.Box (mlExtrHabitats [i].Split (new char[]{'='}) [0], GUILayout.Width (50));
-				GUILayout.Box (mlExtrHabitats [i].Split (new char[]{'='}) [1], GUILayout.Width (60));
-				GUILayout.EndHorizontal ();
-			}
-
-			GUILayout.EndVertical ();
-			GUILayout.EndVertical ();
-			
-			GUILayout.BeginVertical (inspectorStyle);
-			GUILayout.Label ("AFFORD_STR");
-			
-			GUILayout.BeginVertical (inspectorStyle);
-			
-			for (int i = 0; i < mlAffordanceCount; i++) {
-				GUILayout.BeginHorizontal ();
-				GUILayout.Box (mlAffordances [i], GUILayout.Width (115));
-				GUILayout.EndHorizontal ();
-			}
-			
-			GUILayout.EndVertical ();
-			GUILayout.EndVertical ();
-			
-			GUILayout.BeginVertical (inspectorStyle);
-			GUILayout.Label ("EMBODIMENT");
-			GUILayout.BeginHorizontal (inspectorStyle);
-			GUILayout.Label ("Scale");
-
-			GUILayout.Box (mlScale, GUILayout.Width (70), GUILayout.ExpandWidth (true));
-
-			GUILayout.EndHorizontal ();
-			GUILayout.BeginHorizontal (inspectorStyle);
-			GUILayout.Label ("Movable");
-			GUILayout.Toggle (mlMovable, "");
-			GUILayout.EndHorizontal ();
-			GUILayout.EndVertical ();
-
-			GUILayout.EndScrollView ();
 			GUILayout.EndArea ();
 
-			Vector2 textDimensions = GUI.skin.label.CalcSize (new GUIContent (inspectorObject.name));
+			Vector2 textDimensions = GUI.skin.label.CalcSize (new GUIContent (inspectorTitle));
 			GUI.Label (new Rect (((2 * inspectorPositionAdjX + inspectorWidth) / 2) - textDimensions.x / 2, inspectorPositionAdjY, textDimensions.x, 25), inspectorObject.name);
 		}
 	}
+
+	void DisplayObjectMarkup() {
+		scrollPosition = GUILayout.BeginScrollView (scrollPosition, false, false);
+
+		inspectorStyle = GUI.skin.box;
+		inspectorStyle.alignment = TextAnchor.MiddleLeft;
+		inspectorStyle.stretchWidth = true;
+		inspectorStyle.wordWrap = true;
+		GUILayout.BeginVertical (inspectorStyle);
+		GUILayout.Label ("LEX");
+		GUILayout.BeginHorizontal (inspectorStyle);
+		GUILayout.Label ("Pred");
+		GUILayout.Box (mlPred, GUILayout.Width (inspectorWidth-100));
+		GUILayout.EndHorizontal ();
+		GUILayout.BeginVertical (inspectorStyle);
+		GUILayout.BeginHorizontal ();
+		GUILayout.Label ("Type");
+
+		GUILayout.BeginVertical ();
+		for (int i = 0; i < mlTypeCount; i++) {
+			GUILayout.BeginHorizontal ();
+
+			GUILayout.Box (mlTypes [i], GUILayout.Width (inspectorWidth-130), GUILayout.ExpandWidth (true));
+
+			GUILayout.EndHorizontal ();
+		}
+		GUILayout.EndVertical ();
+
+		GUILayout.EndHorizontal ();
+
+		GUILayout.EndVertical ();
+		GUILayout.EndVertical ();
+
+		GUILayout.BeginVertical (inspectorStyle);
+		GUILayout.Label ("TYPE");
+		GUILayout.BeginHorizontal (inspectorStyle);
+		GUILayout.Label ("Head");
+
+		GUILayout.Box (mlHead, GUILayout.Width (inspectorWidth-130), GUILayout.ExpandWidth (true));
+
+		GUILayout.EndHorizontal ();
+		GUILayout.BeginVertical (inspectorStyle);
+		GUILayout.BeginHorizontal ();
+		GUILayout.Label ("Components");
+		GUILayout.EndHorizontal ();
+
+		GUILayout.BeginVertical (inspectorStyle);
+		for (int i = 0; i < mlComponentCount; i++) {
+			string componentName = mlComponents [i].Split (new char[]{ '[' }) [0];
+			TextAsset ml = Resources.Load (componentName) as TextAsset;
+			if (ml != null) {
+				float textSize = GUI.skin.label.CalcSize (new GUIContent(mlComponents [i])).x;
+				float padSize = GUI.skin.label.CalcSize (new GUIContent(" ")).x;
+				int padLength = (int)(((inspectorWidth - 85) - textSize) / (int)padSize);
+				if (GUILayout.Button (mlComponents [i].PadRight(padLength+mlComponents [i].Length-3), GUILayout.Width (inspectorWidth - 85))) {
+					if (ml != null) {
+						VoxemeInspectorModalWindow newInspector = gameObject.AddComponent<VoxemeInspectorModalWindow> ();
+						//LoadMarkup (ml.text);
+						//newInspector.DrawInspector = true;
+						newInspector.windowRect = new Rect(inspectorRect.x+25,inspectorRect.y+25,inspectorWidth,inspectorHeight);
+						//newInspector.InspectorTitle = mlComponents [i];
+						newInspector.InspectorVoxeme = componentName;
+						newInspector.Render = true;
+					}
+					else {
+					}
+				}
+			}
+			else {
+				GUILayout.Box (mlComponents [i], GUILayout.Width (inspectorWidth - 85));
+			}
+		}
+		GUILayout.EndVertical ();
+
+		GUILayout.EndVertical ();
+
+		GUILayout.BeginHorizontal (inspectorStyle);
+		GUILayout.Label ("Concavity");
+
+		GUILayout.Box (mlConcavity, GUILayout.Width (inspectorWidth-130), GUILayout.ExpandWidth (true));
+
+		GUILayout.EndHorizontal ();
+
+		GUILayout.BeginVertical (inspectorStyle);
+		GUILayout.Label ("Rotational Symmetry");
+		GUILayout.BeginHorizontal ();
+		GUILayout.Toggle (mlRotatSymX, "X");
+		GUILayout.Toggle (mlRotatSymY, "Y");
+		GUILayout.Toggle (mlRotatSymZ, "Z");
+		GUILayout.EndHorizontal ();
+		GUILayout.EndVertical ();
+
+		GUILayout.BeginVertical (inspectorStyle);
+		GUILayout.Label ("Reflectional Symmetry");
+		GUILayout.BeginHorizontal ();
+		GUILayout.Toggle (mlReflSymXY, "XY");
+		GUILayout.Toggle (mlReflSymXZ, "XZ");
+		GUILayout.Toggle (mlReflSymYZ, "YZ");
+		GUILayout.EndHorizontal ();
+		GUILayout.EndVertical ();
+		GUILayout.EndVertical ();
+
+		GUILayout.BeginVertical (inspectorStyle);
+		GUILayout.Label ("HABITAT");
+		GUILayout.BeginVertical (inspectorStyle);
+		GUILayout.BeginHorizontal ();
+		GUILayout.Label ("Intrinsic");
+
+		GUILayout.EndHorizontal ();
+
+		for (int i = 0; i < mlIntrHabitatCount; i++) {
+			GUILayout.BeginHorizontal ();
+			GUILayout.Box (mlIntrHabitats [i].Split (new char[]{'='}, 2) [0], GUILayout.Width (inspectorWidth-150));
+			GUILayout.Box (mlIntrHabitats [i].Split (new char[]{'='}, 2) [1], GUILayout.Width (inspectorWidth-140));
+			GUILayout.EndHorizontal ();
+		}
+
+		GUILayout.EndVertical ();
+
+		GUILayout.BeginVertical (inspectorStyle);
+		GUILayout.BeginHorizontal ();
+		GUILayout.Label ("Extrinsic");
+
+		GUILayout.EndHorizontal ();
+
+		for (int i = 0; i < mlExtrHabitatCount; i++) {
+			GUILayout.BeginHorizontal ();
+			GUILayout.Box (mlExtrHabitats [i].Split (new char[]{'='}, 2) [0], GUILayout.Width (inspectorWidth-150));
+			GUILayout.Box (mlExtrHabitats [i].Split (new char[]{'='}, 2) [1], GUILayout.Width (inspectorWidth-140));
+			GUILayout.EndHorizontal ();
+		}
+
+		GUILayout.EndVertical ();
+		GUILayout.EndVertical ();
+
+		GUILayout.BeginVertical (inspectorStyle);
+		GUILayout.Label ("AFFORD_STR");
+
+		GUILayout.BeginVertical (inspectorStyle);
+
+		for (int i = 0; i < mlAffordanceCount; i++) {
+			GUILayout.BeginHorizontal ();
+			GUILayout.Box (mlAffordances [i], GUILayout.Width(inspectorWidth-85));
+			GUILayout.EndHorizontal ();
+		}
+
+		GUILayout.EndVertical ();
+		GUILayout.EndVertical ();
+
+		GUILayout.BeginVertical (inspectorStyle);
+		GUILayout.Label ("EMBODIMENT");
+		GUILayout.BeginHorizontal (inspectorStyle);
+		GUILayout.Label ("Scale");
+
+		GUILayout.Box (mlScale, GUILayout.Width (inspectorWidth-130), GUILayout.ExpandWidth (true));
+
+		GUILayout.EndHorizontal ();
+		GUILayout.BeginHorizontal (inspectorStyle);
+		GUILayout.Label ("Movable");
+		GUILayout.Toggle (mlMovable, "");
+		GUILayout.EndHorizontal ();
+		GUILayout.EndVertical ();
+
+		GUILayout.BeginVertical (inspectorStyle);
+		GUILayout.Label ("PARTICIPATION");
+		GUILayout.BeginVertical (inspectorStyle);
+		object[] assets = Resources.LoadAll ("Programs");
+		foreach (object asset in assets) {
+			if (asset != null) {
+				List<string> participations = new List<string> ();
+				foreach (string affordance in mlAffordances) {
+					if (affordance.Contains (((TextAsset)asset).name)) {
+						if (!participations.Contains (((TextAsset)asset).name)) {
+							participations.Add (((TextAsset)asset).name);
+						}
+					}
+				}
+
+				foreach (string p in participations) {
+					TextAsset ml = Resources.Load ("Programs/" + p) as TextAsset;
+					if (ml != null) {
+						float textSize = GUI.skin.label.CalcSize (new GUIContent (p)).x;
+						float padSize = GUI.skin.label.CalcSize (new GUIContent (" ")).x;
+						int padLength = (int)(((inspectorWidth - 85) - textSize) / (int)padSize);
+						if (GUILayout.Button (p.PadRight (padLength + p.Length - 3), GUILayout.Width (inspectorWidth - 85))) {
+							if (ml != null) {
+								VoxemeInspectorModalWindow newInspector = gameObject.AddComponent<VoxemeInspectorModalWindow> ();
+								//LoadMarkup (ml.text);
+								//newInspector.DrawInspector = true;
+								newInspector.windowRect = new Rect (inspectorRect.x + 25, inspectorRect.y + 25, inspectorWidth, inspectorHeight);
+								//newInspector.InspectorTitle = mlComponents [i];
+								newInspector.InspectorVoxeme = "Programs/" + p;
+								newInspector.Render = true;
+							}
+							else {
+							}
+						}
+					}
+					else {
+						GUILayout.Box (((TextAsset)asset).name, GUILayout.Width (inspectorWidth - 85));
+					}
+				}
+			}
+		}
+
+		GUILayout.EndVertical ();
+		GUILayout.EndVertical ();
+
+		GUILayout.EndScrollView ();
+	}
+
+	void DisplayProgramMarkup() {
+		scrollPosition = GUILayout.BeginScrollView (scrollPosition, false, false);
+
+		inspectorStyle = GUI.skin.box;
+		inspectorStyle.wordWrap = true;
+		inspectorStyle.alignment = TextAnchor.MiddleLeft;
+		GUILayout.BeginVertical (inspectorStyle);
+		GUILayout.Label ("LEX");
+		GUILayout.BeginHorizontal (inspectorStyle);
+		GUILayout.Label ("Pred");
+		GUILayout.Box (mlPred, GUILayout.Width (inspectorWidth-100));
+		GUILayout.EndHorizontal ();
+		GUILayout.BeginVertical (inspectorStyle);
+		GUILayout.BeginHorizontal ();
+		GUILayout.Label ("Type");
+
+		GUILayout.BeginVertical ();
+		for (int i = 0; i < mlTypeCount; i++) {
+			GUILayout.BeginHorizontal ();
+
+			GUILayout.Box (mlTypes [i], GUILayout.Width (inspectorWidth - 130), GUILayout.ExpandWidth (true));
+
+			GUILayout.EndHorizontal ();
+		}
+		GUILayout.EndVertical ();
+
+		GUILayout.EndHorizontal ();
+
+		GUILayout.EndVertical ();
+		GUILayout.EndVertical ();
+
+		GUILayout.BeginVertical (inspectorStyle);
+		GUILayout.Label ("TYPE");
+		GUILayout.BeginHorizontal (inspectorStyle);
+		GUILayout.Label ("Head");
+
+		GUILayout.Box (mlHead, GUILayout.Width (inspectorWidth-130), GUILayout.ExpandWidth (true));
+
+		GUILayout.EndHorizontal ();
+		GUILayout.BeginVertical (inspectorStyle);
+		GUILayout.BeginHorizontal ();
+		GUILayout.Label ("Args");
+		GUILayout.EndHorizontal ();
+
+		GUILayout.BeginVertical (inspectorStyle);
+		for (int i = 0; i < mlArgCount; i++) {
+			GUILayout.Box (mlArgs [i], GUILayout.Width (inspectorWidth - 85));
+		}
+		GUILayout.EndVertical ();
+
+		GUILayout.EndVertical ();
+
+		GUILayout.BeginVertical (inspectorStyle);
+		GUILayout.BeginHorizontal ();
+		GUILayout.Label ("Body");
+		GUILayout.EndHorizontal ();
+
+		GUILayout.BeginVertical (inspectorStyle);
+		for (int i = 0; i < mlSubeventCount; i++) {
+			GUILayout.Box (mlSubevents [i], GUILayout.Width (inspectorWidth - 85));
+		}
+		GUILayout.EndVertical ();
+
+		GUILayout.EndVertical ();
+
+		GUILayout.EndVertical ();
+
+		GUILayout.EndScrollView ();
+	}
+
+	void DisplayAttributeMarkup() {
+		scrollPosition = GUILayout.BeginScrollView (scrollPosition, false, false);
+
+		inspectorStyle = GUI.skin.box;
+		inspectorStyle.wordWrap = true;
+		inspectorStyle.alignment = TextAnchor.MiddleLeft;
+		GUILayout.BeginVertical (inspectorStyle);
+
+		GUILayout.EndVertical ();
+
+		GUILayout.EndScrollView ();
+	}
+
+	void DisplayRelationMarkup() {
+		scrollPosition = GUILayout.BeginScrollView (scrollPosition, false, false);
+
+		inspectorStyle = GUI.skin.box;
+		inspectorStyle.wordWrap = true;
+		inspectorStyle.alignment = TextAnchor.MiddleLeft;
+		GUILayout.BeginVertical (inspectorStyle);
+
+		GUILayout.EndVertical ();
+
+		GUILayout.EndScrollView ();
+	}
+
+	void DisplayFunctionMarkup() {
+		scrollPosition = GUILayout.BeginScrollView (scrollPosition, false, false);
+
+		inspectorStyle = GUI.skin.box;
+		inspectorStyle.alignment = TextAnchor.MiddleLeft;
+		inspectorStyle.stretchWidth = true;
+		inspectorStyle.wordWrap = true;
+		GUILayout.BeginVertical (inspectorStyle);
+
+		GUILayout.EndVertical ();
+
+		GUILayout.EndScrollView ();
+	}
 	
 	void InitNewMarkup() {
+		// ENTITY
+		mlEntityType = Entity.EntityType.None;
+
 		// LEX
 		mlPred = "";
 		
@@ -388,6 +611,12 @@ public class VoxemeInspector : MonoBehaviour {
 		mlReflSymXY = false;
 		mlReflSymXZ = false;
 		mlReflSymYZ = false;
+
+		mlArgCount = 0;
+		mlArgs = new List<string>();
+
+		mlSubeventCount = 0;
+		mlSubevents = new List<string>();
 		
 		// HABITAT
 		mlAddIntrHabitat = -1;
@@ -421,66 +650,26 @@ public class VoxemeInspector : MonoBehaviour {
 		
 		try {
 			voxml = VoxML.Load (obj.name + ".xml");
-			
-			// assign VoxML values
-			// PRED
-			mlPred = voxml.Lex.Pred;
-			mlTypes = new List<string>(voxml.Lex.Type.Split (new char[]{'*'}));
-			mlTypeCount = mlTypes.Count;
-			mlTypeSelectVisible = new List<int>(new int[]{-1});
-			mlTypeSelected = new List<int>(new int[]{-1});
-			mlRemoveType = new List<int>(new int[]{-1});
-			for (int i = 0; i < mlTypeCount; i++) {
-				mlTypeSelectVisible.Add (-1);
-				mlTypeSelected.Add (-1);
-				mlRemoveType.Add (-1);
-			}
-			
-			// TYPE
-			mlHead = voxml.Type.Head;
-			mlComponents = new List<string>();
-			foreach (Component c in voxml.Type.Components) {
-				mlComponents.Add (c.Value);
-			}
-			mlComponentCount = mlComponents.Count;
-			mlConcavity = voxml.Type.Concavity;
-			
-			List <string> rotatSyms = new List<string>(voxml.Type.RotatSym.Split (new char[]{','}));
-			mlRotatSymX = (rotatSyms.Contains("X"));
-			mlRotatSymY = (rotatSyms.Contains("Y"));
-			mlRotatSymZ = (rotatSyms.Contains("Z"));
-			
-			List<string> reflSyms = new List<string>(voxml.Type.ReflSym.Split (new char[]{','}));
-			mlReflSymXY = (reflSyms.Contains ("XY"));
-			mlReflSymXZ = (reflSyms.Contains ("XZ"));
-			mlReflSymYZ = (reflSyms.Contains ("YZ"));
-			
-			// HABITAT
-			mlIntrHabitats = new List<string>();
-			foreach (Intr i in voxml.Habitat.Intrinsic) {
-				mlIntrHabitats.Add (i.Name + "=" + i.Value);
-			}
-			mlIntrHabitatCount = mlIntrHabitats.Count;
-			mlExtrHabitats = new List<string>();
-			foreach (Extr e in voxml.Habitat.Extrinsic) {
-				mlExtrHabitats.Add (e.Name + "=" + e.Value);
-			}
-			mlExtrHabitatCount = mlExtrHabitats.Count;
-			
-			// AFFORD_STR
-			mlAffordances = new List<string>();
-			foreach (Affordance a in voxml.Afford_Str.Affordances) {
-				mlAffordances.Add (a.Formula);
-			}
-			mlAffordanceCount = mlAffordances.Count;
-			
-			// EMBODIMENT
-			mlScale = voxml.Embodiment.Scale;
-			mlMovable = voxml.Embodiment.Movable;
+
+			AssignVoxMLValues(voxml);
 		}
 		catch (FileNotFoundException ex) {
 		}
-		
+
+		return voxml;
+	}
+
+	VoxML LoadMarkup(VoxML v) {
+		VoxML voxml = new VoxML();
+
+		try {
+			voxml = v;
+
+			AssignVoxMLValues(voxml);
+		}
+		catch (FileNotFoundException ex) {
+		}
+
 		return voxml;
 	}
 
@@ -489,67 +678,87 @@ public class VoxemeInspector : MonoBehaviour {
 		
 		try {
 			voxml = VoxML.LoadFromText (text);
-			
-			// assign VoxML values
-			// PRED
-			mlPred = voxml.Lex.Pred;
-			mlTypes = new List<string>(voxml.Lex.Type.Split (new char[]{'*'}));
-			mlTypeCount = mlTypes.Count;
-			mlTypeSelectVisible = new List<int>(new int[]{-1});
-			mlTypeSelected = new List<int>(new int[]{-1});
-			mlRemoveType = new List<int>(new int[]{-1});
-			for (int i = 0; i < mlTypeCount; i++) {
-				mlTypeSelectVisible.Add (-1);
-				mlTypeSelected.Add (-1);
-				mlRemoveType.Add (-1);
-			}
-			
-			// TYPE
-			mlHead = voxml.Type.Head;
-			mlComponents = new List<string>();
-			foreach (Component c in voxml.Type.Components) {
-				mlComponents.Add (c.Value);
-			}
-			mlComponentCount = mlComponents.Count;
-			mlConcavity = voxml.Type.Concavity;
-			
-			List <string> rotatSyms = new List<string>(voxml.Type.RotatSym.Split (new char[]{','}));
-			mlRotatSymX = (rotatSyms.Contains("X"));
-			mlRotatSymY = (rotatSyms.Contains("Y"));
-			mlRotatSymZ = (rotatSyms.Contains("Z"));
-			
-			List<string> reflSyms = new List<string>(voxml.Type.ReflSym.Split (new char[]{','}));
-			mlReflSymXY = (reflSyms.Contains ("XY"));
-			mlReflSymXZ = (reflSyms.Contains ("XZ"));
-			mlReflSymYZ = (reflSyms.Contains ("YZ"));
-			
-			// HABITAT
-			mlIntrHabitats = new List<string>();
-			foreach (Intr i in voxml.Habitat.Intrinsic) {
-				mlIntrHabitats.Add (i.Name + "=" + i.Value);
-			}
-			mlIntrHabitatCount = mlIntrHabitats.Count;
-			mlExtrHabitats = new List<string>();
-			foreach (Extr e in voxml.Habitat.Extrinsic) {
-				mlExtrHabitats.Add (e.Name + "=" + e.Value);
-			}
-			mlExtrHabitatCount = mlExtrHabitats.Count;
-			
-			// AFFORD_STR
-			mlAffordances = new List<string>();
-			foreach (Affordance a in voxml.Afford_Str.Affordances) {
-				mlAffordances.Add (a.Formula);
-			}
-			mlAffordanceCount = mlAffordances.Count;
-			
-			// EMBODIMENT
-			mlScale = voxml.Embodiment.Scale;
-			mlMovable = voxml.Embodiment.Movable;
+
+			AssignVoxMLValues(voxml);
 		}
 		catch (FileNotFoundException ex) {
 		}
 		
 		return voxml;
+	}
+
+	void AssignVoxMLValues(VoxML voxml) {
+		
+		// assign VoxML values
+		// ENTITY
+		mlEntityType = voxml.Entity.Type;
+
+		// PRED
+		mlPred = voxml.Lex.Pred;
+		mlTypes = new List<string>(voxml.Lex.Type.Split (new char[]{'*'}));
+		mlTypeCount = mlTypes.Count;
+		mlTypeSelectVisible = new List<int>(new int[]{-1});
+		mlTypeSelected = new List<int>(new int[]{-1});
+		mlRemoveType = new List<int>(new int[]{-1});
+		for (int i = 0; i < mlTypeCount; i++) {
+			mlTypeSelectVisible.Add (-1);
+			mlTypeSelected.Add (-1);
+			mlRemoveType.Add (-1);
+		}
+
+		// TYPE
+		mlHead = voxml.Type.Head;
+		mlComponents = new List<string>();
+		foreach (Component c in voxml.Type.Components) {
+			mlComponents.Add (c.Value);
+		}
+		mlComponentCount = mlComponents.Count;
+		mlConcavity = voxml.Type.Concavity;
+
+		List <string> rotatSyms = new List<string>(voxml.Type.RotatSym.Split (new char[]{','}));
+		mlRotatSymX = (rotatSyms.Contains("X"));
+		mlRotatSymY = (rotatSyms.Contains("Y"));
+		mlRotatSymZ = (rotatSyms.Contains("Z"));
+
+		List<string> reflSyms = new List<string>(voxml.Type.ReflSym.Split (new char[]{','}));
+		mlReflSymXY = (reflSyms.Contains ("XY"));
+		mlReflSymXZ = (reflSyms.Contains ("XZ"));
+		mlReflSymYZ = (reflSyms.Contains ("YZ"));
+
+		mlArgs = new List<string>();
+		foreach (Arg a in voxml.Type.Args) {
+			mlArgs.Add (a.Value);
+		}
+		mlArgCount = mlArgs.Count;
+
+		mlSubevents = new List<string>();
+		foreach (Subevent e in voxml.Type.Body) {
+			mlSubevents.Add (e.Value);
+		}
+		mlSubeventCount = mlSubevents.Count;
+
+		// HABITAT
+		mlIntrHabitats = new List<string>();
+		foreach (Intr i in voxml.Habitat.Intrinsic) {
+			mlIntrHabitats.Add (i.Name + "=" + i.Value);
+		}
+		mlIntrHabitatCount = mlIntrHabitats.Count;
+		mlExtrHabitats = new List<string>();
+		foreach (Extr e in voxml.Habitat.Extrinsic) {
+			mlExtrHabitats.Add (e.Name + "=" + e.Value);
+		}
+		mlExtrHabitatCount = mlExtrHabitats.Count;
+
+		// AFFORD_STR
+		mlAffordances = new List<string>();
+		foreach (Affordance a in voxml.Afford_Str.Affordances) {
+			mlAffordances.Add (a.Formula);
+		}
+		mlAffordanceCount = mlAffordances.Count;
+
+		// EMBODIMENT
+		mlScale = voxml.Embodiment.Scale;
+		mlMovable = voxml.Embodiment.Movable;
 	}
 	
 	bool ObjectLoaded(GameObject obj) {

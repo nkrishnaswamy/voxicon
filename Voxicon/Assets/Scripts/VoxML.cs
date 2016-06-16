@@ -1,7 +1,25 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Xml;
 using System.Xml.Serialization;
 using System.IO;
+
+/// <summary>
+/// ENTITY
+/// </summary>
+public class Entity {
+	public enum EntityType
+	{
+		None,
+		Object,
+		Program,
+		Attribute,
+		Relation,
+		Function
+	}
+	[XmlAttribute]
+	public EntityType Type { get; set; }
+}
 
 /// <summary>
 /// LEX
@@ -19,6 +37,16 @@ public class Component {
 	public string Value { get; set; }
 }
 
+public class Arg {
+	[XmlAttribute]
+	public string Value { get; set; }
+}
+
+public class Subevent {
+	[XmlAttribute]
+	public string Value { get; set; }
+}
+
 public class Type {
 	public string Head = "";
 	
@@ -29,6 +57,18 @@ public class Type {
 	public string Concavity = "";
 	public string RotatSym = "";
 	public string ReflSym = "";
+
+	[XmlArray("Args")]
+	[XmlArrayItem("Arg")]
+	public List<Arg> Args = new List<Arg>();
+
+	[XmlArray("Body")]
+	[XmlArrayItem("Subevent")]
+	public List<Subevent> Body = new List<Subevent>();
+
+	public string Class = "";
+	public string Value = "";
+	public string Constr = "";
 }
 
 /// <summary>
@@ -87,7 +127,8 @@ public class Embodiment {
 ///  VOXEME
 /// </summary>
 public class VoxML {
-	
+
+	public Entity Entity = new Entity ();
 	public Lex Lex = new Lex();
 	public Type Type = new Type();
 	public Habitat Habitat = new Habitat();

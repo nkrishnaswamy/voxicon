@@ -21,6 +21,9 @@ public class PluginImport : MonoBehaviour {
 
 	[DllImport ("CommunicationsBridge")]
 	private static extern bool ClosePort(string id);
+
+	[DllImport ("CommunicationsBridge")]
+	private static extern IntPtr PythonCall(string scriptsPath, string module, string function, string[] args, int numArgs);
 	
 	void Start () {
 		port = PlayerPrefs.GetString ("Listener Port");
@@ -50,6 +53,14 @@ public class PluginImport : MonoBehaviour {
 			((InputController)(GameObject.Find ("IOController").GetComponent ("InputController"))).inputString = input.Trim();
 			((InputController)(GameObject.Find ("IOController").GetComponent ("InputController"))).MessageReceived(input.Trim());
 		}
+	}
+
+	public string NLParse(string input) {
+		string[] args = new string[]{input};
+		string result = Marshal.PtrToStringAuto(PythonCall (Application.dataPath + "/Externals/python/", "change_to_forms", "parse_sent", args, args.Length));
+		Debug.Log (result);
+
+		return result;
 	}
 
 	void OnDestroy () {

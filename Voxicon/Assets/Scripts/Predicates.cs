@@ -531,6 +531,37 @@ public class Predicates : MonoBehaviour {
 
 	// IN: Objects
 	// OUT: none
+	public void LIFT(object[] args)
+	{
+		// override physics rigging
+		foreach (object arg in args) {
+			if (arg is GameObject) {
+				(arg as GameObject).GetComponent<Rigging> ().ActivatePhysics(false);
+			}
+		}
+
+		Vector3 targetPosition = Vector3.zero;
+
+		if (args [0] is GameObject) {
+			GameObject obj = (args [0] as GameObject);
+			targetPosition = new Vector3 (obj.transform.position.x,obj.transform.position.y+UnityEngine.Random.value, obj.transform.position.z);
+			//Debug.Log (targetPosition);
+			//targetPosition = new Vector3 (obj.transform.position.x+1.0f, obj.transform.position.y, obj.transform.position.z);
+			obj.GetComponent<Voxeme> ().targetPosition = targetPosition;
+		}
+
+		// add to events manager
+		if (args[args.Length-1] is bool) {
+			if ((bool)args[args.Length-1] == false) {
+				eventManager.events[0] = "lift("+(args [0] as GameObject).name+","+Helper.VectorToParsable(targetPosition)+")";
+			}
+		}
+
+		return;
+	}
+
+	// IN: Objects
+	// OUT: none
 	public void SLIDE(object[] args)
 	{
 		// override physics rigging
@@ -779,7 +810,7 @@ public class Predicates : MonoBehaviour {
 
 	// IN: Objects
 	// OUT: none
-	public void GRASP(object[] args)
+	public void REACH(object[] args)
 	{
 		GameObject agent = GameObject.FindGameObjectWithTag ("Agent");
 		if (agent != null) {
@@ -790,14 +821,53 @@ public class Predicates : MonoBehaviour {
 				if ((bool)args [args.Length - 1] == true) {
 					foreach (object arg in args) {
 						if (arg is GameObject) {
-							if ((grasper.transform.position - (arg as GameObject).transform.position).magnitude <
+							// find bounds corner closest to grasper
+							Bounds bounds = Helper.GetObjectWorldSize((arg as GameObject));
+							Vector3 target = bounds.ClosestPoint(grasper.transform.position);
+							target = new Vector3 (bounds.max.x, bounds.center.y, bounds.center.z);
+							GameObject.Find ("ReachObject").transform.position = target;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// IN: Objects
+	// OUT: none
+	public void GRASP(object[] args)
+	{
+		GameObject agent = GameObject.FindGameObjectWithTag ("Agent");
+		if (agent != null) {
+			Animator anim = agent.GetComponentInChildren<Animator> ();
+			GameObject grasper = anim.GetBoneTransform (HumanBodyBones.RightHand).gameObject;
+			//GameObject grasper = GameObject.Find("hand.R");
+			//anim["Grasp_3"].wrapMode = WrapMode.Once;
+			if (args [args.Length - 1] is bool) {
+				if ((bool)args [args.Length - 1] == true) {
+					foreach (object arg in args) {
+						if (arg is GameObject) {
+							//BoxCollider collider = grasper.GetComponent<BoxCollider> ();
+							//Debug.Log (collider.transform.position);
+							GameObject grasperCoord = GameObject.Find ("GrasperCoord");
+							//grasperCoord.transform.position = grasper.transform.position;
+							//Debug.Log(grasperCoord.transform.position);
+							//Debug.Log (GameObject.Find ("ReachObject").transform.position);
+							//Debug.Log((arg as GameObject).transform.position);
+							//Debug.Log((grasper.transform.position - (arg as GameObject).transform.position).magnitude);
+							//Debug.Log (Helper.GetObjectWorldSize ((arg as GameObject)).max);
+							//Debug.Log (Helper.GetObjectWorldSize ((arg as GameObject)).center);
+							//Debug.Log ((Helper.GetObjectWorldSize ((arg as GameObject)).max - Helper.GetObjectWorldSize ((arg as GameObject)).center).magnitude);
+							if ((grasperCoord.transform.position - (arg as GameObject).transform.position).magnitude <
 							    (Helper.GetObjectWorldSize ((arg as GameObject)).max - Helper.GetObjectWorldSize ((arg as GameObject)).center).magnitude) {
 								//if (RCC8.EC (Helper.GetObjectWorldSize((arg as GameObject)), Helper.GetObjectWorldSize(grasper)) ||	// do actual touching test
 								//	RCC8.PO (Helper.GetObjectWorldSize((arg as GameObject)), Helper.GetObjectWorldSize(grasper))) {
-								anim.Play ("Grasp_3");
-								anim.SetInteger ("grasp", 3);
+								anim.Play ("Grasp_2");
+								anim.SetInteger ("grasp", 2);
 								(arg as GameObject).GetComponent<Rigging> ().ActivatePhysics (false);
-								RiggingHelper.RigTo ((arg as GameObject), grasper);
+								RiggingHelper.RigTo ((arg as GameObject), grasperCoord);
+								(arg as GameObject).GetComponent<Voxeme> ().enabled = true;
+								(arg as GameObject).GetComponent<Voxeme> ().isGrasped = true;
 							}
 							else {
 								OutputHelper.PrintOutput("I can't grasp the " + (arg as GameObject).name + ".  I'm not touching it."); 
@@ -818,13 +888,18 @@ public class Predicates : MonoBehaviour {
 			Animator anim = agent.GetComponent<Animator> ();
 			if (args [args.Length - 1] is bool) {
 				if ((bool)args [args.Length - 1] == true) {
-					anim.CrossFade ("idle",0.2f);
+					anim.CrossFade ("New State",0.2f);
 					anim.SetInteger ("grasp", 0);
 					foreach (object arg in args) {
 						if (arg is GameObject) {
-							if ((arg as GameObject).transform.IsChildOf (anim.GetBoneTransform (HumanBodyBones.RightHand).transform)) {
+							GameObject grasperCoord = GameObject.Find ("GrasperCoord");
+							GameObject.Find ("ReachObject").transform.position = grasperCoord.transform.position;
+							//if ((arg as GameObject).transform.IsChildOf (anim.GetBoneTransform (HumanBodyBones.RightHand).transform)) {
+							if ((arg as GameObject).transform.IsChildOf (grasperCoord.transform)) {
 								(arg as GameObject).GetComponent<Rigging> ().ActivatePhysics (true);
-								RiggingHelper.UnRig ((arg as GameObject), anim.GetBoneTransform (HumanBodyBones.RightHand).transform.gameObject);
+								//RiggingHelper.UnRig ((arg as GameObject), anim.GetBoneTransform (HumanBodyBones.RightHand).transform.gameObject);
+								RiggingHelper.UnRig ((arg as GameObject), grasperCoord);
+								(arg as GameObject).GetComponent<Voxeme> ().isGrasped = false;
 							}
 							else {
 								OutputHelper.PrintOutput("I can't drop the " + (arg as GameObject).name + ".  I'm not holding it."); 

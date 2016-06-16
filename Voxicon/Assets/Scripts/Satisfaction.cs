@@ -129,7 +129,7 @@ namespace Satisfaction {
 								if (!voxeme.gameObject.name.Contains("*")) {	// hacky fix to filter out unparented objects w/ disabled voxeme components
 									testBounds = Helper.GetObjectWorldSize (test);
 									// bunch of underspecified RCC relations
-									if (voxeme.voxml.Afford_Str.Affordances.Any (p => p.Formula == "support")) {
+									if (voxeme.voxml.Afford_Str.Affordances.Any (p => p.Formula.Contains("support"))) {
 										if ((voxeme.voxml.Type.Concavity == "Concave") &&
 										   (Helper.FitsIn (objBounds, testBounds))) {	// if test object is concave and placed object would fit inside
 											if (RCC8.PO (objBounds, Helper.GetObjectWorldSize (test))) {	// interpenetration = support
@@ -151,7 +151,7 @@ namespace Satisfaction {
 										}
 									}
 
-									if (voxeme.voxml.Afford_Str.Affordances.Any (p => p.Formula == "contain")) {
+									if (voxeme.voxml.Afford_Str.Affordances.Any (p => p.Formula.Contains("contain"))) {
 										if (Helper.FitsIn (objBounds, Helper.GetObjectWorldSize (test))) {
 											if (RCC8.PO (objBounds, Helper.GetObjectWorldSize (test))) {	// interpenetration = containment
 												obj.GetComponent<Voxeme> ().minYBound = Helper.GetObjectWorldSize (obj).min.y;

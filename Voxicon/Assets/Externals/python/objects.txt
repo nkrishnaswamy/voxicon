@@ -1,0 +1,19 @@
+block
+ball
+plate
+cup
+disc
+spoon
+book
+blackboard
+bottle
+grape
+apple
+banana
+table
+bowl
+knife
+pencil
+paper sheet
+hand
+arm

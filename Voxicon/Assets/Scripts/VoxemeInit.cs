@@ -35,7 +35,8 @@ public class VoxemeInit : MonoBehaviour {
 						if (subObj.GetComponent<MeshFilter> () != null) {
 							if (go.tag != "UnPhysic") {
 								if (subObj.GetComponent<BoxCollider> () == null) {	// may already have one -- goddamn overachieving scene artists
-									subObj.AddComponent<BoxCollider> ();
+									BoxCollider collider = subObj.AddComponent<BoxCollider> ();
+									//Physics.IgnoreCollision (collider, GameObject.Find ("MainCamera").GetComponent<Collider> ());
 								}
 							}
 

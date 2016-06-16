@@ -2,12 +2,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 
 public class Launcher : MonoBehaviour {
 	
+	string ip;
 	string inPort;
 	string sriUrl;
-	
+
 	int bgLeft = Screen.width/6;
 	int bgTop = Screen.height/12;
 	int bgWidth = 4*Screen.width/6;
@@ -53,6 +55,14 @@ public class Launcher : MonoBehaviour {
 #endif
 
 		listItems = availableScenes.ToArray ();
+
+		// get IP address
+		foreach (IPAddress ipAddress in System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName()).AddressList) {
+			if (ipAddress.AddressFamily.ToString() == "InterNetwork") {
+				//Debug.Log(ipAddress.ToString());
+				ip = ipAddress.ToString ();
+			}
+		}
 	}
 	
 	// Update is called once per frame
@@ -71,9 +81,14 @@ public class Launcher : MonoBehaviour {
 		GUI.Label (new Rect (bgLeft + 10, bgTop + 35, 90, 25), "Listener Port");
 		inPort = GUI.TextField (new Rect (bgLeft+100, bgTop+35, 60, 25), inPort);
 
+		GUI.Button (new Rect (bgLeft + 165, bgTop + 35, 10, 10), new GUIContent ("*", "IP: " + ip));
+		if (GUI.tooltip != "") {
+			GUI.TextArea (new Rect (bgLeft + 175, bgTop + 35, GUI.skin.label.CalcSize (new GUIContent ("IP: "+ip)).x+10, 20), GUI.tooltip);
+		}
+
 		GUI.Label (new Rect (bgLeft + 10, bgTop + 65, 90, 25), "SRI URL");
 		sriUrl = GUI.TextField (new Rect (bgLeft+100, bgTop+65, 150, 25), sriUrl);
-		
+
 		GUILayout.BeginArea(new Rect(13*Screen.width/24, bgTop + 35, 3*Screen.width/12, 3*Screen.height/6), GUI.skin.window);
 		scrollPosition = GUILayout.BeginScrollView(scrollPosition, false, false); 
 		GUILayout.BeginVertical(GUI.skin.box);

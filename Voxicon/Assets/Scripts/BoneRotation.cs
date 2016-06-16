@@ -33,7 +33,7 @@ public class BoneRotation : MonoBehaviour
 
 		// hack to set demo bone positions
 		// sorry Paul!
-		anim.GetBoneTransform (HumanBodyBones.RightShoulder).localRotation = Quaternion.Euler(new Vector3 (295.0f,20.0f,270.0f));
+		//anim.GetBoneTransform (HumanBodyBones.RightShoulder).localRotation = Quaternion.Euler(new Vector3 (295.0f,20.0f,270.0f));
 
 		if (Input.GetKey (KeyCode.A)) {
 			x -= speed;

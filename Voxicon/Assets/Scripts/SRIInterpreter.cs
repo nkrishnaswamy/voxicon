@@ -122,7 +122,7 @@ public class SRIInterpreter : MonoBehaviour {
 	}
 	
 	void OnGUI () {
-		if (GUI.Button (new Rect (10, Screen.height - 30, 60, 20), "Refresh")) {
+		if (GUI.Button (new Rect (10, Screen.height - 55, 100, 20), "Refresh")) {
 			ClearBlocks ();
 			StartCoroutine ("GetApparatusData");
 		}

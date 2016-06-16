@@ -26,6 +26,8 @@ public class Voxeme : MonoBehaviour {
 
 	public GameObject supportingSurface = null;
 
+	public bool isGrasped = false;
+
 	// Use this for initialization
 	void Start () {
 		// load in VoxML knowledge
@@ -49,11 +51,23 @@ public class Voxeme : MonoBehaviour {
 	void Update () {
 		if (interTargetPositions.Count == 0) {	// no queued path
 			if (!Helper.VectorIsNaN (targetPosition)) {	// has valid destination
-				if (transform.position != targetPosition) {
-					Vector3 offset = MoveToward (targetPosition);
+				if (!isGrasped) {
+					if (transform.position != targetPosition) {
+						Vector3 offset = MoveToward (targetPosition);
 
-					if (offset.sqrMagnitude <= 0.01f) {
-						transform.position = targetPosition;
+						if (offset.sqrMagnitude <= 0.01f) {
+							transform.position = targetPosition;
+						}
+					}
+				}
+				else {
+					GameObject reachObj = GameObject.Find ("ReachObject");
+					if (reachObj.transform.position != targetPosition) {
+						Vector3 offset = MoveToward (targetPosition);
+
+						if (offset.sqrMagnitude <= 0.01f) {
+							reachObj.transform.position = targetPosition;
+						}
 					}
 				}
 			}
@@ -64,12 +78,25 @@ public class Voxeme : MonoBehaviour {
 		}
 		else {
 			Vector3 interimTarget = interTargetPositions.Peek ();
-			if (transform.position != interimTarget) {
-				Vector3 offset = MoveToward (interimTarget);
+			if (!isGrasped) {
+				if (transform.position != interimTarget) {
+					Vector3 offset = MoveToward (interimTarget);
 
-				if (offset.sqrMagnitude <= 0.001f) {
-					transform.position = interimTarget;
-					interTargetPositions.Dequeue ();
+					if (offset.sqrMagnitude <= 0.001f) {
+						transform.position = interimTarget;
+						interTargetPositions.Dequeue ();
+					}
+				}
+			}
+			else {
+				GameObject reachObj = GameObject.Find ("ReachObject");
+				if (reachObj.transform.position != interimTarget) {
+					Vector3 offset = MoveToward (interimTarget);
+
+					if (offset.sqrMagnitude <= 0.01f) {
+						reachObj.transform.position = interimTarget;
+						interTargetPositions.Dequeue ();
+					}
 				}
 			}
 		}
@@ -81,15 +108,17 @@ public class Voxeme : MonoBehaviour {
 		}
 
 		if (!Helper.VectorIsNaN (targetRotation)) {	// has valid target
-			if (transform.rotation != Quaternion.Euler (targetRotation)) {
-				if ((Mathf.Deg2Rad * Quaternion.Angle (transform.rotation, Quaternion.Euler (targetRotation))) > 0.01f) {
-					//transform.eulerAngles = Vector3.MoveTowards (transform.eulerAngles, targetRotation, Time.deltaTime * turnSpeed);
-					//transform.eulerAngles = Vector3.Slerp (transform.eulerAngles, targetRotation, Time.deltaTime * turnSpeed);
-					transform.rotation = Quaternion.Slerp (transform.rotation, 
-						Quaternion.Euler (targetRotation), Time.deltaTime * turnSpeed);
-				} else {
-					//transform.eulerAngles = targetRotation;
-					transform.rotation = Quaternion.Euler (targetRotation);
+			if (!isGrasped) {
+				if (transform.rotation != Quaternion.Euler (targetRotation)) {
+					if ((Mathf.Deg2Rad * Quaternion.Angle (transform.rotation, Quaternion.Euler (targetRotation))) > 0.01f) {
+						//transform.eulerAngles = Vector3.MoveTowards (transform.eulerAngles, targetRotation, Time.deltaTime * turnSpeed);
+						//transform.eulerAngles = Vector3.Slerp (transform.eulerAngles, targetRotation, Time.deltaTime * turnSpeed);
+						transform.rotation = Quaternion.Slerp (transform.rotation, 
+							Quaternion.Euler (targetRotation), Time.deltaTime * turnSpeed);
+					} else {
+						//transform.eulerAngles = targetRotation;
+						transform.rotation = Quaternion.Euler (targetRotation);
+					}
 				}
 			}
 		}
@@ -98,7 +127,7 @@ public class Voxeme : MonoBehaviour {
 			targetPosition = transform.position;
 		}
 
-		if (transform.localScale != targetScale) {
+		if ((transform.localScale != targetScale) && (!isGrasped)) {
 			Vector3 offset = transform.localScale - targetScale;
 			Vector3 normalizedOffset = Vector3.Normalize (offset);
 	
@@ -185,22 +214,57 @@ public class Voxeme : MonoBehaviour {
 	}
 
 	Vector3 MoveToward(Vector3 target) {
-		Vector3 offset = transform.position - target;
-		Vector3 normalizedOffset = Vector3.Normalize (offset);
+		if (!isGrasped) {
+			Vector3 offset = transform.position - target;
+			Vector3 normalizedOffset = Vector3.Normalize (offset);
 
-		if (rigging.usePhysicsRig) {
-			Rigidbody[] rigidbodies = gameObject.GetComponentsInChildren<Rigidbody> ();
-			foreach (Rigidbody rigidbody in rigidbodies) {
-				rigidbody.MovePosition (new Vector3 (transform.position.x - normalizedOffset.x * Time.deltaTime * moveSpeed,
-					transform.position.y - normalizedOffset.y * Time.deltaTime * moveSpeed,
-					transform.position.z - normalizedOffset.z * Time.deltaTime * moveSpeed));
+			if (rigging.usePhysicsRig) {
+				Rigidbody[] rigidbodies = gameObject.GetComponentsInChildren<Rigidbody> ();
+				foreach (Rigidbody rigidbody in rigidbodies) {
+					rigidbody.MovePosition (new Vector3 (transform.position.x - normalizedOffset.x * Time.deltaTime * moveSpeed,
+						transform.position.y - normalizedOffset.y * Time.deltaTime * moveSpeed,
+						transform.position.z - normalizedOffset.z * Time.deltaTime * moveSpeed));
+				}
 			}
+
+			transform.position = new Vector3 (transform.position.x - normalizedOffset.x * Time.deltaTime * moveSpeed,
+				transform.position.y - normalizedOffset.y * Time.deltaTime * moveSpeed,
+				transform.position.z - normalizedOffset.z * Time.deltaTime * moveSpeed);
+
+			//GameObject.Find ("ReachObject").transform.position = transform.position;
+
+			return offset;
+		}
+		else {
+			GameObject reachObj = GameObject.Find ("ReachObject");
+			GameObject grasperCoord = GameObject.Find ("GrasperCoord");
+
+
+			Vector3 offset = reachObj.transform.position - target;
+			Vector3 normalizedOffset = Vector3.Normalize (offset);
+
+			/*if (rigging.usePhysicsRig) {
+				Rigidbody[] rigidbodies = gameObject.GetComponentsInChildren<Rigidbody> ();
+				foreach (Rigidbody rigidbody in rigidbodies) {
+					rigidbody.MovePosition (new Vector3 (transform.position.x - normalizedOffset.x * Time.deltaTime * moveSpeed,
+						transform.position.y - normalizedOffset.y * Time.deltaTime * moveSpeed,
+						transform.position.z - normalizedOffset.z * Time.deltaTime * moveSpeed));
+				}
+			}*/
+
+			reachObj.transform.position = new Vector3 (reachObj.transform.position.x - normalizedOffset.x * Time.deltaTime * moveSpeed,
+				reachObj.transform.position.y - normalizedOffset.y * Time.deltaTime * moveSpeed,
+				reachObj.transform.position.z - normalizedOffset.z * Time.deltaTime * moveSpeed);
+
+			return offset;
 		}
 
-		transform.position = new Vector3 (transform.position.x - normalizedOffset.x * Time.deltaTime * moveSpeed,
-			transform.position.y - normalizedOffset.y * Time.deltaTime * moveSpeed,
-			transform.position.z - normalizedOffset.z * Time.deltaTime * moveSpeed);
+		
+	}
 
-		return offset;
+	void OnCollisionEnter(Collision other) {
+		if (other.gameObject.tag == "MainCamera") {
+			return;
+		}
 	}
 }
