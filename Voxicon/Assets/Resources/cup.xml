@@ -2,32 +2,31 @@
 <VoxML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
     <Entity Type="Object" />
   <Lex>
-    <Pred>block</Pred>
+    <Pred>cup</Pred>
     <Type>physobj*artifact</Type>
   </Lex>
   <Type>
-    <Head>rectangular_prism</Head>
+    <Head>cylindroid[1]</Head>
     <Components>
-      <Component Value="C1" />
-      <Component Value="C2" />
+      <Component Value="surface" />
+      <Component Value="interior" />
     </Components>
-    <Concavity>Flat</Concavity>
+    <Concavity>Concave</Concavity>
     <RotatSym>Y</RotatSym>
     <ReflSym>XY,YZ</ReflSym>
   </Type>
   <Habitat>
     <Intrinsic>
-      <Intr Name="I1" Value="F1" />
-      <Intr Name="I2" Value="F2" />
+        <Intr Name="UP[2]" Value="align(Y,E_y)" />
+        <Intr Name="TOP[2]" Value="top(+Y)" />
     </Intrinsic>
-    <Extrinsic>
-      <Extr Name="E1" Value="F3" />
-      <Extr Name="E2" Value="F4" />
-    </Extrinsic>
+    <Extrinsic />
   </Habitat>
   <Afford_Str>
     <Affordances>
-      <Affordance Formula="support" />
+        <Affordance Formula="H[2]-&gt;[put(x, on([1]))]support([1], x)" />
+        <Affordance Formula="H[2]-&gt;[put(x, in([1]))]contain([1], x)" />
+        <Affordance Formula="H[2]-&gt;[grasp(x, [1])]" />
     </Affordances>
   </Afford_Str>
   <Embodiment>

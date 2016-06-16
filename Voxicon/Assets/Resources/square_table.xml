@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="us-ascii"?>
 <VoxML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <Entity Type="Object" />
   <Lex>
     <Pred>table</Pred>
     <Type>physobj*artifact</Type>
   </Lex>
   <Type>
-    <Head>sheet</Head>
+    <Head>sheet[1]</Head>
     <Components>
-      <Component Value="surface" />
-      <Component Value="leg+" />
+      <Component Value="surface[1]" />
+      <Component Value="leg[2]+" />
     </Components>
     <Concavity>Flat</Concavity>
     <RotatSym>Y</RotatSym>
@@ -18,14 +19,15 @@
     <Intrinsic>
       <Intr Name="UP" Value="align(Y,E_y)" />
       <Intr Name="TOP" Value="top(+Y)" />
+      <Intr Name="CONSTR[1]" Value="Y &lt;&lt; Z, Y &lt;&lt; X" />
+      <Intr Name="CONSTR[2]" Value="Y &gt;&gt; X, Y &gt;&gt; Z" />
     </Intrinsic>
     <Extrinsic />
   </Habitat>
   <Afford_Str>
     <Affordances>
-      <Affordance Formula="H1 -&gt; [E1]R" />
-      <Affordance Formula="A2" />
-      <Affordance Formula="A3" />
+        <Affordance Formula="H[3]-&gt;[put(x,on([1]))]on([1],x)" />
+        <Affordance Formula="H[3]-&gt;[put(x,on([1]))]support([1],x)" />
     </Affordances>
   </Afford_Str>
   <Embodiment>
