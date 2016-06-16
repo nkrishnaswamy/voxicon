@@ -1,16 +1,49 @@
+reset
 disable(human1)
+slide the apple
+put the apple on the plate
+put the plate on the mug
+put the plate in the mug
+put the spoon on the mug
+put the spoon in the mug
+put the lid in the mug
+put the lid on the mug
+flip the mug
+close the mug
+stack the blocks
+put the apple on the stack
+flip the stack
+flip the plate
+reach for the apple
+grasp the apple
+lift the apple
+drop the apple
+reach for the plate
+grasp the plate
+lift the plate
+drop the plate
 foo(apple)
 slide(bar)
 slide(apple)
-reset
 put(apple,on(plate))
 put(plate,on(mug))
+put(plate,in(mug))
 put(spoon,in(mug))
 put(spoon,on(mug))
 put(lid,in(mug))
+put(lid,on(mug))
+flip(mug)
+close(mug)
 stack(apple,plate,mug)
 stack(blocks)
 put(apple,on(stack))
 flip(stack)
+flip(plate)
+reach(apple)
 grasp(apple)
+lift(apple)
 drop(apple)
+reach(plate)
+grasp(plate)
+lift(plate)
+drop(plate)

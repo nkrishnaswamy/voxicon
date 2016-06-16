@@ -111,7 +111,7 @@
 - (void) viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
     
-    _presetsView.contentSize = CGSizeMake(_presetsView.frame.size.width, (_presetsView.subviews.count*40)+6);
+    _presetsView.contentSize = CGSizeMake(_presetsView.frame.size.width, (_presetsView.subviews.count*45)+46);
 }
 
 - (IBAction) sendMessage {
