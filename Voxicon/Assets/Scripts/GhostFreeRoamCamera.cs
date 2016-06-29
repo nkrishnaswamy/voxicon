@@ -174,56 +174,14 @@ public class GhostFreeRoamCamera : MonoBehaviour
 	}
 //	void OnCollisionEnter(Collision other) {
 //		if (other.gameObject.tag != "Ground") {
-//////			currentSpeed = 0;
-////			Debug.Log(other.transform.name);
-////			Vector3 dir = other.transform.position - transform.position;
-////			dir = other.transform.InverseTransformDirection(dir);
-//////			float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-////			Debug.Log(dir);
-////			Debug.Log (deltaPosition);
-////			deltaPosition -= dir;
-////			transform.position += deltaPosition * currentSpeed * Time.deltaTime;
 //			Physics.IgnoreCollision (GetComponent<Collider> (), other.gameObject.GetComponent<Collider> ());
-////			transform.position -= dir;
-////			transform.position = deltaPosition * currentSpeed * Mathf.Sin ((Vector3.Angle(deltaPosition, other.transform.local)));
-////			if (transform.position.x == other.transform.position.x) {
-////				Debug.Log("1");
-////			}
-////			if (transform.position.y == other.transform.position.y) {
-////				Debug.Log ("2");
-////			}
-////			if (transform.position.z == other.transform.position.z) {
-////				Debug.Log("3");
-////			}
-////			transform.position -= deltaPosition * currentSpeed * Time.deltaTime;
 //		}
 //	}
 //	
 //	void OnCollisionStay(Collision other) {
 //		if (other.gameObject.tag != "Ground") {
-////			currentSpeed = 0;
 //			Physics.IgnoreCollision(GetComponent<Collider>(), other.gameObject.GetComponent<Collider>());
-////			if (transform.position.x == other.transform.position.x) {
-////				Debug.Log("x " + other.name);
-////			}
-////			if (transform.position.y == other.transform.position.y) {
-////				Debug.Log ("y " + other.name);
-////			}
-////			if (transform.position.z == other.transform.position.z) {
-////				Debug.Log("z " + other.name);
-////			}
-////			transform.position -= deltaPosition * currentSpeed * Time.deltaTime;
-////		}
-////		rb.AddForce(other.transform.up);
-////		Debug.Log(other.gameObject.name);
-////			Vector3 dir = other.transform.position - transform.position;
-////			dir = other.transform.InverseTransformDirection(dir);
-////			float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-////			Debug.Log(angle);
 //		}
 //
 //	}
-
-
-// NOTE:* Set the Euler angles above to define the relative orientation of the capsule (it depends on the cube axes).
 }
