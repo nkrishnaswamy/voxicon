@@ -19,7 +19,14 @@ public class GhostFreeRoamCamera : MonoBehaviour
 	public float cursorSensitivity = 0.025f;
 	public bool cursorToggleAllowed = true;
 	public KeyCode cursorToggleButton = KeyCode.Escape;
-	
+
+	public float panSpeed = 0.3f;
+	private Vector3 mouseOrigin;	// Position of cursor when mouse dragging starts
+
+	float ZoomAmount = 0; 
+	float MaxToClamp = 10f;
+	float zoomSpeed = 0.5f;
+
 	private float currentSpeed = 0f;
 	private bool moving = false;
 	private bool togglePressed = false;
@@ -56,7 +63,7 @@ public class GhostFreeRoamCamera : MonoBehaviour
 		{
 			bool lastMoving = moving;
 			deltaPosition = Vector3.zero;
-			
+
 			if (moving)
 				currentSpeed += increaseSpeed * Time.deltaTime;
 			
@@ -66,7 +73,26 @@ public class GhostFreeRoamCamera : MonoBehaviour
 			CheckMove(backwardButton, -transform.forward);
 			CheckMove(rightButton, transform.right);
 			CheckMove(leftButton, -transform.right);
-			
+
+			//adding in zooming
+			ZoomAmount += Input.GetAxis("Mouse ScrollWheel");
+			ZoomAmount = Mathf.Clamp(ZoomAmount, -MaxToClamp, MaxToClamp);
+			var translate = Mathf.Min(Mathf.Abs(Input.GetAxis("Mouse ScrollWheel")), MaxToClamp - Mathf.Abs(ZoomAmount));
+			gameObject.transform.Translate(0,0,translate * zoomSpeed * Mathf.Sign(Input.GetAxis("Mouse ScrollWheel")));
+
+
+			//adding in panning
+			if (Input.GetMouseButtonDown (2)){
+				// Get mouse origin
+				mouseOrigin = Input.mousePosition;
+			}
+			if(Input.GetMouseButton(2)){
+				Vector3 pos = Camera.main.ScreenToViewportPoint(Input.mousePosition- mouseOrigin);
+				Vector3 move = new Vector3(pos.x * panSpeed, pos.y * panSpeed, 0);
+				transform.Translate(move);
+			}
+
+		
 			if (moving)
 			{
 				if (moving != lastMoving)
@@ -74,7 +100,9 @@ public class GhostFreeRoamCamera : MonoBehaviour
 				
 				transform.position += deltaPosition * currentSpeed * Time.deltaTime;
 			}
-			else currentSpeed = 0f;            
+			else currentSpeed = 0f;
+
+
 		}
 		
 		if (allowRotation)
