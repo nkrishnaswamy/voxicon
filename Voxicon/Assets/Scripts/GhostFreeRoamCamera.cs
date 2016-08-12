@@ -59,6 +59,50 @@ public class GhostFreeRoamCamera : MonoBehaviour
 	
 	private void FixedUpdate()
 	{
+		if (inputController != null) {
+			if (!Helper.PointOutsideMaskedAreas (new Vector2 (Input.mousePosition.x, Screen.height - Input.mousePosition.y), 
+				new Rect[]{ inputController.inputRect })) {
+				return;
+			}
+
+		}
+
+		if (outputController != null) {
+			if (!Helper.PointOutsideMaskedAreas (new Vector2 (Input.mousePosition.x, Screen.height - Input.mousePosition.y), 
+				new Rect[]{ outputController.outputRect })) {
+				return;
+			}
+
+		}
+
+		if (help != null) {
+			if (!Helper.PointOutsideMaskedAreas (new Vector2 (Input.mousePosition.x, Screen.height - Input.mousePosition.y), 
+				new Rect[]{ help.windowRect }) && (help.render)) {
+				return;
+			}
+		}
+
+		if (inspector != null) {
+			if (!Helper.PointOutsideMaskedAreas (new Vector2 (Input.mousePosition.x, Screen.height - Input.mousePosition.y), 
+				new Rect[]{ inspector.InspectorRect }) && (inspector.DrawInspector)) {
+				return;
+			}
+		}
+
+		bool masked = false;	// assume mouse not masked by some open modal window
+		for (int i = 0; i < windowManager.windowManager.Count; i++) {
+			if (windowManager.windowManager[i] != null) {
+				if (!Helper.PointOutsideMaskedAreas (new Vector2 (Input.mousePosition.x, Screen.height - Input.mousePosition.y), 
+					new Rect[]{ windowManager.windowManager[i].windowRect }) && (windowManager.windowManager[i].Render)) {
+					masked = true;
+					break;
+				}
+			}
+		}
+		if (masked) {
+			return;
+		}
+
 		if (allowMovement)
 		{
 			bool lastMoving = moving;
@@ -75,10 +119,10 @@ public class GhostFreeRoamCamera : MonoBehaviour
 			CheckMove(leftButton, -transform.right);
 
 			//adding in zooming
-			ZoomAmount += Input.GetAxis("Mouse ScrollWheel");
-			ZoomAmount = Mathf.Clamp(ZoomAmount, -MaxToClamp, MaxToClamp);
-			var translate = Mathf.Min(Mathf.Abs(Input.GetAxis("Mouse ScrollWheel")), MaxToClamp - Mathf.Abs(ZoomAmount));
-			gameObject.transform.Translate(0,0,translate * zoomSpeed * Mathf.Sign(Input.GetAxis("Mouse ScrollWheel")));
+			ZoomAmount += Input.GetAxis ("Mouse ScrollWheel");
+			ZoomAmount = Mathf.Clamp (ZoomAmount, -MaxToClamp, MaxToClamp);
+			var translate = Mathf.Min (Mathf.Abs (Input.GetAxis ("Mouse ScrollWheel")), MaxToClamp - Mathf.Abs (ZoomAmount));
+			gameObject.transform.Translate (0, 0, translate * zoomSpeed * Mathf.Sign (Input.GetAxis ("Mouse ScrollWheel")));
 
 
 			//adding in panning
@@ -91,7 +135,6 @@ public class GhostFreeRoamCamera : MonoBehaviour
 				Vector3 move = new Vector3(pos.x * panSpeed, pos.y * panSpeed, 0);
 				transform.Translate(move);
 			}
-
 		
 			if (moving)
 			{
@@ -101,56 +144,10 @@ public class GhostFreeRoamCamera : MonoBehaviour
 				transform.position += deltaPosition * currentSpeed * Time.deltaTime;
 			}
 			else currentSpeed = 0f;
-
-
 		}
 		
 		if (allowRotation)
 		{
-			if (inputController != null) {
-				if (!Helper.PointOutsideMaskedAreas (new Vector2 (Input.mousePosition.x, Screen.height - Input.mousePosition.y), 
-					    new Rect[]{ inputController.inputRect })) {
-					return;
-				}
-
-			}
-
-			if (outputController != null) {
-				if (!Helper.PointOutsideMaskedAreas (new Vector2 (Input.mousePosition.x, Screen.height - Input.mousePosition.y), 
-					new Rect[]{ outputController.outputRect })) {
-					return;
-				}
-
-			}
-
-			if (help != null) {
-				if (!Helper.PointOutsideMaskedAreas (new Vector2 (Input.mousePosition.x, Screen.height - Input.mousePosition.y), 
-					new Rect[]{ help.windowRect }) && (help.render)) {
-					return;
-				}
-			}
-
-			if (inspector != null) {
-				if (!Helper.PointOutsideMaskedAreas (new Vector2 (Input.mousePosition.x, Screen.height - Input.mousePosition.y), 
-					new Rect[]{ inspector.InspectorRect }) && (inspector.DrawInspector)) {
-					return;
-				}
-			}
-
-			bool masked = false;	// assume mouse not masked by some open modal window
-			for (int i = 0; i < windowManager.windowManager.Count; i++) {
-				if (windowManager.windowManager[i] != null) {
-					if (!Helper.PointOutsideMaskedAreas (new Vector2 (Input.mousePosition.x, Screen.height - Input.mousePosition.y), 
-						new Rect[]{ windowManager.windowManager[i].windowRect }) && (windowManager.windowManager[i].Render)) {
-						masked = true;
-						break;
-					}
-				}
-			}
-			if (masked) {
-				return;
-			}
-
 			if (Input.GetMouseButton (0)) {
 				Vector3 eulerAngles = transform.eulerAngles;
 				eulerAngles.x += -Input.GetAxis ("Mouse Y") * 359f * cursorSensitivity;
