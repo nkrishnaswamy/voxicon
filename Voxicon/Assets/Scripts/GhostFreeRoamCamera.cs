@@ -20,11 +20,11 @@ public class GhostFreeRoamCamera : MonoBehaviour
 	public bool cursorToggleAllowed = true;
 	public KeyCode cursorToggleButton = KeyCode.Escape;
 
-	public float panSpeed = 0.3f;
+	public float panSpeed = 0.1f;
 	private Vector3 mouseOrigin;	// Position of cursor when mouse dragging starts
 
-	float ZoomAmount = 0; 
-	float MaxToClamp = 10f;
+	float zoomAmount = 0; 
+	float maxToClamp = 10f;
 	float zoomSpeed = 0.5f;
 
 	private float currentSpeed = 0f;
@@ -119,20 +119,22 @@ public class GhostFreeRoamCamera : MonoBehaviour
 			CheckMove(leftButton, -transform.right);
 
 			//adding in zooming
-			ZoomAmount += Input.GetAxis ("Mouse ScrollWheel");
-			ZoomAmount = Mathf.Clamp (ZoomAmount, -MaxToClamp, MaxToClamp);
-			var translate = Mathf.Min (Mathf.Abs (Input.GetAxis ("Mouse ScrollWheel")), MaxToClamp - Mathf.Abs (ZoomAmount));
+			zoomAmount += Input.GetAxis ("Mouse ScrollWheel");
+			zoomAmount = Mathf.Clamp (zoomAmount, -maxToClamp, maxToClamp);
+			var translate = Mathf.Min (Mathf.Abs (Input.GetAxis ("Mouse ScrollWheel")), maxToClamp - Mathf.Abs (zoomAmount));
 			gameObject.transform.Translate (0, 0, translate * zoomSpeed * Mathf.Sign (Input.GetAxis ("Mouse ScrollWheel")));
 
 
 			//adding in panning
-			if (Input.GetMouseButtonDown (2)){
+			if (Input.GetMouseButtonDown (2)) {
 				// Get mouse origin
 				mouseOrigin = Input.mousePosition;
+
 			}
-			if(Input.GetMouseButton(2)){
-				Vector3 pos = Camera.main.ScreenToViewportPoint(Input.mousePosition- mouseOrigin);
-				Vector3 move = new Vector3(pos.x * panSpeed, pos.y * panSpeed, 0);
+
+			if ((Input.GetMouseButton(2)) || (Input.GetMouseButtonDown (0))) {
+				Vector3 pos = Camera.main.ScreenToViewportPoint(Input.mousePosition - mouseOrigin);
+				Vector3 move = new Vector3(Mathf.Sign(pos.x) * panSpeed, Mathf.Sign(pos.y) * panSpeed, 0);
 				transform.Translate(move);
 			}
 		
