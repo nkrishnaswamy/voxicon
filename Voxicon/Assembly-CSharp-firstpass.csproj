@@ -99,6 +99,7 @@
      <None Include="Assets\Externals\python\relations.txt" />
      <None Include="Assets\Resources\block2.xml" />
      <None Include="Assets\Resources\knife.xml" />
+     <None Include="Assets\Resources\block4.xml" />
      <None Include="Assets\Resources\Programs\put.xml" />
      <None Include="Assets\Standard Assets\CrossPlatformInput\CrossPlatformInputGuidelines.txt" />
      <None Include="Assets\Resources\spoon.xml" />
@@ -110,6 +111,8 @@
      <None Include="Assets\Resources\Programs\in.xml" />
      <None Include="Assets\Standard Assets\Characters\ThirdPersonCharacter\ThirdPersonCharacterGuidelines.txt" />
      <None Include="Assets\Resources\stack.xml" />
+     <None Include="Assets\Resources\block5.xml" />
+     <None Include="Assets\Resources\block6.xml" />
      <None Include="Assets\Standard Assets\Characters\FirstPersonCharacter\FirstPersonCharacterGuidelines.txt" />
      <None Include="Assets\Externals\python\events.txt" />
      <None Include="Assets\JSON Tests\TroubleShoot.txt" />

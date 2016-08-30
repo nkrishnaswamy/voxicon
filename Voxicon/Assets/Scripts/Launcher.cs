@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 
+using Global;
+
 public class Launcher : MonoBehaviour {
 	
 	string ip;
@@ -116,7 +118,7 @@ public class Launcher : MonoBehaviour {
 		if (GUI.Button (new Rect (Screen.width / 2 - 50, bgTop + bgHeight - 60, 100, 50), "Launch")) {
 			if (sceneSelected != "") {
 				SavePrefs ();
-				UnityEngine.SceneManagement.SceneManager.LoadScene (sceneSelected);
+				StartCoroutine(SceneHelper.LoadScene (sceneSelected));
 			}
 		}
 

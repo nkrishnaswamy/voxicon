@@ -25,31 +25,35 @@ namespace Satisfaction {
 			//Debug.Log (test);
 
 			if (predString == "put") {	// satisfy put
-				GameObject obj = GameObject.Find (argsStrings [0] as String);
-				if (obj != null) {
+				GameObject theme = GameObject.Find (argsStrings [0] as String);
+				if (theme != null) {
 					//Debug.Log(Helper.ConvertVectorToParsable(obj.transform.position) + " " + (String)argsStrings[1]);
 					//Debug.Log(obj.transform.position);
-					//Debug.Log (Helper.ParsableToVector ((String)argsStrings [1]));
-					if (obj.transform.position == Helper.ParsableToVector ((String)argsStrings [1])) {
+					if (Helper.CloseEnough(theme.transform.position,Helper.ParsableToVector ((String)argsStrings [1]))) {
 						satisfied = true;
 						//obj.GetComponent<Rigging> ().ActivatePhysics (true);
-						ReevaluateRelationships (predString, obj);	// we need to talk (do physics reactivation in here?)
+						//ReevaluateRelationships (predString, theme);	// we need to talk (do physics reactivation in here?)
+						ReasonFromAffordances (predString, theme.GetComponent<Voxeme>());	// we need to talk (do physics reactivation in here?) // replace ReevaluateRelationships
 					}
 				}
 			}
 			else if (predString == "flip") {	// satisfy flip
-				GameObject obj = GameObject.Find (argsStrings [0] as String);
-				if (obj != null) {
+				GameObject theme = GameObject.Find (argsStrings [0] as String);
+				if (theme != null) {
 					//Debug.Log(Helper.ConvertVectorToParsable(obj.transform.position) + " " + (String)argsStrings[1]);
 					//Debug.Log(obj.transform.position);
 					//Debug.Log (Quaternion.Angle(obj.transform.rotation,Quaternion.Euler(Helper.ParsableToVector((String)argsStrings[1]))));
-					if (Quaternion.Angle (obj.transform.rotation, Quaternion.Euler (Helper.ParsableToVector ((String)argsStrings [1]))) == 0.0f) {
+					if (Helper.CloseEnough(theme.transform.rotation, Quaternion.Euler (Helper.ParsableToVector ((String)argsStrings [1])))) {
 						satisfied = true;
-						obj.GetComponent<Rigging> ().ActivatePhysics (true);
+						ReasonFromAffordances (predString, theme.GetComponent<Voxeme>());	// we need to talk (do physics reactivation in here?) // replace ReevaluateRelationships
+						theme.GetComponent<Rigging> ().ActivatePhysics (true);
 					}
 				}
 			}
 			else if (predString == "bind") {	// satisfy bind
+				satisfied = true;
+			}
+			else if (predString == "reach") {	// satisfy reach
 				satisfied = true;
 			}
 
@@ -110,12 +114,137 @@ namespace Satisfaction {
 			return true;
 		}
 
+		public static void ReasonFromAffordances(String program, Voxeme obj) {
+			Regex reentrancyForm = new Regex (@"\[[0-9]+\]");
+			List<string> supportedRelations = new List<string> (new string[]{ @"on\(.*\)",	// list of supported relations
+				@"in\(.*\)"});	// to do: move externally, draw from voxeme database
+		
+			// get relation tracker
+			RelationTracker relationTracker = (RelationTracker)GameObject.Find ("BehaviorController").GetComponent("RelationTracker");
+
+			// get bounds of theme object of program
+			Bounds objBounds = Helper.GetObjectWorldSize(obj.gameObject);
+
+			// get list of all voxeme entities
+			Voxeme[] allVoxemes = UnityEngine.Object.FindObjectsOfType<Voxeme>();
+
+			// reasoning from affordances
+			foreach (Voxeme test in allVoxemes) {
+				// foreach voxeme
+				if (test.enabled) {	// if voxeme is active
+					OperationalVox.OpAfford_Str affStr = test.opVox.Affordance;
+					foreach (int h in affStr.Affordances.Keys) {
+						for (int i = 0; i < affStr.Affordances[h].Count; i++) {	// condition/event/result list for this habitat index
+							//if (test.opVox.Habitat condition blah blah)	// ignore habitat conditionals for now
+							string ev = affStr.Affordances[h][i].Item2.Item1;
+							if (ev.Contains (program)) {
+								//Debug.Log (test.opVox.Lex.Pred);
+								//Debug.Log (program);
+
+								foreach (string rel in supportedRelations) {
+									Regex r = new Regex (rel);
+									if (r.Match (ev).Length > 0) {	// found a relation that might apply between these objects
+										string relation = r.Match (ev).Groups[0].Value.Split('(')[0];
+
+										MatchCollection matches = reentrancyForm.Matches (ev);
+										foreach (Match m in matches) {
+											foreach (Group g in m.Groups) {
+												int componentIndex = System.Convert.ToInt32 (
+													                     g.Value.Replace (g.Value, g.Value.Trim (new char[]{ '[', ']' })));
+												//Debug.Log (componentIndex);
+												if (test.opVox.Type.Components.FindIndex (c => c.Item3 == componentIndex) != -1) {
+													Triple<string, GameObject, int> component = test.opVox.Type.Components.First (c => c.Item3 == componentIndex);
+													//Debug.Log (ev.Replace(g.Value,component.Item2.name));
+													Debug.Log (string.Format("Is {0} {1} {2}?", obj.gameObject.name, relation, component.Item2.name));
+													if (TestRelation (obj.gameObject, relation, component.Item2)) {
+														string result = affStr.Affordances[h][i].Item2.Item2;
+
+														if (relation == "on") {
+															if (!((Helper.GetMostImmediateParentVoxeme (test.gameObject).GetComponent<Voxeme> ().voxml.Type.Concavity == "Concave") &&
+																(Helper.FitsIn (Helper.GetObjectWorldSize(obj.gameObject), Helper.GetObjectWorldSize(test.gameObject))))) {
+																if (obj.enabled) {
+																	obj.gameObject.GetComponent<Rigging> ().ActivatePhysics (true);
+																}
+																obj.minYBound = Helper.GetObjectWorldSize(test.gameObject).max.y;
+															}
+														}
+														else if (relation == "in") {
+															obj.minYBound = Helper.GetObjectWorldSize (obj.gameObject).min.y;
+														}
+
+														if (result != "") {
+															result = result.Replace ("x", obj.gameObject.name);
+															// any component reentrancy ultimately inherits from the parent voxeme itself
+															result = reentrancyForm.Replace (result, test.gameObject.name);
+															result = Helper.GetTopPredicate (result);
+															Debug.Log (string.Format("{0} {1}s {2}",
+																test.gameObject.name,result,obj.gameObject.name));
+															relationTracker.AddNewRelation(new List<GameObject>{test.gameObject,obj.gameObject},result);
+
+															if (result == "support") {
+																RiggingHelper.RigTo (obj.gameObject, test.gameObject);
+															}
+															else if (result == "contain") {
+																RiggingHelper.RigTo (obj.gameObject, test.gameObject);
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		public static bool TestRelation(GameObject obj1, string relation, GameObject obj2) {
+			bool r = false;
+			Bounds bounds1 = Helper.GetObjectWorldSize (obj1);
+			Bounds bounds2 = Helper.GetObjectWorldSize (obj2);
+
+			if (relation == "on") {
+				if ((Helper.GetMostImmediateParentVoxeme(obj2).GetComponent<Voxeme>().voxml.Type.Concavity == "Concave") &&
+					(Helper.FitsIn (bounds1, bounds2))) {	// if test object is concave and placed object would fit inside
+					r = RCC8.PO (bounds1, bounds2);
+				}
+				else {
+					r = RCC8.EC (bounds1, bounds2);
+				}
+			}
+			else if (relation == "in") {
+				if (Helper.FitsIn (bounds1, bounds2)) {
+					r = RCC8.PO (bounds1, bounds2) || RCC8.TPP (bounds1, bounds2) || RCC8.NTPP (bounds1, bounds2);
+				}
+			}
+			else if (relation == "behind") {
+				r = RCC8.EC(bounds1, bounds2) || RCC8.DC(bounds1, bounds2);
+			}
+			else {
+			}
+
+			return r;
+		}
+
 		public static void ReevaluateRelationships(String program, GameObject obj) {
 			// get object bounds
 			Bounds objBounds = Helper.GetObjectWorldSize(obj);
 
 			// get all objects
 			GameObject[] allObjects = UnityEngine.Object.FindObjectsOfType<GameObject>();
+
+			// reasoning from habitats
+			// for each object
+			// for each habitat in object
+			// for each affordance by habitat
+
+			// e.g. with object obj: H->[put(x, on([1]))]support([1], x)
+			//	if (program == "put" && obj is on test) then test supports obj
+			//	H[2]->[put(x, in([1]))]contain(y, x)
+			// if obj is in configuration [2], if (program == "put" && obj is in test) then test contains obj
 
 			if (program == "put") {
 				Bounds testBounds = new Bounds ();
@@ -130,6 +259,7 @@ namespace Satisfaction {
 									testBounds = Helper.GetObjectWorldSize (test);
 									// bunch of underspecified RCC relations
 									if (voxeme.voxml.Afford_Str.Affordances.Any (p => p.Formula.Contains("support"))) {
+										// **check for support configuration here
 										if ((voxeme.voxml.Type.Concavity == "Concave") &&
 										   (Helper.FitsIn (objBounds, testBounds))) {	// if test object is concave and placed object would fit inside
 											if (RCC8.PO (objBounds, Helper.GetObjectWorldSize (test))) {	// interpenetration = support

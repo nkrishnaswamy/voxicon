@@ -172,6 +172,12 @@ unsigned char *Process() {
 bool ClosePort(char *port) {
     bool r = false;
     
+    /*for(i = 0; i <= fdmax; i++) {
+        if (FD_ISSET(i, &read_fds)) { // we got one!!
+            send(i, "disconnected", 12, 0);
+        }
+    }*/
+    
     //if ((rv = getaddrinfo(NULL, port, &hints, &ai)) != 0) {
         // Handle the error
     //}

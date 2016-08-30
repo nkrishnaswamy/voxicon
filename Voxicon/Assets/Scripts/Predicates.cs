@@ -158,26 +158,22 @@ public class Predicates : MonoBehaviour {
 	public Vector3 BEHIND(object[] args)
 	{
 		Vector3 outValue = Vector3.zero;
-		if (args [0] is GameObject) {	// on an object
-			GameObject obj = ((GameObject)args[0]);
-			Renderer[] renderers = obj.GetComponentsInChildren<Renderer>();
-			Bounds bounds = new Bounds();
-			
-			foreach (Renderer renderer in renderers) {
-				if (renderer.bounds.max.z > bounds.max.z) {
-					bounds = renderer.bounds;
-				}
-			}
-			Debug.Log("behind: " + bounds.max.z);
-			
-			//Debug.Log (bounds.ToString());
-			//Debug.Log (obj.transform.position.ToString());
-			outValue = new Vector3(bounds.center.x,bounds.center.y,bounds.max.z);
+		if (args [0] is GameObject) {	// behind an object
+			GameObject obj = ((GameObject)args [0]);
+			Bounds bounds = new Bounds ();
+
+			bounds = Helper.GetObjectWorldSize (obj);
+
+			outValue = new Vector3 (obj.transform.position.x,
+					obj.transform.position.y,
+					bounds.max.z);
+				
+			Debug.Log ("behind: " + Helper.VectorToParsable (outValue));
 		}
 		else if (args [0] is Vector3) {	// behind a location
 			outValue = (Vector3)args[0];
 		}
-		
+
 		return outValue;
 	}
 
@@ -229,7 +225,28 @@ public class Predicates : MonoBehaviour {
 	// OUT: Location
 	public Vector3 LEFT(object[] args)
 	{
-		return ((GameObject)args[0]).transform.position;
+		Vector3 outValue = Vector3.zero;
+		if (args [0] is GameObject) {	// left of an object
+			GameObject obj = ((GameObject)args[0]);
+			Renderer[] renderers = obj.GetComponentsInChildren<Renderer>();
+			Bounds bounds = new Bounds();
+
+			foreach (Renderer renderer in renderers) {
+				if (renderer.bounds.min.x < bounds.min.x) {
+					bounds = renderer.bounds;
+				}
+			}
+			Debug.Log("left: " + bounds.min.x);
+
+			//Debug.Log (bounds.ToString());
+			//Debug.Log (obj.transform.position.ToString());
+			outValue = new Vector3(bounds.min.x,bounds.center.y,bounds.center.z);
+		}
+		else if (args [0] is Vector3) {	// left of a location
+			outValue = (Vector3)args[0];
+		}
+
+		return outValue;
 	}
 
 	// IN: Object (single element array)
@@ -322,6 +339,7 @@ public class Predicates : MonoBehaviour {
 					//Debug.Log (Helper.VectorToParsable(bounds.center));
 					//Debug.Log (Helper.VectorToParsable(bounds.min));
 
+					float yAdjust = (theme.transform.position.y - themeBounds.center.y);
 					Debug.Log ("Y-size = " + (themeBounds.center.y-themeBounds.min.y));
 					Debug.Log ("put_on: " + (theme.transform.position.y - themeBounds.min.y).ToString ());
 
@@ -337,14 +355,17 @@ public class Predicates : MonoBehaviour {
 						}
 					}
 
-					targetPosition = new Vector3 (loc.x,
-						loc.y + (theme.transform.position.y - themeBounds.min.y),
-					    loc.z);
-					Debug.Log (Helper.VectorToParsable(targetPosition));
 					if (args[args.Length-1] is bool) {
-						if ((bool)args[args.Length-1] == true) {
-							theme.GetComponent<Voxeme> ().targetPosition = targetPosition;
+						if ((bool)args [args.Length - 1] == false) {
+							targetPosition = new Vector3 (loc.x,
+								loc.y + (themeBounds.center.y - themeBounds.min.y) + yAdjust,
+								loc.z);
 						}
+						else {
+							targetPosition = loc;
+						}
+						Debug.Log (Helper.VectorToParsable(targetPosition));
+						theme.GetComponent<Voxeme> ().targetPosition = targetPosition;
 					}
 				}
 			}
@@ -361,6 +382,7 @@ public class Predicates : MonoBehaviour {
 					//Debug.Log (Helper.VectorToParsable(bounds.center));
 					//Debug.Log (Helper.VectorToParsable(bounds.min));
 
+					float yAdjust = (theme.transform.position.y - themeBounds.center.y);
 					Debug.Log ("Y-size = " + (themeBounds.center.y-themeBounds.min.y));
 					Debug.Log ("put_in: " + (theme.transform.position.y - themeBounds.min.y).ToString ());
 
@@ -397,45 +419,54 @@ public class Predicates : MonoBehaviour {
 					}
 
 					if (!Helper.VectorIsNaN (targetRotation)) {
-						targetPosition = new Vector3 (loc.x,
-							loc.y + (theme.transform.position.y - themeBounds.min.y),
-							loc.z);
-						Debug.Log (Helper.VectorToParsable (targetPosition));
+						if (args [args.Length - 1] is bool) {
+							if ((bool)args [args.Length - 1] == false) {
+								targetPosition = new Vector3 (loc.x,
+									loc.y + (themeBounds.center.y - themeBounds.min.y) + yAdjust,
+									loc.z);
+							}
+							else {
+								targetPosition = loc;
+							}
+						}
 					}
 					else {
 						targetPosition = new Vector3 (float.NaN, float.NaN, float.NaN);
 					}
+						
 
-					if (args[args.Length-1] is bool) {
-						if ((bool)args[args.Length-1] == true) {
-							theme.GetComponent<Voxeme> ().targetPosition = targetPosition;
-							theme.GetComponent<Voxeme> ().targetRotation = targetRotation;
-						}
-					}
+					Debug.Log (Helper.VectorToParsable (targetPosition));
+
+					theme.GetComponent<Voxeme> ().targetPosition = targetPosition;
+					theme.GetComponent<Voxeme> ().targetRotation = targetRotation;
 				}
 			}
 		}
 		else if (rdfTriples [0].Item2.Contains ("_behind")) {	// fix for multiple RDF triples
 			if (args [0] is GameObject) {
 				if (args [1] is Vector3) {
-					GameObject obj = args [0] as GameObject;
-					Renderer[] renderers = obj.GetComponentsInChildren<Renderer> ();
-					Bounds bounds = new Bounds ();
-					
-					foreach (Renderer renderer in renderers) {
-						if (renderer.bounds.min.z - renderer.bounds.center.z < bounds.min.z - bounds.center.z) {
-							bounds = renderer.bounds;
-						}
-					}
-					
-					Debug.Log ("put_behind: " + (bounds.center.z - bounds.min.z).ToString ());
-					targetPosition = new Vector3 (((Vector3)args [1]).x,
-					                              ((Vector3)args [1]).y,
-					                              ((Vector3)args [1]).z + (bounds.center.z - bounds.min.z));
+					GameObject theme = args [0] as GameObject;	// get theme obj ("apple" in "put apple on plate")
+					GameObject dest = GameObject.Find (rdfTriples [0].Item3);	// get destination obj ("plate" in "put apple on plate")
+
+					Bounds themeBounds = Helper.GetObjectWorldSize (theme);	// bounds of theme obj
+					Bounds destBounds = Helper.GetObjectWorldSize (dest);	// bounds of dest obj => alter to get interior enumerated by VoxML structure
+
+					float zAdjust = (theme.transform.position.z - themeBounds.center.z);
+					Debug.Log ("Z-adjust = " + zAdjust);
+					Debug.Log ("put_behind: " + (themeBounds.max.z - theme.transform.position.z).ToString ());
+
+					Vector3 loc = ((Vector3)args [1]);	// coord of "behind"
+
 					if (args[args.Length-1] is bool) {
-						if ((bool)args[args.Length-1] == true) {
-							obj.GetComponent<Voxeme> ().targetPosition = targetPosition;
+						if ((bool)args [args.Length - 1] == false) {
+							targetPosition = new Vector3 (loc.x, loc.y,
+								loc.z + (themeBounds.max.z - themeBounds.center.z) + zAdjust);
 						}
+						else {
+							targetPosition = loc;
+						}
+						Debug.Log (Helper.VectorToParsable(targetPosition));
+						theme.GetComponent<Voxeme> ().targetPosition = targetPosition;
 					}
 				}
 			}
@@ -457,6 +488,31 @@ public class Predicates : MonoBehaviour {
 					targetPosition = new Vector3 (((Vector3)args [1]).x,
 					                              ((Vector3)args [1]).y,
 					                              ((Vector3)args [1]).z + (bounds.center.z - bounds.max.z));
+					if (args[args.Length-1] is bool) {
+						if ((bool)args[args.Length-1] == true) {
+							obj.GetComponent<Voxeme> ().targetPosition = targetPosition;
+						}
+					}
+				}
+			}
+		}
+		else if (rdfTriples [0].Item2.Contains ("_left")) {	// fix for multiple RDF triples
+			if (args [0] is GameObject) {
+				if (args [1] is Vector3) {
+					GameObject obj = args [0] as GameObject;
+					Renderer[] renderers = obj.GetComponentsInChildren<Renderer> ();
+					Bounds bounds = new Bounds ();
+
+					foreach (Renderer renderer in renderers) {
+						if (renderer.bounds.min.x - renderer.bounds.center.x < bounds.min.x - bounds.center.x) {
+							bounds = renderer.bounds;
+						}
+					}
+
+					Debug.Log ("put_left: " + (bounds.center.x - bounds.min.x).ToString ());
+					targetPosition = new Vector3 (((Vector3)args [1]).x + (bounds.center.x - bounds.min.x),
+													((Vector3)args [1]).y,
+													((Vector3)args [1]).z);
 					if (args[args.Length-1] is bool) {
 						if ((bool)args[args.Length-1] == true) {
 							obj.GetComponent<Voxeme> ().targetPosition = targetPosition;
@@ -759,6 +815,18 @@ public class Predicates : MonoBehaviour {
 			collider.size = boundsSize;
 			collider.isTrigger = true;
 		}
+	}
+
+	// IN: Objects
+	// OUT: none
+	public void CLOSE(object[] args)
+	{
+	}
+
+	// IN: Objects
+	// OUT: none
+	public void OPEN(object[] args)
+	{
 	}
 
 	// IN: Objects

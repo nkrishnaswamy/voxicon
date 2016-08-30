@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+using Global;
+
 public class ExitToMenu : MonoBehaviour {
 
 	// Use this for initialization
@@ -15,7 +17,7 @@ public class ExitToMenu : MonoBehaviour {
 
 	void OnGUI () {
 		if (GUI.Button (new Rect (10, Screen.height - 30, 100, 20), "Exit to Menu")) {
-			UnityEngine.SceneManagement.SceneManager.LoadScene ("VoxiconMenu");
+			StartCoroutine(SceneHelper.LoadScene ("VoxiconMenu"));
 			return;
 		}
 	}

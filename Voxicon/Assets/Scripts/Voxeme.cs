@@ -3,14 +3,18 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 using Global;
 using MajorAxes;
+using Vox;
 
 public class Voxeme : MonoBehaviour {
 
 	[HideInInspector]
 	public VoxML voxml = new VoxML();
+
+	public OperationalVox opVox = new OperationalVox ();
 
 	Rigging rigging;
 
@@ -36,6 +40,9 @@ public class Voxeme : MonoBehaviour {
 			voxml = VoxML.LoadFromText (markup.text);
 		}
 
+		// populate operational voxeme structure
+		PopulateOperationalVoxeme();
+
 		// get movement blocking
 		minYBound = Helper.GetObjectWorldSize(gameObject).min.y;
 
@@ -46,7 +53,7 @@ public class Voxeme : MonoBehaviour {
 		targetRotation = transform.eulerAngles;
 		targetScale = transform.localScale;
 	}
-	
+		
 	// Update is called once per frame
 	void Update () {
 		if (interTargetPositions.Count == 0) {	// no queued path
@@ -258,13 +265,191 @@ public class Voxeme : MonoBehaviour {
 
 			return offset;
 		}
-
-		
 	}
 
 	void OnCollisionEnter(Collision other) {
 		if (other.gameObject.tag == "MainCamera") {
 			return;
+		}
+	}
+
+	void PopulateOperationalVoxeme() {
+		// set entity type
+		opVox.VoxemeType = voxml.Entity.Type;
+
+		// set lex
+		opVox.Lex.Pred = voxml.Lex.Pred;
+		//Debug.Log (opVox.Lex.Pred);
+
+		// set type info
+
+		// find component objects
+		foreach (VoxTypeComponent c in voxml.Type.Components) {
+			string[] s = c.Value.Split('[');
+			Transform obj = null;
+			int index = -1;
+			obj = gameObject.transform.FindChild(gameObject.name+"*/"+s[0]);
+			if (s.Length > 1) {
+				index = System.Convert.ToInt32 (s[1].Remove (s[1].IndexOf (']')));
+			}
+
+			if (obj != null) {
+				//Debug.Log (s[0]);
+				//Debug.Log (obj);
+				//Debug.Log (index);
+				opVox.Type.Components.Add (new Triple<string,GameObject,int> (s[0], obj.gameObject, index));
+			}
+		}
+
+		// set component as semantic head
+		string[] str = voxml.Type.Head.Split('[');
+		int i = System.Convert.ToInt32 (str[1].Remove (str[1].IndexOf (']')));
+		if (opVox.Type.Components.FindIndex (c => c.Item3 == i) != -1) {
+			opVox.Type.Head = opVox.Type.Components.First (c => c.Item3 == i);
+		}
+		// if none, add entire game object as semantic head for voxeme
+		else {
+			opVox.Type.Head = new Triple<string,GameObject,int> (gameObject.name, gameObject, i);
+			opVox.Type.Components.Add (new Triple<string,GameObject,int> (gameObject.name, gameObject, i));
+		}
+
+
+		// set habitat info
+		foreach (VoxHabitatIntr ih in voxml.Habitat.Intrinsic) {
+			string[] s = ih.Name.Split ('[');
+			int index = System.Convert.ToInt32 (s [1].Remove (s [1].IndexOf (']')));
+			//Debug.Log(index);
+			//Debug.Log (s[0] + " = {" + ih.Value + "}");
+
+			if (!opVox.Habitat.IntrinsicHabitats.ContainsKey (index)) {
+				opVox.Habitat.IntrinsicHabitats.Add (index, new List<string> (){ s[0] + " = {" + ih.Value + "}" });
+			}
+			else {
+				opVox.Habitat.IntrinsicHabitats [index].Add (s [0] + " = {" + ih.Value + "}");
+			}
+		}
+
+		foreach (VoxHabitatExtr eh in voxml.Habitat.Extrinsic) {
+			string[] s = eh.Name.Split ('[');
+			int index = System.Convert.ToInt16 (s[1].Remove (s[1].IndexOf(']')));
+			//Debug.Log(index);
+			//Debug.Log (s[0] + " = {" + ih.Value + "}");
+
+			if (!opVox.Habitat.ExtrinsicHabitats.ContainsKey (index)) {
+				opVox.Habitat.ExtrinsicHabitats.Add (index, new List<string> (){ s[0] + " = {" + eh.Value + "}" });
+			}
+			else {
+				opVox.Habitat.ExtrinsicHabitats [index].Add (s [0] + " = {" + eh.Value + "}");
+			}
+		}
+
+		/*foreach (KeyValuePair<int,List<string>> kv in opVox.Habitat.IntrinsicHabitats) {
+					Debug.Log (kv.Key);
+					foreach (string s in kv.Value) {
+						Debug.Log (s);
+					}
+				}*/
+
+		// set affordance info
+		foreach (VoxAffordAffordance a in voxml.Afford_Str.Affordances) {
+			//Debug.Log (a.Formula);
+			Regex reentrancyForm = new Regex (@"\[[0-9]+\]");
+			Regex numericalForm = new Regex (@"[0-9]+");
+			string[] s = a.Formula.Split (new string[]{ "->" }, StringSplitOptions.None);
+			string[] conditions = s [0].Split (new char[]{ ',' }, 2);
+			MatchCollection reentrancies = reentrancyForm.Matches (s [1]);
+			string aff = "";
+			string cHabitat = "";
+			string cFormula = "";
+			string events = "";
+			string result = "";
+			cHabitat = conditions [0]; // split into habitat and non-habitat condition (if any)
+			cFormula = conditions.Length > 1 ? conditions [1] : ""; // split into habitat and non-habitat condition (if any)
+			int index = (cHabitat.Split ('[').Length > 1) ? 
+				System.Convert.ToInt32 (cHabitat.Split ('[') [1].Remove (cHabitat.Split ('[') [1].IndexOf (']'))) : 0;
+
+			//Debug.Log ("Habitat index: " + index.ToString ());
+			foreach (Match match in reentrancies) {
+				GroupCollection groups = match.Groups;
+				foreach (Group group in groups) {
+					aff = s[1].Replace (group.Value, group.Value.Trim (new char[]{ '[', ']' }));
+				}
+			}
+
+			//if (cFormula != "") {
+			//	Debug.Log ("Formula: " + cFormula);
+			//}
+			//Debug.Log ("Affordance: " + aff);
+
+			events = aff.Split (']')[0].Trim ('[');
+			MatchCollection numerical = numericalForm.Matches (events);
+			foreach (Match match in numerical) {
+				GroupCollection groups = match.Groups;
+				foreach (Group group in groups) {
+					events = events.Replace (group.Value, '['+group.Value+']');
+				}
+			}
+			//Debug.Log ("Events: " + events);
+
+			result = aff.Split (']') [1];
+			numerical = numericalForm.Matches (result);
+			foreach (Match match in numerical) {
+				GroupCollection groups = match.Groups;
+				foreach (Group group in groups) {
+					result = result.Replace (group.Value, '[' + group.Value + ']');
+				}
+			}
+			//Debug.Log ("Result: " + result);
+
+			Pair<string,string> affordance = new Pair<string, string> (events, result);
+			if (!opVox.Affordance.Affordances.ContainsKey (index)) {
+				opVox.Affordance.Affordances.Add (index, new List<Pair<string,Pair<string,string>>> (){ new Pair<string,Pair<string,string>>(cFormula,affordance) });
+			}
+			else {
+				opVox.Affordance.Affordances[index].Add (new Pair<string,Pair<string,string>>(cFormula,affordance));
+			}
+		}
+
+		using (System.IO.StreamWriter file = 
+			new System.IO.StreamWriter(gameObject.name+@".txt"))
+		{
+			file.WriteLine("PRED");
+			file.WriteLine("{0,-20}",opVox.Lex.Pred);
+			file.WriteLine("\n");
+			file.WriteLine("TYPE");
+			file.WriteLine("COMPONENTS");
+			foreach (Triple<string, GameObject, int> component in opVox.Type.Components) {
+				file.Write (String.Format("{0,-20}{1,-20}{2,-20}{3,-20}{4,-20}\n",
+					"Name: " + component.Item1,
+					"\t",
+					"GameObject name: " + component.Item2.name,
+					"\t",
+					"Index: " + component.Item3));
+			}
+			file.WriteLine("HABITATS");
+			file.WriteLine("INTRINSIC");
+			foreach (KeyValuePair<int,List<string>> kv in opVox.Habitat.IntrinsicHabitats) {
+				file.Write ("Index: " + kv.Key);
+				foreach (string formula in kv.Value) {
+					file.Write ("\t\tFormula: " + formula + "\n");
+				}
+			}
+			file.WriteLine("EXTRINSIC");
+			foreach (KeyValuePair<int,List<string>> kv in opVox.Habitat.ExtrinsicHabitats) {
+				file.Write ("Index: " + kv.Key);
+				foreach (string formula in kv.Value) {
+					file.Write ("\t\tFormula: " + formula + "\n");
+				}
+			}
+			file.WriteLine("\n");
+			file.WriteLine("AFFORDANCES");
+			foreach (KeyValuePair<int, List<Pair<string, Pair<string, string>>>> kv in opVox.Affordance.Affordances) {
+				file.Write ("Habitat index: " + kv.Key);
+				foreach (Pair<string, Pair<string, string>> affordance in kv.Value) {
+					file.Write ("\t\tCondition: " + ((affordance.Item1 != "") ? affordance.Item1 : "None") +
+						"\t\tEvents: " + affordance.Item2.Item1 + "\t\tResult: " + ((affordance.Item2.Item2 != "") ? affordance.Item2.Item2 : "None") + "\n");
+				}
+			}
 		}
 	}
 }

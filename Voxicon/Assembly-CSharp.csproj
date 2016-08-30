@@ -47,6 +47,7 @@
   <ItemGroup>
      <Compile Include="Assets\JSON Tests\CSharp\Test_CSharp.cs" />
      <Compile Include="Assets\Scripts\AStarSearch.cs" />
+     <Compile Include="Assets\Scripts\AttributeSet.cs" />
      <Compile Include="Assets\Scripts\Behavior.cs" />
      <Compile Include="Assets\Scripts\BehaviorTypes.cs" />
      <Compile Include="Assets\Scripts\Behaviors\Cross.cs" />
@@ -75,6 +76,7 @@
      <Compile Include="Assets\Scripts\ModalWindowManager.cs" />
      <Compile Include="Assets\Scripts\ObjectSelector.cs" />
      <Compile Include="Assets\Scripts\OldEntityClass.cs" />
+     <Compile Include="Assets\Scripts\OperationalVox.cs" />
      <Compile Include="Assets\Scripts\OutputController.cs" />
      <Compile Include="Assets\Scripts\PluginImport.cs" />
      <Compile Include="Assets\Scripts\Predicate.cs" />
@@ -92,6 +94,7 @@
      <Compile Include="Assets\Scripts\VoxemeInit.cs" />
      <Compile Include="Assets\Scripts\VoxemeInspector.cs" />
      <Compile Include="Assets\Scripts\VoxemeInspectorModalWindow.cs" />
+     <Compile Include="Assets\Scripts\WinPluginImport.cs" />
      <None Include="Assets\Resources\block1.xml" />
      <None Include="Assets\Resources\mug.xml" />
      <None Include="Assets\Resources\handle.xml" />
@@ -103,6 +106,7 @@
      <None Include="Assets\Externals\python\relations.txt" />
      <None Include="Assets\Resources\block2.xml" />
      <None Include="Assets\Resources\knife.xml" />
+     <None Include="Assets\Resources\block4.xml" />
      <None Include="Assets\Resources\Programs\put.xml" />
      <None Include="Assets\Standard Assets\CrossPlatformInput\CrossPlatformInputGuidelines.txt" />
      <None Include="Assets\Resources\spoon.xml" />
@@ -114,6 +118,8 @@
      <None Include="Assets\Resources\Programs\in.xml" />
      <None Include="Assets\Standard Assets\Characters\ThirdPersonCharacter\ThirdPersonCharacterGuidelines.txt" />
      <None Include="Assets\Resources\stack.xml" />
+     <None Include="Assets\Resources\block5.xml" />
+     <None Include="Assets\Resources\block6.xml" />
      <None Include="Assets\Standard Assets\Characters\FirstPersonCharacter\FirstPersonCharacterGuidelines.txt" />
      <None Include="Assets\Externals\python\events.txt" />
      <None Include="Assets\JSON Tests\TroubleShoot.txt" />

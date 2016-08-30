@@ -139,6 +139,7 @@
 - (void)stream:(NSStream *)theStream handleEvent:(NSStreamEvent)streamEvent {
     
     NSLog(@"stream event %lu", streamEvent);
+    NSLog(@"%@", theStream);
     
     switch (streamEvent) {
             
@@ -156,8 +157,8 @@
                 [button setEnabled:true];
             }
             break;
+
         case NSStreamEventHasBytesAvailable:
-            
             if (theStream == inputStream) {
                 uint8_t buffer[1024];
                 NSInteger len;

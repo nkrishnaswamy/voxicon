@@ -7,7 +7,7 @@ using Global;
 
 public class PluginImport : MonoBehaviour {
 	// port definitions
-	string port = "";
+	public string port = "";
 
 	// Make our calls from the Plugin
 	[DllImport ("CommunicationsBridge")]
@@ -28,18 +28,7 @@ public class PluginImport : MonoBehaviour {
 	void Start () {
 		port = PlayerPrefs.GetString ("Listener Port");
 
-		if (port != "") {
-			if (OpenPort (port)) {
-				Debug.Log ("Listening on port " + port);
-				SelfHandshake (port);
-			}
-			else {
-				Debug.Log ("Failed to open port " + port);
-			}
-		}
-		else {
-			Debug.Log ("No listener port specified.  Skipping interface startup.");
-		}
+		OpenPortInternal (port);
 	}
 
 	void Update () {
@@ -55,6 +44,25 @@ public class PluginImport : MonoBehaviour {
 		}
 	}
 
+	public void OpenPortInternal(string port) {
+		if (port != "") {
+			if (OpenPort (port)) {
+				Debug.Log ("Listening on port " + port);
+				SelfHandshakeInternal (port);
+			}
+			else {
+				Debug.Log ("Failed to open port " + port);
+			}
+		}
+		else {
+			Debug.Log ("No listener port specified.  Skipping interface startup.");
+		}
+	}
+
+	public void SelfHandshakeInternal(string port) {
+		SelfHandshake (port);
+	}
+
 	public string NLParse(string input) {
 		string[] args = new string[]{input};
 		string result = Marshal.PtrToStringAuto(PythonCall (Application.dataPath + "/Externals/python/", "change_to_forms", "parse_sent", args, args.Length));
@@ -68,6 +76,8 @@ public class PluginImport : MonoBehaviour {
 			return;
 		}
 
+		Debug.Log ("Closing port " + port);
+
 		ClosePort (port);
 	}
 
@@ -75,6 +85,8 @@ public class PluginImport : MonoBehaviour {
 		if (port == "") {
 			return;
 		}
+
+		Debug.Log ("Closing port " + port);
 
 		ClosePort (port);
 	}

@@ -119,11 +119,13 @@ public class GhostFreeRoamCamera : MonoBehaviour
 			CheckMove(leftButton, -transform.right);
 
 			//adding in zooming
-			zoomAmount += Input.GetAxis ("Mouse ScrollWheel");
-			zoomAmount = Mathf.Clamp (zoomAmount, -maxToClamp, maxToClamp);
-			var translate = Mathf.Min (Mathf.Abs (Input.GetAxis ("Mouse ScrollWheel")), maxToClamp - Mathf.Abs (zoomAmount));
-			gameObject.transform.Translate (0, 0, translate * zoomSpeed * Mathf.Sign (Input.GetAxis ("Mouse ScrollWheel")));
-
+			if (Input.mousePosition.x >= 0 && Input.mousePosition.x <= Screen.width &&
+			    Input.mousePosition.y >= 0 && Input.mousePosition.y <= Screen.height) {
+				zoomAmount += Input.GetAxis ("Mouse ScrollWheel");
+				zoomAmount = Mathf.Clamp (zoomAmount, -maxToClamp, maxToClamp);
+				var translate = Mathf.Min (Mathf.Abs (Input.GetAxis ("Mouse ScrollWheel")), maxToClamp - Mathf.Abs (zoomAmount));
+				gameObject.transform.Translate (0, 0, translate * zoomSpeed * Mathf.Sign (Input.GetAxis ("Mouse ScrollWheel")));
+			}
 
 			//adding in panning
 			if (Input.GetMouseButtonDown (2)) {
@@ -132,7 +134,7 @@ public class GhostFreeRoamCamera : MonoBehaviour
 
 			}
 
-			if ((Input.GetMouseButton(2)) || (Input.GetMouseButtonDown (0))) {
+			if (Input.GetMouseButton(2)) {
 				Vector3 pos = Camera.main.ScreenToViewportPoint(Input.mousePosition - mouseOrigin);
 				Vector3 move = new Vector3(Mathf.Sign(pos.x) * panSpeed, Mathf.Sign(pos.y) * panSpeed, 0);
 				transform.Translate(move);

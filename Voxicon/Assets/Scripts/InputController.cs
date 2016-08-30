@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Global;
 
 public class InputController : MonoBehaviour {
 	public String inputString;
@@ -68,7 +69,7 @@ public class InputController : MonoBehaviour {
 			/* DEBUG BUTTONS */
 
 		if (GUI.Button (new Rect (10, Screen.height - 80, 100, 20), "Reset")) {
-			UnityEngine.SceneManagement.SceneManager.LoadScene (UnityEngine.SceneManagement.SceneManager.GetActiveScene ().name);
+			StartCoroutine(SceneHelper.LoadScene (UnityEngine.SceneManagement.SceneManager.GetActiveScene ().name));
 			return;
 		}
 
@@ -84,7 +85,7 @@ public class InputController : MonoBehaviour {
 
 		if (inputString != "") {
 			if (inputString == "reset") {
-				UnityEngine.SceneManagement.SceneManager.LoadScene (UnityEngine.SceneManagement.SceneManager.GetActiveScene ().name);
+				StartCoroutine(SceneHelper.LoadScene (UnityEngine.SceneManagement.SceneManager.GetActiveScene ().name));
 				return;
 			}
 

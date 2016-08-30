@@ -27,6 +27,16 @@ public class VoxemeInit : MonoBehaviour {
 					voxeme.enabled = false;
 					//container.GetComponent<Entity> ().enabled = false;
 
+				// copy attribute set
+					AttributeSet attrSet = go.GetComponent<AttributeSet>();
+					if (attrSet != null) {
+						AttributeSet newAttrSet = container.AddComponent<AttributeSet> ();
+						foreach (string s in attrSet.attributes) {
+							newAttrSet.attributes.Add (s);
+						}
+					}
+
+
 				// set up for physics
 				// add box colliders and rigid bodies to all subobjects that have MeshFilters
 				Renderer[] renderers = go.GetComponentsInChildren<Renderer> ();

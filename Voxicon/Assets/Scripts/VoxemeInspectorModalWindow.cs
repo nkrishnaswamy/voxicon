@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 
 using Global;
+using Vox;
 
 public class VoxemeInspectorModalWindow : ModalWindow {
 	public int inspectorWidth = 230;
@@ -79,7 +80,7 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 	
 	// Markup vars
 	// ENTITY
-	Entity.EntityType mlEntityType = Entity.EntityType.None;
+	VoxEntity.EntityType mlEntityType = VoxEntity.EntityType.None;
 
 	// LEX
 	string mlPred = "";
@@ -254,23 +255,23 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 		base.DoModalWindow (windowID);
 
 		switch (mlEntityType) {
-		case	Entity.EntityType.Object:
+		case	VoxEntity.EntityType.Object:
 			DisplayObjectMarkup ();
 			break;
 
-		case	Entity.EntityType.Program:
+		case	VoxEntity.EntityType.Program:
 			DisplayProgramMarkup ();
 			break;
 
-		case	Entity.EntityType.Attribute:
+		case	VoxEntity.EntityType.Attribute:
 			DisplayAttributeMarkup ();
 			break;
 
-		case	Entity.EntityType.Relation:
+		case	VoxEntity.EntityType.Relation:
 			DisplayRelationMarkup ();
 			break;
 
-		case	Entity.EntityType.Function:
+		case	VoxEntity.EntityType.Function:
 			DisplayFunctionMarkup ();
 			break;
 
@@ -636,7 +637,7 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 	
 	void InitNewMarkup() {
 		// ENTITY
-		mlEntityType = Entity.EntityType.None;
+		mlEntityType = VoxEntity.EntityType.None;
 
 		// LEX
 		mlPred = "";
@@ -770,7 +771,7 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 		// TYPE
 		mlHead = voxml.Type.Head;
 		mlComponents = new List<string>();
-		foreach (Component c in voxml.Type.Components) {
+		foreach (VoxTypeComponent c in voxml.Type.Components) {
 			mlComponents.Add (c.Value);
 		}
 		mlComponentCount = mlComponents.Count;
@@ -787,13 +788,13 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 		mlReflSymYZ = (reflSyms.Contains ("YZ"));
 
 		mlArgs = new List<string>();
-		foreach (Arg a in voxml.Type.Args) {
+		foreach (VoxTypeArg a in voxml.Type.Args) {
 			mlArgs.Add (a.Value);
 		}
 		mlArgCount = mlArgs.Count;
 
 		mlSubevents = new List<string>();
-		foreach (Subevent e in voxml.Type.Body) {
+		foreach (VoxTypeSubevent e in voxml.Type.Body) {
 			mlSubevents.Add (e.Value);
 		}
 		mlSubeventCount = mlSubevents.Count;
@@ -804,19 +805,19 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 
 		// HABITAT
 		mlIntrHabitats = new List<string>();
-		foreach (Intr i in voxml.Habitat.Intrinsic) {
+		foreach (VoxHabitatIntr i in voxml.Habitat.Intrinsic) {
 			mlIntrHabitats.Add (i.Name + "=" + i.Value);
 		}
 		mlIntrHabitatCount = mlIntrHabitats.Count;
 		mlExtrHabitats = new List<string>();
-		foreach (Extr e in voxml.Habitat.Extrinsic) {
+		foreach (VoxHabitatExtr e in voxml.Habitat.Extrinsic) {
 			mlExtrHabitats.Add (e.Name + "=" + e.Value);
 		}
 		mlExtrHabitatCount = mlExtrHabitats.Count;
 
 		// AFFORD_STR
 		mlAffordances = new List<string>();
-		foreach (Affordance a in voxml.Afford_Str.Affordances) {
+		foreach (VoxAffordAffordance a in voxml.Afford_Str.Affordances) {
 			mlAffordances.Add (a.Formula);
 		}
 		mlAffordanceCount = mlAffordances.Count;

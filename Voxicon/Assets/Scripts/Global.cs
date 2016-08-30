@@ -7,6 +7,55 @@ using System.Text.RegularExpressions;
 
 namespace Global {
 	/// <summary>
+	/// Constants
+	/// </summary>
+
+	static class Constants {
+		public const float EPSILON = 0.001f;
+	}
+
+	/// <summary>
+	/// Pair class
+	/// </summary>
+	public class Pair<T1, T2> : IEquatable<System.Object>{
+		public T1 Item1{
+			get;
+			set;
+		}
+
+		public T2 Item2{
+			get;
+			set;
+		}
+
+		public Pair(T1 Item1, T2 Item2){
+			this.Item1 = Item1;
+			this.Item2 = Item2;
+		}
+
+		public override bool Equals(object obj) {
+			if ( obj == null || (obj as Pair<T1, T2>) == null ) //if the object is null or the cast fails
+				return false;
+			else {
+				Pair<T1,T2> tuple = (Pair<T1, T2>) obj;
+				return Item1.Equals(tuple.Item1) && Item2.Equals(tuple.Item2);
+			}
+		}
+
+		public override int GetHashCode() {
+			return Item1.GetHashCode() ^ Item2.GetHashCode();
+		}
+
+		public static bool operator == (Pair<T1, T2> tuple1, Pair<T1, T2> tuple2) {
+			return tuple1.Equals(tuple2);
+		}
+
+		public static bool operator != (Pair<T1, T2> tuple1, Pair<T1, T2> tuple2) {
+			return !tuple1.Equals(tuple2);
+		}
+	}
+
+	/// <summary>
 	/// Triple class
 	/// </summary>
 	public class Triple<T1, T2, T3> : IEquatable<System.Object>{
@@ -298,6 +347,16 @@ namespace Global {
 			return fits;
 		}
 
+		// two vectors are within epsilon
+		public static bool CloseEnough(Vector3 v1, Vector3 v2) {
+			return ((v1 - v2).magnitude < Constants.EPSILON);
+		}
+
+		// two quaternions are within epsilon
+		public static bool CloseEnough(Quaternion q1, Quaternion q2) {
+			return (Quaternion.Angle(q1,q2) < Constants.EPSILON);
+		}
+
 		public static GameObject GetMostImmediateParentVoxeme(GameObject obj) {
 			GameObject voxObject = obj;
 
@@ -311,6 +370,26 @@ namespace Global {
 			}
 
 			return voxObject;
+		}
+	}
+
+	/// <summary>
+	/// SceneHelper class
+	/// </summary>
+	public static class SceneHelper {
+		public static IEnumerator LoadScene(string sceneName) {
+			yield return null;
+
+			AsyncOperation ao = UnityEngine.SceneManagement.SceneManager.LoadSceneAsync (sceneName);
+			ao.allowSceneActivation = true;
+
+			while (!ao.isDone)
+			{
+				yield return null;
+			}
+
+			PluginImport commBridge = GameObject.Find ("CommunicationsBridge").GetComponent<PluginImport> ();
+			commBridge.OpenPortInternal (commBridge.port);
 		}
 	}
 }

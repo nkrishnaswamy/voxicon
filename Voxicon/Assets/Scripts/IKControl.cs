@@ -15,7 +15,7 @@ public class IKControl : MonoBehaviour {
 
 	void Start () 
 	{
-		animator = GetComponent<Animator>();
+		animator = GetComponentInChildren<Animator>();
 	}
 
 	//a callback for calculating IK
