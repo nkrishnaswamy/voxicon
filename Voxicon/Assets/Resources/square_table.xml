@@ -17,16 +17,15 @@
   </Type>
   <Habitat>
     <Intrinsic>
-      <Intr Name="UP" Value="align(Y,E_y)" />
-      <Intr Name="TOP" Value="top(+Y)" />
-      <Intr Name="CONSTR[1]" Value="Y &lt;&lt; Z, Y &lt;&lt; X" />
-      <Intr Name="CONSTR[2]" Value="Y &gt;&gt; X, Y &gt;&gt; Z" />
+      <Intr Name="UP[3]" Value="align(Y,E_y)" />
+      <Intr Name="TOP[3]" Value="top(+Y)" />
+      <Intr Name="CONSTR[3]" Value="Y[1] &lt;&lt; Z[1], Y[1] &lt;&lt; X[1]" />
+      <Intr Name="CONSTR[3]" Value="Y[2] &gt;&gt; X[2], Y[2] &gt;&gt; Z[2]" />
     </Intrinsic>
     <Extrinsic />
   </Habitat>
   <Afford_Str>
     <Affordances>
-        <Affordance Formula="H[3]-&gt;[put(x,on([1]))]on([1],x)" />
         <Affordance Formula="H[3]-&gt;[put(x,on([1]))]support([1],x)" />
     </Affordances>
   </Afford_Str>

@@ -43,9 +43,14 @@ def parse_sent(sent):
                "block1",
                "block2",
                "block3",
+               "block4",
+               "block5",
+               "block6",
                "blocks",
                "lid",
-               "stack"]
+               "stack",
+               "staircase",
+               "pyramid"]
   
     relations = ["touching",
                  "in",
@@ -55,32 +60,52 @@ def parse_sent(sent):
                  "near",
                  "left of",
                  "right of"]
+                 
+    attributes = ["brown",
+                  "blue",
+                  "black",
+                  "green",
+                  "yellow",
+                  "red"]
+                  
+    determiners = ["a",
+                   "the"]
       
-    s = sent.split()
+    s = filter(lambda a: a not in determiners, sent.split())
+    
     form = s[0] + '('
+    
     for i in range(1,len(s)):
-        if s[i] in relations:
-            form = form + ',' + s[i] + '('
-        elif (i+2 < len(s)):
-            if (s[i] == 'in' and s[i+1] == 'front' and s[i+2] == 'of'):
-                form = form + ',in_front_of('
-        elif (i+1 < len(s)):
-            if s[i] == 'left' and s[i+1] == 'of':
-                form = form + ',left_of('
-        elif (s[i] == 'right' and s[i+1] == 'of'):
-            form = form + ',right_of('
-        elif s[i] == 'paper' and s[i+1] == 'sheet':
+        if (i+2 < len(s) and s[i:i+3] == ['in', 'front', 'of']):
+            form = form + ',in_front('
+            s[i+1] = ""
+            s[i+2] = ""
+        elif (i+1 < len(s) and s[i:i+2] == ['left', 'of']):
+            form = form + ',left('
+            s[i+1] = ""
+        elif (i+1 < len(s) and s[i:i+2] == ['right', 'of']):
+            form = form + ',right('
+            s[i+1] = ""
+        elif (i+1 < len(s) and s[i:i+2] == ['paper', 'sheet']):
             form = form + 'paper_sheet'
-                                  
-        if s[i] in objects:
+            s[i+1] = ""
+        elif s[i] in relations:
+            form = form + ',' + s[i] + '('
+        elif s[i] in attributes:
+            form = form + s[i] + '(' + s[i+1] + ')'
+            s[i+1] = ""
+        else:
             form = form + s[i]
-        elif s[i] == 'edge':
+    
+        if s[i] == 'edge':
             form = form + 'edge'
-        elif s[i] == 'center':
-            form = form + 'center'
 
+        if s[i] == 'center':
+            form = form + 'center'
+    
     form = form + ')'
     if ',' in form:
         form = form + ')'
+
 
     return form

@@ -11,7 +11,7 @@ namespace Global {
 	/// </summary>
 
 	static class Constants {
-		public const float EPSILON = 0.001f;
+		public const float EPSILON = 0.003f;
 	}
 
 	/// <summary>
@@ -165,7 +165,7 @@ namespace Global {
 		}
 
 		public static int StringToInt(String inString) {
-			return System.Convert.ToInt16(inString);
+			return System.Convert.ToInt32(inString);
 		}
 
 		public static Triple<String,String,String> MakeRDFTriples(String formula) {		// fix for multiple RDF triples
@@ -220,6 +220,27 @@ namespace Global {
 			}
 			
 			return outside;
+		}
+
+		public static Vector3 RayIntersectionPoint(Vector3 rayStart, GameObject obj) {
+			Collider[] colliders = obj.GetComponentsInChildren<Collider> ();
+			List<RaycastHit> hits = new List<RaycastHit> ();
+
+			foreach (Collider c in colliders) {
+				RaycastHit hitInfo = new RaycastHit ();
+				Physics.Raycast (rayStart, (c.transform.position - rayStart), out hitInfo);
+				hits.Add (hitInfo);
+			}
+
+			RaycastHit closestHit = hits [0];
+
+			foreach (RaycastHit hit in hits) {
+				if (hit.distance < closestHit.distance) {
+					closestHit = hit;
+				}
+			}
+
+			return closestHit.point;
 		}
 
 		public static Bounds GetObjectSize(GameObject obj) {

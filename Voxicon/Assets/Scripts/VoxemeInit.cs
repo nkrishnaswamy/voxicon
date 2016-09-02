@@ -7,6 +7,7 @@ public class VoxemeInit : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
+		ObjectSelector objSelector = GameObject.Find ("BlocksWorld").GetComponent<ObjectSelector> ();
 		
 		/* MAKE GLOBAL OBJECT RUNTIME ALTERATIONS */
 
@@ -27,19 +28,18 @@ public class VoxemeInit : MonoBehaviour {
 					voxeme.enabled = false;
 					//container.GetComponent<Entity> ().enabled = false;
 
-				// copy attribute set
+					// copy attribute set
+					AttributeSet newAttrSet = container.AddComponent<AttributeSet> ();
 					AttributeSet attrSet = go.GetComponent<AttributeSet>();
 					if (attrSet != null) {
-						AttributeSet newAttrSet = container.AddComponent<AttributeSet> ();
 						foreach (string s in attrSet.attributes) {
 							newAttrSet.attributes.Add (s);
 						}
 					}
-
-
-				// set up for physics
-				// add box colliders and rigid bodies to all subobjects that have MeshFilters
-				Renderer[] renderers = go.GetComponentsInChildren<Renderer> ();
+		
+					// set up for physics
+					// add box colliders and rigid bodies to all subobjects that have MeshFilters
+					Renderer[] renderers = go.GetComponentsInChildren<Renderer> ();
 					foreach (Renderer renderer in renderers) {
 						GameObject subObj = renderer.gameObject;
 						if (subObj.GetComponent<MeshFilter> () != null) {
@@ -73,6 +73,8 @@ public class VoxemeInit : MonoBehaviour {
 							}
 						}
 					}
+					// add to master voxeme list
+					objSelector.allVoxemes.Add (container.GetComponent<Voxeme> ());
 				}
 			}
 		}

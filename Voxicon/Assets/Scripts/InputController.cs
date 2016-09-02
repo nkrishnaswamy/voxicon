@@ -16,6 +16,8 @@ public class InputController : MonoBehaviour {
 
 	public Rect inputRect;
 
+	GUIStyle textAreaStyle = new GUIStyle();
+
 	void Start() {
 		GameObject bc = GameObject.Find ("BehaviorController");
 		eventManager = bc.GetComponent<EventManager> ();
@@ -34,34 +36,14 @@ public class InputController : MonoBehaviour {
 		if (e.keyCode == KeyCode.Return) {
 			if (inputString != "") {
 				MessageReceived (inputString);
-//				if (inputString == "reset") {
-//					UnityEngine.SceneManagement.SceneManager.LoadScene (UnityEngine.SceneManagement.SceneManager.GetActiveScene ().name);
-//					return;
-//				}
-//
-//				if (inputString.Count (x => x == '(') == inputString.Count (x => x == ')')) {
-//					eventManager.ClearEvents ();
-//					foreach (KeyValuePair<String,String> kv in macros.commandMacros) {	// if input is a macro
-//						if (inputString == kv.Key) {									// sub in value
-//							inputString = kv.Value;
-//							break;
-//						}
-//					}
-//					Debug.Log ("User entered: " + inputString);
-//					OutputHelper.PrintOutput("");
-//					commands = inputString.Split (';');
-//					foreach (String commandString in commands) {
-//						// add to queue
-//						eventManager.QueueEvent (commandString);
-//					}
-//
-//					eventManager.ExecuteNextCommand ();
-//				}
+
+				// warning: switching to TextArea here (and below) seems to cause crash
 				GUI.Label (inputRect, "Human:");
 				inputString = GUI.TextField (inputRect, ""); 
 			}
 		}
 		else {
+
 			GUI.Label (new Rect (5, 5, 50, 25), "Human:");
 			inputString = GUI.TextField (new Rect (55, 5, 300, 25), inputString);
 		}
@@ -81,7 +63,7 @@ public class InputController : MonoBehaviour {
 
 	public void MessageReceived(String inputString) {
 		Regex r = new Regex(@".*\(.*\)");
-		string functionalCommand;
+		string functionalCommand = "";
 
 		if (inputString != "") {
 			if (inputString == "reset") {
@@ -92,7 +74,14 @@ public class InputController : MonoBehaviour {
 			Debug.Log ("User entered: " + inputString);
 			if (!r.IsMatch (inputString)) { // is not already functional form
 				// parse into functional form
-				functionalCommand = commBridge.NLParse (inputString.ToLower());
+				String[] inputs = inputString.Split(new char[]{'.',',','!'});
+				List<String> commands = new List<String> ();
+				foreach (String s in inputs) {
+					if (s != String.Empty) {
+						commands.Add(commBridge.NLParse(s.Trim().ToLower()));
+					}
+				}
+				functionalCommand = String.Join (";", commands.ToArray());
 			}
 			else {
 				functionalCommand = inputString;

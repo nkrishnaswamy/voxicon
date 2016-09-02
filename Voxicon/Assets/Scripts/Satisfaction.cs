@@ -27,7 +27,7 @@ namespace Satisfaction {
 			if (predString == "put") {	// satisfy put
 				GameObject theme = GameObject.Find (argsStrings [0] as String);
 				if (theme != null) {
-					//Debug.Log(Helper.ConvertVectorToParsable(obj.transform.position) + " " + (String)argsStrings[1]);
+					//Debug.Log(Helper.VectorToParsable(theme.transform.position) + " " + (String)argsStrings[1]);
 					//Debug.Log(obj.transform.position);
 					if (Helper.CloseEnough(theme.transform.position,Helper.ParsableToVector ((String)argsStrings [1]))) {
 						satisfied = true;
@@ -63,30 +63,46 @@ namespace Satisfaction {
 		public static bool ComputeSatisfactionConditions(String command) {
 			Hashtable predArgs = Helper.ParsePredicate (command);
 			String pred = Helper.GetTopPredicate (command);
+			ObjectSelector objSelector = GameObject.Find ("BlocksWorld").GetComponent<ObjectSelector> ();
 			
 			if (predArgs.Count > 0) {
 				Queue<String> argsStrings = new Queue<String> (((String)predArgs [pred]).Split (new char[] { ',' }));
 				List<object> objs = new List<object> ();
 				MethodInfo methodToCall;
 				Predicates preds = GameObject.Find ("BehaviorController").GetComponent<Predicates> ();
-			
+
 				while (argsStrings.Count > 0) {
 					object arg = argsStrings.Dequeue ();
 				
 					if (Helper.v.IsMatch ((String)arg)) {	// if arg is vector form
 						objs.Add (Helper.ParsableToVector ((String)arg));
-					} else if (arg is String) {	// if arg is String
+					}
+					else if (arg is String) {	// if arg is String
 						Regex q = new Regex("\".*\"");
 						if (q.IsMatch (arg as String)) {
 							objs.Add (arg as String);
 						}
 						else {
 							if ((arg as String).Count (f => f == '(') +
-						    (arg as String).Count (f => f == ')') == 0) {
-								GameObject go = GameObject.Find (arg as String);
-								if (go == null) {
-									OutputHelper.PrintOutput ("What is a " + "\"" + (arg as String) + "\"?");
-									return false;	// abort
+						    	(arg as String).Count (f => f == ')') == 0) {
+								List<GameObject> matches = new List<GameObject> ();
+								foreach (Voxeme voxeme in objSelector.allVoxemes) {
+									if (voxeme.voxml.Lex.Pred.Equals(arg)) {
+										matches.Add (voxeme.gameObject);
+									}
+								}
+
+								if (matches.Count <= 1) {
+									GameObject go = GameObject.Find (arg as String);
+									if (go == null) {
+										OutputHelper.PrintOutput (string.Format ("What is a \"{0}\"?", (arg as String)));
+										return false;	// abort
+									}
+								}
+								else {
+									//Debug.Log (string.Format ("Which {0}?", (arg as String)));
+									//OutputHelper.PrintOutput (string.Format("Which {0}?", (arg as String)));
+									//return false;	// abort
 								}
 							}
 							objs.Add (GameObject.Find (arg as String));
@@ -128,9 +144,15 @@ namespace Satisfaction {
 			// get list of all voxeme entities
 			Voxeme[] allVoxemes = UnityEngine.Object.FindObjectsOfType<Voxeme>();
 
+			// reactivate physics by default
+			bool reactivatePhysics = true;
+			obj.minYBound = objBounds.min.y;
+
 			// reasoning from affordances
 			foreach (Voxeme test in allVoxemes) {
 				// foreach voxeme
+				// get bounds of object being tested against
+				Bounds testBounds = Helper.GetObjectWorldSize(test.gameObject);
 				if (test.enabled) {	// if voxeme is active
 					OperationalVox.OpAfford_Str affStr = test.opVox.Affordance;
 					foreach (int h in affStr.Affordances.Keys) {
@@ -149,27 +171,29 @@ namespace Satisfaction {
 										MatchCollection matches = reentrancyForm.Matches (ev);
 										foreach (Match m in matches) {
 											foreach (Group g in m.Groups) {
-												int componentIndex = System.Convert.ToInt32 (
+												int componentIndex = Helper.StringToInt (
 													                     g.Value.Replace (g.Value, g.Value.Trim (new char[]{ '[', ']' })));
 												//Debug.Log (componentIndex);
 												if (test.opVox.Type.Components.FindIndex (c => c.Item3 == componentIndex) != -1) {
 													Triple<string, GameObject, int> component = test.opVox.Type.Components.First (c => c.Item3 == componentIndex);
 													//Debug.Log (ev.Replace(g.Value,component.Item2.name));
 													Debug.Log (string.Format("Is {0} {1} {2}?", obj.gameObject.name, relation, component.Item2.name));
-													if (TestRelation (obj.gameObject, relation, component.Item2)) {
+													if (TestRelation (obj.gameObject, relation, test.gameObject)) {
 														string result = affStr.Affordances[h][i].Item2.Item2;
 
+														// things are getting a little ad hoc here
 														if (relation == "on") {
 															if (!((Helper.GetMostImmediateParentVoxeme (test.gameObject).GetComponent<Voxeme> ().voxml.Type.Concavity == "Concave") &&
-																(Helper.FitsIn (Helper.GetObjectWorldSize(obj.gameObject), Helper.GetObjectWorldSize(test.gameObject))))) {
-																if (obj.enabled) {
-																	obj.gameObject.GetComponent<Rigging> ().ActivatePhysics (true);
-																}
-																obj.minYBound = Helper.GetObjectWorldSize(test.gameObject).max.y;
+															    (Helper.FitsIn (objBounds, testBounds)))) {
+																//if (obj.enabled) {
+																//	obj.gameObject.GetComponent<Rigging> ().ActivatePhysics (true);
+																//}
+																obj.minYBound = testBounds.max.y;
 															}
 														}
 														else if (relation == "in") {
-															obj.minYBound = Helper.GetObjectWorldSize (obj.gameObject).min.y;
+															reactivatePhysics = false;
+															obj.minYBound = objBounds.min.y;
 														}
 
 														if (result != "") {
@@ -177,8 +201,8 @@ namespace Satisfaction {
 															// any component reentrancy ultimately inherits from the parent voxeme itself
 															result = reentrancyForm.Replace (result, test.gameObject.name);
 															result = Helper.GetTopPredicate (result);
-															Debug.Log (string.Format("{0} {1}s {2}",
-																test.gameObject.name,result,obj.gameObject.name));
+															Debug.Log (string.Format("{0}: {1} {2}s {3}",
+																affStr.Affordances[h][i].Item2.Item1,test.gameObject.name,result,obj.gameObject.name));
 															relationTracker.AddNewRelation(new List<GameObject>{test.gameObject,obj.gameObject},result);
 
 															if (result == "support") {
@@ -199,6 +223,12 @@ namespace Satisfaction {
 					}
 				}
 			}
+
+			if (reactivatePhysics) {
+				if (obj.enabled) {
+					obj.gameObject.GetComponent<Rigging> ().ActivatePhysics (true);
+				}
+			}
 		}
 
 		public static bool TestRelation(GameObject obj1, string relation, GameObject obj2) {
@@ -206,18 +236,80 @@ namespace Satisfaction {
 			Bounds bounds1 = Helper.GetObjectWorldSize (obj1);
 			Bounds bounds2 = Helper.GetObjectWorldSize (obj2);
 
+			Regex align = new Regex(@"align\(.+,.+\)");
+			List<string> habitats = new List<string> ();
+			foreach (int i in Helper.GetMostImmediateParentVoxeme(obj2).GetComponent<Voxeme>().opVox.Habitat.IntrinsicHabitats.Keys) {
+				habitats.AddRange(Helper.GetMostImmediateParentVoxeme(obj2).GetComponent<Voxeme>().
+					opVox.Habitat.IntrinsicHabitats [i].Where ((h => align.IsMatch (h))));
+			}
+
+			for (int i = 0; i < habitats.Count; i++) {
+				habitats[i] = align.Match(habitats[i]).Value.Replace("align(","").Replace(")","").Split(',')[0];
+			}
+
+			// (default to Y-alignment if no encoding exists)
+			if (habitats.Count == 0) {
+				habitats.Add ("Y");
+			}
+
 			if (relation == "on") {
-				if ((Helper.GetMostImmediateParentVoxeme(obj2).GetComponent<Voxeme>().voxml.Type.Concavity == "Concave") &&
-					(Helper.FitsIn (bounds1, bounds2))) {	// if test object is concave and placed object would fit inside
-					r = RCC8.PO (bounds1, bounds2);
-				}
-				else {
-					r = RCC8.EC (bounds1, bounds2);
+				foreach (string axis in habitats) {
+					if ((Helper.GetMostImmediateParentVoxeme (obj2.gameObject).GetComponent<Voxeme> ().voxml.Type.Concavity == "Concave") &&
+					    (Helper.FitsIn (bounds1, bounds2))) {	// if test object is concave and placed object would fit inside
+						switch (axis) {
+						case "X":
+							r = (Vector3.Distance(
+								new Vector3(obj2.gameObject.transform.position.x, obj1.gameObject.transform.position.y, obj1.gameObject.transform.position.z),
+								obj2.gameObject.transform.position) <= Constants.EPSILON);
+							break;
+
+						case "Y":
+							r = (Vector3.Distance(
+								new Vector3(obj1.gameObject.transform.position.x, obj2.gameObject.transform.position.y, obj1.gameObject.transform.position.z),
+								obj2.gameObject.transform.position) <= Constants.EPSILON);
+							break;
+
+						case "Z":
+							r = (Vector3.Distance(
+								new Vector3(obj1.gameObject.transform.position.x, obj1.gameObject.transform.position.y, obj2.gameObject.transform.position.z),
+								obj2.gameObject.transform.position) <= Constants.EPSILON);
+							break;
+
+						default:
+							break;
+						}
+						r &= RCC8.PO (bounds1, bounds2);
+					}
+					else {
+						switch (axis) {
+						case "X":
+							r = (Vector3.Distance(
+								new Vector3(obj2.gameObject.transform.position.x, obj1.gameObject.transform.position.y, obj1.gameObject.transform.position.z),
+								obj2.gameObject.transform.position) <= Constants.EPSILON);
+							break;
+
+						case "Y":
+							r = (Vector3.Distance(
+								new Vector3(obj1.gameObject.transform.position.x, obj2.gameObject.transform.position.y, obj1.gameObject.transform.position.z),
+								obj2.gameObject.transform.position) <= Constants.EPSILON);
+							break;
+
+						case "Z":
+							r = (Vector3.Distance(
+								new Vector3(obj1.gameObject.transform.position.x, obj1.gameObject.transform.position.y, obj2.gameObject.transform.position.z),
+								obj2.gameObject.transform.position) <= Constants.EPSILON);
+							break;
+
+						default:
+							break;
+						}
+						r &= RCC8.EC (bounds1, bounds2);
+					}
 				}
 			}
 			else if (relation == "in") {
 				if (Helper.FitsIn (bounds1, bounds2)) {
-					r = RCC8.PO (bounds1, bounds2) || RCC8.TPP (bounds1, bounds2) || RCC8.NTPP (bounds1, bounds2);
+					r = RCC8.PO (bounds1, bounds2) || RCC8.ProperPart (bounds1, bounds2);
 				}
 			}
 			else if (relation == "behind") {

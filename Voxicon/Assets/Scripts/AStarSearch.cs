@@ -127,7 +127,7 @@ public class AStarSearch : MonoBehaviour {
 			}
 		}
 		path.Add(startNode);
-		Debug.Log (startNode);
+		//Debug.Log (startNode);
 
 		// find closest node to goal
 		dist = (endNode - goalPos).magnitude;
@@ -162,7 +162,7 @@ public class AStarSearch : MonoBehaviour {
 				}
 			}
 			path.Add (nextNode);
-			Debug.Log (nextNode);
+			//Debug.Log (nextNode);
 			//AddDebugCube (nextNode);
 		} 
 

@@ -26,8 +26,8 @@
     <Affordances>
       <Affordance Formula="H[3]-&gt;[put(x, on([1]))]support([1], x)" />
       <Affordance Formula="H[3]-&gt;[put(x, in([1]))]contain([1], x)" />
-      <Affordance Formula="H[3]-&gt;grasp(x, [2])" />
-      <Affordance Formula="H[3]-&gt;slide([1])" />
+      <Affordance Formula="H[3]-&gt;[grasp(x, [2])]" />
+      <Affordance Formula="H[3]-&gt;[slide([1])]" />
     </Affordances>
   </Afford_Str>
   <Embodiment>

@@ -39,7 +39,8 @@ public static class Concavity {
 						toExclude.Add (transform.gameObject);
 					}
 					objBounds = Helper.GetObjectWorldSize (obj, toExclude);
-				} else {
+				}
+				else {
 					objBounds = Helper.GetObjectWorldSize (obj);
 				}
 

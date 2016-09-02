@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System;
 
+using Global;
+
 // RCC8 relations
 // grossly underspecified for now
 namespace RCC
@@ -26,24 +28,24 @@ namespace RCC
 			// if y and z dimensions overlap
 			if (Mathf.Abs(x.center.y - y.center.y) * 2 < (x.size.y + y.size.y) &&
 				(Mathf.Abs(x.center.z - y.center.z) * 2 < (x.size.z + y.size.z))){
-				if ((Mathf.Abs(x.min.x-y.max.x) < 0.002) ||	// if touching on y
-					(Mathf.Abs(x.max.x-y.min.x) < 0.002)) {
+				if ((Mathf.Abs(x.min.x-y.max.x) < Constants.EPSILON) ||	// if touching on y
+					(Mathf.Abs(x.max.x-y.min.x) < Constants.EPSILON)) {
 					ec = true;
 				}
 			}
 			// if x and z dimensions overlap
 			if (Mathf.Abs(x.center.x - y.center.x) * 2 < (x.size.x + y.size.x) &&
 				(Mathf.Abs(x.center.z - y.center.z) * 2 < (x.size.z + y.size.z))){
-				if ((Mathf.Abs(x.min.y-y.max.y) < 0.002) ||	// if touching on y
-					(Mathf.Abs(x.max.y-y.min.y) < 0.002)) {
+				if ((Mathf.Abs(x.min.y-y.max.y) < Constants.EPSILON) ||	// if touching on y
+					(Mathf.Abs(x.max.y-y.min.y) < Constants.EPSILON)) {
 					ec = true;
 				}
 			}
 			// if x and y dimensions overlap
 			if (Mathf.Abs (x.center.x - y.center.x) * 2 < (x.size.x + y.size.x) &&
 			    (Mathf.Abs (x.center.y - y.center.y) * 2 < (x.size.y + y.size.y))) {
-				if ((Mathf.Abs (x.min.z - y.max.z) < 0.002) ||	// if touching on z
-				    (Mathf.Abs (x.max.z - y.min.z) < 0.002)) {
+				if ((Mathf.Abs (x.min.z - y.max.z) < Constants.EPSILON) ||	// if touching on z
+					(Mathf.Abs (x.max.z - y.min.z) < Constants.EPSILON)) {
 					ec = true;
 				}
 			}
@@ -55,7 +57,12 @@ namespace RCC
 			bool po = false;
 
 			if (x.Intersects (y)) {
-				po = true;
+				// intersects but not too much, system is a little fuzzy
+				if ((Mathf.Abs((x.center - y.center).x - ((x.size.x / 2) + (y.size.x / 2))) > Constants.EPSILON) &&
+					(Mathf.Abs((x.center - y.center).y - ((x.size.y / 2) + (y.size.y / 2))) > Constants.EPSILON) &&
+					(Mathf.Abs((x.center - y.center).z - ((x.size.z / 2) + (y.size.z / 2))) > Constants.EPSILON)) {
+					po = true;
+				}
 			}
 
 			return po;
@@ -64,7 +71,7 @@ namespace RCC
 		public static bool EQ(Bounds x, Bounds y) {
 			bool eq = false;
 
-			if (((x.min-y.min).magnitude < 0.002) && ((x.max-y.max).magnitude < 0.002)) {
+			if (((x.min-y.min).magnitude < Constants.EPSILON) && ((x.max-y.max).magnitude < Constants.EPSILON)) {
 				eq = true;
 			}
 
@@ -75,12 +82,12 @@ namespace RCC
 			bool tpp = false;
 
 			if (y.Contains (x.min) && y.Contains (x.max)) {
-				if ((Mathf.Abs(x.min.x-y.min.x) < 0.002) ||
-					(Mathf.Abs(x.max.x-y.max.x) < 0.002) ||
-					(Mathf.Abs(x.min.y-y.min.y) < 0.002) ||
-					(Mathf.Abs(x.max.y-y.max.y) < 0.002) ||
-					(Mathf.Abs(x.min.z-y.min.z) < 0.002) ||
-					(Mathf.Abs(x.max.z-y.max.z) < 0.002))
+				if ((Mathf.Abs(x.min.x-y.min.x) < Constants.EPSILON) ||
+					(Mathf.Abs(x.max.x-y.max.x) < Constants.EPSILON) ||
+					(Mathf.Abs(x.min.y-y.min.y) < Constants.EPSILON) ||
+					(Mathf.Abs(x.max.y-y.max.y) < Constants.EPSILON) ||
+					(Mathf.Abs(x.min.z-y.min.z) < Constants.EPSILON) ||
+					(Mathf.Abs(x.max.z-y.max.z) < Constants.EPSILON))
 				tpp = true;
 			}
 

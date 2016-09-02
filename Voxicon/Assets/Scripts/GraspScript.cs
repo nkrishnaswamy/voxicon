@@ -24,6 +24,12 @@ public class GraspScript : MonoBehaviour {
 		} else if (Input.GetKeyDown (KeyCode.Alpha4)) {
 			grasper = 4;
 			Debug.Log (grasper);
+		} else if (Input.GetKeyDown (KeyCode.Alpha5)) {
+			grasper = 5;
+			Debug.Log (grasper);
+		} else if (Input.GetKeyDown (KeyCode.Alpha6)) {
+			grasper = 6;
+			Debug.Log (grasper);
 		} else if (Input.GetKeyDown (KeyCode.Space)) {
 			grasper = 0;
 		}

@@ -17,10 +17,12 @@ public class Predicates : MonoBehaviour {
 	public List<Triple<String,String,String>> rdfTriples = new List<Triple<String,String,String>>();
 	EventManager eventManager;
 	AStarSearch aStarSearch;
+	ObjectSelector objSelector;
 
 	void Start () {
 		eventManager = gameObject.GetComponent<EventManager> ();
 		aStarSearch = GameObject.Find ("BlocksWorld").GetComponent<AStarSearch> ();
+		objSelector = GameObject.Find ("BlocksWorld").GetComponent<ObjectSelector> ();
 	}
 
 	/// <summary>
@@ -155,30 +157,6 @@ public class Predicates : MonoBehaviour {
 
 	// IN: Object (single element array)
 	// OUT: Location
-	public Vector3 BEHIND(object[] args)
-	{
-		Vector3 outValue = Vector3.zero;
-		if (args [0] is GameObject) {	// behind an object
-			GameObject obj = ((GameObject)args [0]);
-			Bounds bounds = new Bounds ();
-
-			bounds = Helper.GetObjectWorldSize (obj);
-
-			outValue = new Vector3 (obj.transform.position.x,
-					obj.transform.position.y,
-					bounds.max.z);
-				
-			Debug.Log ("behind: " + Helper.VectorToParsable (outValue));
-		}
-		else if (args [0] is Vector3) {	// behind a location
-			outValue = (Vector3)args[0];
-		}
-
-		return outValue;
-	}
-
-	// IN: Object (single element array)
-	// OUT: Location
 	public Vector3 TO(object[] args)
 	{
 		Vector3 outValue = Vector3.zero;
@@ -195,29 +173,59 @@ public class Predicates : MonoBehaviour {
 
 	// IN: Object (single element array)
 	// OUT: Location
+	public Vector3 BEHIND(object[] args)
+	{
+		Vector3 outValue = Vector3.zero;
+		if (args [0] is GameObject) {	// behind an object
+			GameObject obj = ((GameObject)args [0]);
+
+			Bounds bounds = new Bounds ();
+
+			bounds = Helper.GetObjectWorldSize (obj);
+
+			GameObject camera = GameObject.Find ("Main Camera");
+			float povDir = camera.transform.eulerAngles.y;
+			Vector3 rayStart = new Vector3 (0.0f, 0.0f,
+				Mathf.Abs(bounds.size.z));
+			rayStart = Quaternion.Euler (0.0f, povDir, 0.0f) * rayStart;
+			rayStart += obj.transform.position;
+			outValue = Helper.RayIntersectionPoint (rayStart, obj);
+
+			Debug.Log ("behind: " + Helper.VectorToParsable (outValue));
+		}
+		else if (args [0] is Vector3) {	// behind a location
+			outValue = (Vector3)args[0];
+		}
+
+		return outValue;
+	}
+
+	// IN: Object (single element array)
+	// OUT: Location
 	public Vector3 IN_FRONT(object[] args)
 	{
 		Vector3 outValue = Vector3.zero;
-		if (args [0] is GameObject) {	// on an object
-			GameObject obj = ((GameObject)args[0]);
-			Renderer[] renderers = obj.GetComponentsInChildren<Renderer>();
-			Bounds bounds = new Bounds();
-			
-			foreach (Renderer renderer in renderers) {
-				if (renderer.bounds.min.z < bounds.min.z) {
-					bounds = renderer.bounds;
-				}
-			}
-			Debug.Log("in_front: " + bounds.min.z);
-			
-			//Debug.Log (bounds.ToString());
-			//Debug.Log (obj.transform.position.ToString());
-			outValue = new Vector3(bounds.center.x,bounds.center.y,bounds.min.z);
+		if (args [0] is GameObject) {	// in front of an object
+			GameObject obj = ((GameObject)args [0]);
+
+			Bounds bounds = new Bounds ();
+
+			bounds = Helper.GetObjectWorldSize (obj);
+
+			GameObject camera = GameObject.Find ("Main Camera");
+			float povDir = camera.transform.eulerAngles.y;
+			Vector3 rayStart = new Vector3 (0.0f, 0.0f,
+				Mathf.Abs(bounds.size.z));
+			rayStart = Quaternion.Euler (0.0f, povDir+180.0f, 0.0f) * rayStart;
+			rayStart += obj.transform.position;
+			outValue = Helper.RayIntersectionPoint (rayStart, obj);
+
+			Debug.Log ("in_front: " + Helper.VectorToParsable (outValue));
 		}
 		else if (args [0] is Vector3) {	// in front of a location
 			outValue = (Vector3)args[0];
 		}
-		
+
 		return outValue;
 	}
 
@@ -227,20 +235,21 @@ public class Predicates : MonoBehaviour {
 	{
 		Vector3 outValue = Vector3.zero;
 		if (args [0] is GameObject) {	// left of an object
-			GameObject obj = ((GameObject)args[0]);
-			Renderer[] renderers = obj.GetComponentsInChildren<Renderer>();
-			Bounds bounds = new Bounds();
+			GameObject obj = ((GameObject)args [0]);
 
-			foreach (Renderer renderer in renderers) {
-				if (renderer.bounds.min.x < bounds.min.x) {
-					bounds = renderer.bounds;
-				}
-			}
-			Debug.Log("left: " + bounds.min.x);
+			Bounds bounds = new Bounds ();
 
-			//Debug.Log (bounds.ToString());
-			//Debug.Log (obj.transform.position.ToString());
-			outValue = new Vector3(bounds.min.x,bounds.center.y,bounds.center.z);
+			bounds = Helper.GetObjectWorldSize (obj);
+
+			GameObject camera = GameObject.Find ("Main Camera");
+			float povDir = camera.transform.eulerAngles.y;
+			Vector3 rayStart = new Vector3 (0.0f, 0.0f,
+				Mathf.Abs(bounds.size.z));
+			rayStart = Quaternion.Euler (0.0f, povDir+270.0f, 0.0f) * rayStart;
+			rayStart += obj.transform.position;
+			outValue = Helper.RayIntersectionPoint (rayStart, obj);
+
+			Debug.Log ("left: " + Helper.VectorToParsable (outValue));
 		}
 		else if (args [0] is Vector3) {	// left of a location
 			outValue = (Vector3)args[0];
@@ -253,7 +262,29 @@ public class Predicates : MonoBehaviour {
 	// OUT: Location
 	public Vector3 RIGHT(object[] args)
 	{
-		return ((GameObject)args[0]).transform.position;
+		Vector3 outValue = Vector3.zero;
+		if (args [0] is GameObject) {	// right of an object
+			GameObject obj = ((GameObject)args [0]);
+
+			Bounds bounds = new Bounds ();
+
+			bounds = Helper.GetObjectWorldSize (obj);
+
+			GameObject camera = GameObject.Find ("Main Camera");
+			float povDir = camera.transform.eulerAngles.y;
+			Vector3 rayStart = new Vector3 (0.0f, 0.0f,
+				Mathf.Abs(bounds.size.z));
+			rayStart = Quaternion.Euler (0.0f, povDir+90.0f, 0.0f) * rayStart;
+			rayStart += obj.transform.position;
+			outValue = Helper.RayIntersectionPoint (rayStart, obj);
+
+			Debug.Log ("left: " + Helper.VectorToParsable (outValue));
+		}
+		else if (args [0] is Vector3) {	// right of a location
+			outValue = (Vector3)args[0];
+		}
+
+		return outValue;
 	}
 
 	/// <summary>
@@ -300,6 +331,78 @@ public class Predicates : MonoBehaviour {
 	}
 
 	/// <summary>
+	/// Attributes
+	/// </summary>
+
+	// IN: String
+	// OUT: String
+	public String BROWN(object[] args) {
+		String objName = "";
+
+		List<Voxeme> attrObjs = objSelector.allVoxemes.FindAll (v => v.gameObject.GetComponent<AttributeSet> ().attributes.Contains ("brown"));
+		if (attrObjs.Count > 0) {
+			objName = attrObjs [0].gameObject.name;
+		}
+
+		return objName;
+	}
+
+	public String BLUE(object[] args) {
+		String objName = "";
+
+		List<Voxeme> attrObjs = objSelector.allVoxemes.FindAll (v => v.gameObject.GetComponent<AttributeSet> ().attributes.Contains ("blue"));
+		if (attrObjs.Count > 0) {
+			objName = attrObjs [0].gameObject.name;
+		}
+
+		return objName;
+	}
+
+	public String BLACK(object[] args) {
+		String objName = "";
+
+		List<Voxeme> attrObjs = objSelector.allVoxemes.FindAll (v => v.gameObject.GetComponent<AttributeSet> ().attributes.Contains ("black"));
+		if (attrObjs.Count > 0) {
+			objName = attrObjs [0].gameObject.name;
+		}
+
+		return objName;
+	}
+
+	public String GREEN(object[] args) {
+		String objName = "";
+
+		List<Voxeme> attrObjs = objSelector.allVoxemes.FindAll (v => v.gameObject.GetComponent<AttributeSet> ().attributes.Contains ("green"));
+		if (attrObjs.Count > 0) {
+			objName = attrObjs [0].gameObject.name;
+		}
+
+		return objName;
+	}
+
+	public String YELLOW(object[] args) {
+		String objName = "";
+
+		List<Voxeme> attrObjs = objSelector.allVoxemes.FindAll (v => v.gameObject.GetComponent<AttributeSet> ().attributes.Contains ("yellow"));
+		if (attrObjs.Count > 0) {
+			objName = attrObjs [0].gameObject.name;
+		}
+
+		return objName;
+	}
+
+	public String RED(object[] args) {
+		String objName = "";
+
+		List<Voxeme> attrObjs = objSelector.allVoxemes.FindAll (v => v.gameObject.GetComponent<AttributeSet> ().attributes.Contains ("red"));
+		if (attrObjs.Count > 0) {
+			objName = attrObjs [0].gameObject.name;
+		}
+	
+		return objName;
+	}
+
+	/// <summary>
 	/// Programs
 	/// </summary>
 
@@ -307,6 +410,8 @@ public class Predicates : MonoBehaviour {
 	// OUT: none
 	public void PUT(object[] args)
 	{
+		EventManager em = GameObject.Find ("BehaviorController").GetComponent<EventManager> ();
+
 		// override physics rigging
 		foreach (object arg in args) {
 			if (arg is GameObject) {
@@ -319,7 +424,9 @@ public class Predicates : MonoBehaviour {
 
 		Helper.PrintRDFTriples (rdfTriples);
 
-		if (rdfTriples [0].Item2.Contains ("_on")) {	// fix for multiple RDF triples
+		string prep = rdfTriples [0].Item2.Replace ("put", "");
+
+		if (prep == "_on") {	// fix for multiple RDF triples
 			if (args [0] is GameObject) {
 				if (args [1] is Vector3) {
 					GameObject theme = args [0] as GameObject;	// get theme obj ("apple" in "put apple on plate")
@@ -370,7 +477,7 @@ public class Predicates : MonoBehaviour {
 				}
 			}
 		}
-		else if (rdfTriples [0].Item2.Contains ("_in")) {	// fix for multiple RDF triples
+		else if (prep == "_in") {	// fix for multiple RDF triples
 			if (args [0] is GameObject) {
 				if (args [1] is Vector3) {
 					GameObject theme = args [0] as GameObject;	// get theme obj ("apple" in "put apple in plate")
@@ -442,7 +549,7 @@ public class Predicates : MonoBehaviour {
 				}
 			}
 		}
-		else if (rdfTriples [0].Item2.Contains ("_behind")) {	// fix for multiple RDF triples
+		else if (prep == "_behind") {	// fix for multiple RDF triples
 			if (args [0] is GameObject) {
 				if (args [1] is Vector3) {
 					GameObject theme = args [0] as GameObject;	// get theme obj ("apple" in "put apple on plate")
@@ -451,72 +558,164 @@ public class Predicates : MonoBehaviour {
 					Bounds themeBounds = Helper.GetObjectWorldSize (theme);	// bounds of theme obj
 					Bounds destBounds = Helper.GetObjectWorldSize (dest);	// bounds of dest obj => alter to get interior enumerated by VoxML structure
 
+					GameObject mainCamera = GameObject.Find ("Main Camera");
+					float povDir = mainCamera.transform.eulerAngles.y;
+
 					float zAdjust = (theme.transform.position.z - themeBounds.center.z);
+
+					Vector3 rayStart = new Vector3 (0.0f, 0.0f,
+						Mathf.Abs(themeBounds.size.z));
+					rayStart = Quaternion.Euler (0.0f, povDir+180.0f, 0.0f) * rayStart;
+					rayStart += theme.transform.position;
+					Vector3 contactPoint = Helper.RayIntersectionPoint (rayStart, theme);
+
 					Debug.Log ("Z-adjust = " + zAdjust);
-					Debug.Log ("put_behind: " + (themeBounds.max.z - theme.transform.position.z).ToString ());
+					Debug.Log ("put_behind: " + Helper.VectorToParsable (contactPoint));
 
 					Vector3 loc = ((Vector3)args [1]);	// coord of "behind"
 
 					if (args[args.Length-1] is bool) {
-						if ((bool)args [args.Length - 1] == false) {
-							targetPosition = new Vector3 (loc.x, loc.y,
-								loc.z + (themeBounds.max.z - themeBounds.center.z) + zAdjust);
+						if ((bool)args [args.Length - 1] == false) {	// compute satisfaction condition
+							Vector3 dir = new Vector3 (loc.x - (contactPoint.x-theme.transform.position.x),
+								loc.y - (contactPoint.y-theme.transform.position.y),
+								loc.z - (contactPoint.z-theme.transform.position.z) + zAdjust) - loc;
+
+							targetPosition = dir+loc;
 						}
 						else {
 							targetPosition = loc;
 						}
+
 						Debug.Log (Helper.VectorToParsable(targetPosition));
 						theme.GetComponent<Voxeme> ().targetPosition = targetPosition;
 					}
 				}
 			}
 		}
-		else if (rdfTriples [0].Item2.Contains ("_in_front")) {	// fix for multiple RDF triples
+		else if (prep == "_in_front") {	// fix for multiple RDF triples
 			if (args [0] is GameObject) {
 				if (args [1] is Vector3) {
-					GameObject obj = args [0] as GameObject;
-					Renderer[] renderers = obj.GetComponentsInChildren<Renderer> ();
-					Bounds bounds = new Bounds ();
-					
-					foreach (Renderer renderer in renderers) {
-						if (renderer.bounds.max.z - renderer.bounds.center.z > bounds.max.z - bounds.center.z) {
-							bounds = renderer.bounds;
-						}
-					}
-					
-					Debug.Log ("put_in_front: " + (bounds.center.z - bounds.max.z).ToString ());
-					targetPosition = new Vector3 (((Vector3)args [1]).x,
-					                              ((Vector3)args [1]).y,
-					                              ((Vector3)args [1]).z + (bounds.center.z - bounds.max.z));
+					GameObject theme = args [0] as GameObject;	// get theme obj ("apple" in "put apple on plate")
+					GameObject dest = GameObject.Find (rdfTriples [0].Item3);	// get destination obj ("plate" in "put apple on plate")
+
+					Bounds themeBounds = Helper.GetObjectWorldSize (theme);	// bounds of theme obj
+					Bounds destBounds = Helper.GetObjectWorldSize (dest);	// bounds of dest obj => alter to get interior enumerated by VoxML structure
+
+					GameObject mainCamera = GameObject.Find ("Main Camera");
+					float povDir = mainCamera.transform.eulerAngles.y;
+
+					float zAdjust = (theme.transform.position.z - themeBounds.center.z);
+
+					Vector3 rayStart = new Vector3 (0.0f, 0.0f,
+						Mathf.Abs(themeBounds.size.z));
+					rayStart = Quaternion.Euler (0.0f, povDir, 0.0f) * rayStart;
+					rayStart += theme.transform.position;
+					Vector3 contactPoint = Helper.RayIntersectionPoint (rayStart, theme);
+
+					Debug.Log ("Z-adjust = " + zAdjust);
+					Debug.Log ("put_in_front: " + Helper.VectorToParsable (contactPoint));
+
+					Vector3 loc = ((Vector3)args [1]);	// coord of "in front"
+
 					if (args[args.Length-1] is bool) {
-						if ((bool)args[args.Length-1] == true) {
-							obj.GetComponent<Voxeme> ().targetPosition = targetPosition;
+						if ((bool)args [args.Length - 1] == false) {	// compute satisfaction condition
+							Vector3 dir = new Vector3 (loc.x - (contactPoint.x-theme.transform.position.x),
+								loc.y - (contactPoint.y-theme.transform.position.y),
+								loc.z - (contactPoint.z-theme.transform.position.z) + zAdjust) - loc;
+
+							targetPosition = dir+loc;
 						}
+						else {
+							targetPosition = loc;
+						}
+
+						Debug.Log (Helper.VectorToParsable(targetPosition));
+						theme.GetComponent<Voxeme> ().targetPosition = targetPosition;
 					}
 				}
 			}
 		}
-		else if (rdfTriples [0].Item2.Contains ("_left")) {	// fix for multiple RDF triples
+		else if (prep == "_left") {	// fix for multiple RDF triples
 			if (args [0] is GameObject) {
 				if (args [1] is Vector3) {
-					GameObject obj = args [0] as GameObject;
-					Renderer[] renderers = obj.GetComponentsInChildren<Renderer> ();
-					Bounds bounds = new Bounds ();
+					GameObject theme = args [0] as GameObject;	// get theme obj ("apple" in "put apple on plate")
+					GameObject dest = GameObject.Find (rdfTriples [0].Item3);	// get destination obj ("plate" in "put apple on plate")
 
-					foreach (Renderer renderer in renderers) {
-						if (renderer.bounds.min.x - renderer.bounds.center.x < bounds.min.x - bounds.center.x) {
-							bounds = renderer.bounds;
-						}
-					}
+					Bounds themeBounds = Helper.GetObjectWorldSize (theme);	// bounds of theme obj
+					Bounds destBounds = Helper.GetObjectWorldSize (dest);	// bounds of dest obj => alter to get interior enumerated by VoxML structure
 
-					Debug.Log ("put_left: " + (bounds.center.x - bounds.min.x).ToString ());
-					targetPosition = new Vector3 (((Vector3)args [1]).x + (bounds.center.x - bounds.min.x),
-													((Vector3)args [1]).y,
-													((Vector3)args [1]).z);
+					GameObject mainCamera = GameObject.Find ("Main Camera");
+					float povDir = mainCamera.transform.eulerAngles.y;
+
+					float xAdjust = (theme.transform.position.x - themeBounds.center.x);
+
+					Vector3 rayStart = new Vector3 (0.0f, 0.0f,
+						Mathf.Abs(themeBounds.size.z));
+					rayStart = Quaternion.Euler (0.0f, povDir+90.0f, 0.0f) * rayStart;
+					rayStart += theme.transform.position;
+					Vector3 contactPoint = Helper.RayIntersectionPoint (rayStart, theme);
+
+					Debug.Log ("X-adjust = " + xAdjust);
+					Debug.Log ("put_left: " + Helper.VectorToParsable (contactPoint));
+
+					Vector3 loc = ((Vector3)args [1]);	// coord of "left"
+
 					if (args[args.Length-1] is bool) {
-						if ((bool)args[args.Length-1] == true) {
-							obj.GetComponent<Voxeme> ().targetPosition = targetPosition;
+						if ((bool)args [args.Length - 1] == false) {	// compute satisfaction condition
+							Vector3 dir = new Vector3 (loc.x - (contactPoint.x-theme.transform.position.x) + xAdjust,
+								loc.y - (contactPoint.y-theme.transform.position.y),
+								loc.z - (contactPoint.z-theme.transform.position.z)) - loc;
+
+							targetPosition = dir+loc;
 						}
+						else {
+							targetPosition = loc;
+						}
+
+						Debug.Log (Helper.VectorToParsable(targetPosition));
+						theme.GetComponent<Voxeme> ().targetPosition = targetPosition;
+					}
+				}
+			}
+		}
+		else if (prep == "_right") {	// fix for multiple RDF triples
+			if (args [0] is GameObject) {
+				if (args [1] is Vector3) {
+					GameObject theme = args [0] as GameObject;	// get theme obj ("apple" in "put apple on plate")
+					GameObject dest = GameObject.Find (rdfTriples [0].Item3);	// get destination obj ("plate" in "put apple on plate")
+
+					Bounds themeBounds = Helper.GetObjectWorldSize (theme);	// bounds of theme obj
+					Bounds destBounds = Helper.GetObjectWorldSize (dest);	// bounds of dest obj => alter to get interior enumerated by VoxML structure
+
+					GameObject mainCamera = GameObject.Find ("Main Camera");
+					float povDir = mainCamera.transform.eulerAngles.y;
+
+					float xAdjust = (theme.transform.position.x - themeBounds.center.x);
+
+					Vector3 rayStart = new Vector3 (0.0f, 0.0f,
+						Mathf.Abs(themeBounds.size.z));
+					rayStart = Quaternion.Euler (0.0f, povDir+270.0f, 0.0f) * rayStart;
+					rayStart += theme.transform.position;
+					Vector3 contactPoint = Helper.RayIntersectionPoint (rayStart, theme);
+
+					Debug.Log ("X-adjust = " + xAdjust);
+					Debug.Log ("put_right: " + Helper.VectorToParsable (contactPoint));
+
+					Vector3 loc = ((Vector3)args [1]);	// coord of "left"
+
+					if (args[args.Length-1] is bool) {
+						if ((bool)args [args.Length - 1] == false) {
+							Vector3 dir = new Vector3 (loc.x - (contactPoint.x-theme.transform.position.x) + xAdjust,
+								loc.y - (contactPoint.y-theme.transform.position.y),
+								loc.z - (contactPoint.z-theme.transform.position.z)) - loc;
+
+							targetPosition = dir+loc;
+						}
+						else {
+							targetPosition = loc;
+						}
+						Debug.Log (Helper.VectorToParsable(targetPosition));
+						theme.GetComponent<Voxeme> ().targetPosition = targetPosition;
 					}
 				}
 			}

@@ -6,6 +6,8 @@ using System.IO;
 using Global;
 
 public class ObjectSelector : MonoBehaviour {
+	public List<Voxeme> allVoxemes = new List<Voxeme> ();
+
 	public List<GameObject> selectedObjects = new List<GameObject>();
 	
 	VoxemeInspector inspector;

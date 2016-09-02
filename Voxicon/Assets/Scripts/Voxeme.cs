@@ -290,7 +290,7 @@ public class Voxeme : MonoBehaviour {
 			int index = -1;
 			obj = gameObject.transform.FindChild(gameObject.name+"*/"+s[0]);
 			if (s.Length > 1) {
-				index = System.Convert.ToInt32 (s[1].Remove (s[1].IndexOf (']')));
+				index = Helper.StringToInt (s[1].Remove (s[1].IndexOf (']')));
 			}
 
 			if (obj != null) {
@@ -303,7 +303,7 @@ public class Voxeme : MonoBehaviour {
 
 		// set component as semantic head
 		string[] str = voxml.Type.Head.Split('[');
-		int i = System.Convert.ToInt32 (str[1].Remove (str[1].IndexOf (']')));
+		int i = Helper.StringToInt (str[1].Remove (str[1].IndexOf (']')));
 		if (opVox.Type.Components.FindIndex (c => c.Item3 == i) != -1) {
 			opVox.Type.Head = opVox.Type.Components.First (c => c.Item3 == i);
 		}
@@ -317,7 +317,7 @@ public class Voxeme : MonoBehaviour {
 		// set habitat info
 		foreach (VoxHabitatIntr ih in voxml.Habitat.Intrinsic) {
 			string[] s = ih.Name.Split ('[');
-			int index = System.Convert.ToInt32 (s [1].Remove (s [1].IndexOf (']')));
+			int index = Helper.StringToInt (s [1].Remove (s [1].IndexOf (']')));
 			//Debug.Log(index);
 			//Debug.Log (s[0] + " = {" + ih.Value + "}");
 
@@ -366,7 +366,7 @@ public class Voxeme : MonoBehaviour {
 			cHabitat = conditions [0]; // split into habitat and non-habitat condition (if any)
 			cFormula = conditions.Length > 1 ? conditions [1] : ""; // split into habitat and non-habitat condition (if any)
 			int index = (cHabitat.Split ('[').Length > 1) ? 
-				System.Convert.ToInt32 (cHabitat.Split ('[') [1].Remove (cHabitat.Split ('[') [1].IndexOf (']'))) : 0;
+				Helper.StringToInt (cHabitat.Split ('[') [1].Remove (cHabitat.Split ('[') [1].IndexOf (']'))) : 0;
 
 			//Debug.Log ("Habitat index: " + index.ToString ());
 			foreach (Match match in reentrancies) {

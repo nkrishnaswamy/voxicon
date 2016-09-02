@@ -14,6 +14,7 @@ using Satisfaction;
 public class EventManager : MonoBehaviour {
 	public List<String> events = new List<String>();
 	public OrderedDictionary eventsStatus = new OrderedDictionary();
+	public ObjectSelector objSelector;
 	string skolemized, evaluated;
 	MethodInfo methodToCall;
 	public Predicates preds;
@@ -27,6 +28,7 @@ public class EventManager : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		preds = gameObject.GetComponent<Predicates> ();
+		objSelector = GameObject.Find ("BlocksWorld").GetComponent<ObjectSelector> ();
 	}
 	
 	// Update is called once per frame
@@ -49,28 +51,6 @@ public class EventManager : MonoBehaviour {
 				}
 			}
 		}
-		/*if (eventsStatus.Keys.Count > 0) {
-			//Debug.Log (eventsStatus.Keys.Count);
-			String nextIncompleteEvent = GetNextIncompleteEvent ();
-			//Debug.Log ("Next incomplete event: " + nextIncompleteEvent);
-			//Debug.Log ("Next queued event: " + nextQueuedEvent);
-
-			if (nextIncompleteEvent != "") {
-				if (SatisfactionTest.IsSatisfied (nextIncompleteEvent) == true) {
-					GameObject.Find ("BlocksWorld").GetComponent<AStarSearch> ().plannedPath.Clear ();
-					Debug.Log ("Satisfied " + nextIncompleteEvent);
-					eventsStatus[nextIncompleteEvent] = true;
-					if (nextQueuedEvent != "") {
-						//SatisfactionTest.ComputeSatisfactionConditions(nextQueuedEvent);
-						Debug.Log ("eventsStatus.Keys.Count:" + eventsStatus.Keys.Count.ToString());
-						//ExecuteCommand (nextQueuedEvent);
-					}
-					else {
-						nextIncompleteEvent = "";
-					}
-				}
-			}
-		}*/
 	}
 
 	public void QueueEvent(String commandString) {
@@ -95,18 +75,34 @@ public class EventManager : MonoBehaviour {
 		skolemized = Skolemize (command);
 		Debug.Log ("Skolemized command: " + skolemized);
 		//EvaluateSkolemizedCommand(skolemized);
-		if (EvaluateSkolemConstants ()) {
-			evaluated = ApplySkolems (skolemized);
-			Debug.Log ("Evaluated command: " + evaluated);
-			events [events.IndexOf (command)] = evaluated;
-			//nextIncompleteEvent = evaluated;
+
+		if (!EvaluateSkolemConstants (1)) {
+			events.RemoveAt (events.Count - 1);
+			return;
+		}
+		string objectResolved = ApplySkolems (skolemized);
+
+		Triple<String,String,String> triple = Helper.MakeRDFTriples(objectResolved);
+		if (triple.Item1 != "" && triple.Item2 != "" && triple.Item3 != "") {
+			preds.rdfTriples.Add(triple);
+			Helper.PrintRDFTriples(preds.rdfTriples);
 		}
 		else {
-			events.RemoveAt (events.Count - 1);
+			Debug.Log ("Failed to make RDF triple");
 		}
+
+		if (!EvaluateSkolemConstants (2)) {
+			events.RemoveAt (events.Count - 1);
+			return;
+		}
+
+		evaluated = ApplySkolems (skolemized);
+		Debug.Log ("Evaluated command: " + evaluated);
+		events [events.IndexOf (command)] = evaluated;
 	}
 
 	public void ExecuteCommand(String evaluatedCommand) {
+		Debug.Log("Execute command: " + evaluatedCommand);
 		Hashtable predArgs = Helper.ParsePredicate (evaluatedCommand);
 		String pred = Helper.GetTopPredicate (evaluatedCommand);
 
@@ -119,18 +115,32 @@ public class EventManager : MonoBehaviour {
 			
 				if (Helper.v.IsMatch ((String)arg)) {	// if arg is vector form
 					objs.Add (Helper.ParsableToVector ((String)arg));
-				} else if (arg is String) {	// if arg is String
+				}
+				else if (arg is String) {	// if arg is String
 					Regex q = new Regex("\".*\"");
 					if (q.IsMatch (arg as String)) {
 						objs.Add (arg as String);
 					}
 					else {
-						GameObject go = GameObject.Find (arg as String);
-						if (go == null) {
-							OutputHelper.PrintOutput ("What is a " + "\"" + (arg as String) + "\"?");
-							return;	// abort
+						List<GameObject> matches = new List<GameObject> ();
+						foreach (Voxeme voxeme in objSelector.allVoxemes) {
+							if (voxeme.voxml.Lex.Pred.Equals(arg)) {
+								matches.Add (voxeme.gameObject);
+							}
 						}
-						objs.Add (GameObject.Find (arg as String));
+
+						if (matches.Count <= 1) {
+							GameObject go = GameObject.Find (arg as String);
+							if (go == null) {
+								OutputHelper.PrintOutput (string.Format("What is a \"{0}\"?", (arg as String)));
+								return;	// abort
+							}
+							objs.Add (go);
+						}
+						else {
+							//Debug.Log (string.Format ("Which {0}?", (arg as String)));
+							//OutputHelper.PrintOutput (string.Format("Which {0}?", (arg as String)));
+						}
 					}
 				}
 			}
@@ -168,35 +178,12 @@ public class EventManager : MonoBehaviour {
 				}
 				else {
 					nextQueuedEvent = "";
-					//put(spoon,on(mug));put(apple,on(plate))
-					//put(block1,on(block2));put(block3,on(block1))
 				}
 				break;
 			}
 		}
 
 		return nextIncompleteEvent;
-
-		/*SatisfactionTest.ComputeSatisfactionConditions(events[eventsStatus.Keys.Count-1]);
-
-		eventsStatus.Keys.CopyTo (keys,0);
-		eventsStatus.Values.CopyTo (values,0);
-
-		String nextIncompleteEvent = keys [keys.Length - 1];
-
-		if (events.Count > eventsStatus.Keys.Count) {
-			nextQueuedEvent = SatisfactionTest.ComputeSatisfactionConditions(events[eventsStatus.Keys.Count]);
-
-			eventsStatus.Keys.CopyTo (keys,0);
-			eventsStatus.Values.CopyTo (values,0);
-			
-			nextQueuedEvent = keys [keys.Length - 1];
-		}
-		else {
-			nextQueuedEvent = "";
-		}
-
-		return nextIncompleteEvent;*/
 	}
 
 	public void ClearSkolems() {
@@ -215,14 +202,15 @@ public class EventManager : MonoBehaviour {
 
 		if (r.IsMatch (command)) {	// if command matches predicate form
 			//Debug.Log ("ParseCommand: " + command);
-			Triple<String,String,String> triple = Helper.MakeRDFTriples(command);
+			// make RDF triples only after resolving attributives to atomics (but before evaluating relations and functions)
+			/*Triple<String,String,String> triple = Helper.MakeRDFTriples(command);
 			if (triple.Item1 != "" && triple.Item2 != "" && triple.Item3 != "") {
 				preds.rdfTriples.Add(triple);
 				Helper.PrintRDFTriples(preds.rdfTriples);
 			}
 			else {
 				Debug.Log ("Failed to make RDF triple");
-			}
+			}*/
 			predArgs = Helper.ParsePredicate(command);
 			foreach (DictionaryEntry entry in predArgs) {
 				predString = (String)entry.Key;
@@ -247,37 +235,13 @@ public class EventManager : MonoBehaviour {
 						sb = new StringBuilder(sb.ToString());
 						foreach(DictionaryEntry kv in skolems) {
 							argsList = argsList.Replace((String)kv.Value, (String)kv.Key);
-							//Debug.Log(predString + " : " + argsList);
-							//foreach(KeyValuePair<String,String> kkv in skolems) {
-							//	if (kkv.Key != kv.Key) {
-							//		skolems[kkv.Key] = kkv.Value.Replace(kv.Value, kv.Key);
-							//	}
-							//}
-							//move(mug,to(center(square_table)))
-							//move(mug,ARG0)
-							//move(mug,to(ARG1))
 						}
-						//Debug.Log(predString + " : " + argsList);
 
 					}
 					ParseCommand (argsStrings.ElementAt (i));
 				}
 			}
 		}
-
-		//if (r.IsMatch(arguments))	Debug.Log (arguments);
-		//Debug.Log (predicate + ' ' + arguments);
-
-		/*GameObject bc = GameObject.Find ("BehaviorController");
-		List<GameObject> objs = new List<GameObject>();
-		while (argsStrings.Count > 0) {
-			objs.Add(GameObject.Find(argsStrings.Dequeue()));
-		}
-
-		Predicates preds = bc.GetComponent<Predicates> ();
-		MethodInfo method = preds.GetType().GetMethod(predString);
-		object obj = method.Invoke(preds, new object[]{objs.ToArray<GameObject>()});
-		Debug.Log (obj);*/
 	}
 
 	public void FinishSkolemization() {
@@ -334,7 +298,6 @@ public class EventManager : MonoBehaviour {
 			temp.Count(f => f == ')');
 		//Debug.Log ("Skolemize: parenCount = " + parenCount.ToString ());
 
-		//do{
 		foreach (DictionaryEntry kv in skolems) {
 			if (kv.Value is Vector3) {
 				outString = (String)outString.Replace((String)kv.Key,Helper.VectorToParsable((Vector3)kv.Value));
@@ -348,13 +311,11 @@ public class EventManager : MonoBehaviour {
 		parenCount = temp.Count(f => f == '(') + 
 			temp.Count(f => f == ')');
 		//Debug.Log ("Skolemize: parenCount = " + parenCount.ToString ());
-		//move(mug,from(edge(table)),to(edge(table)))
-		//}while(parenCount > 6);
 
 		return outString;
 	}
 
-	public bool EvaluateSkolemConstants() {
+	public bool EvaluateSkolemConstants(int pass) {
 		Hashtable temp = new Hashtable ();
 		Regex regex = new Regex (argVarPrefix+@"[0-9]+");
 		Match argsMatch;
@@ -370,45 +331,74 @@ public class EventManager : MonoBehaviour {
 					Debug.Log (kv.Value);
 					predArgs = Helper.ParsePredicate ((String)kv.Value);
 					String pred = Helper.GetTopPredicate ((String)kv.Value);
-					argsStrings = new Queue<String> (((String)predArgs [pred]).Split (new char[] {','}));
-					while (argsStrings.Count > 0) {
-						object arg = argsStrings.Dequeue ();
+					if (((String)kv.Value).Count (f => f == '(') +	// make sure actually a predicate
+						((String)kv.Value).Count (f => f == ')') >= 2) {
+						argsStrings = new Queue<String> (((String)predArgs [pred]).Split (new char[] {','}));
+						while (argsStrings.Count > 0) {
+							object arg = argsStrings.Dequeue ();
 
-						if (Helper.v.IsMatch ((String)arg)) {	// if arg is vector form
-							objs.Add (Helper.ParsableToVector ((String)arg));
-						} else if (arg is String) {	// if arg is String
-							if ((arg as String).Count (f => f == '(') +	// not a predicate
-							    (arg as String).Count (f => f == ')') == 0) {
-								if (preds.GetType ().GetMethod (pred.ToUpper ()).ReturnType != typeof(String)) {	// if predicate not going to return string (as in "AS")
-									GameObject go = GameObject.Find (arg as String);
-									if (go == null) {
-										OutputHelper.PrintOutput ("What is a " + "\"" + (arg as String) + "\"?");
-										return false;	// abort
+							if (Helper.v.IsMatch ((String)arg)) {	// if arg is vector form
+								objs.Add (Helper.ParsableToVector ((String)arg));
+							}
+							else if (arg is String) {	// if arg is String
+								if ((arg as String).Count (f => f == '(') +	// not a predicate
+								    (arg as String).Count (f => f == ')') == 0) {
+									if (preds.GetType ().GetMethod (pred.ToUpper ()).ReturnType != typeof(String)) {	// if predicate not going to return string (as in "AS")
+										List<GameObject> matches = new List<GameObject> ();
+										foreach (Voxeme voxeme in objSelector.allVoxemes) {
+											if (voxeme.voxml.Lex.Pred.Equals(arg)) {
+												matches.Add (voxeme.gameObject);
+											}
+										}
+
+										if (matches.Count <= 1) {
+											GameObject go = GameObject.Find (arg as String);
+											if (go == null) {
+												OutputHelper.PrintOutput (string.Format("What is a \"{0}\"?", (arg as String)));
+												return false;	// abort
+											}
+											objs.Add (go);
+										}
+										else {
+											//Debug.Log (string.Format ("Which {0}?", (arg as String)));
+											//OutputHelper.PrintOutput (string.Format("Which {0}?", (arg as String)));
+											//return false;	// abort
+										}
 									}
 								}
-							}
 
-							Regex q = new Regex("\".*\"");
-							if (q.IsMatch(arg as String)) {
-								objs.Add (arg);
-							}
-							else {
-								objs.Add (GameObject.Find (arg as String));
+								Regex q = new Regex("\".*\"");
+								if (q.IsMatch(arg as String)) {
+									objs.Add (arg);
+								}
+								else {
+									objs.Add (GameObject.Find (arg as String));
+								}
 							}
 						}
+
+						methodToCall = preds.GetType ().GetMethod (pred.ToUpper());
+
+						if (methodToCall == null) {
+							OutputHelper.PrintOutput ("Sorry, what does " + "\"" + pred + "\" mean?");
+							return false;
+						}
+
+						if ((methodToCall.ReturnType == typeof(String)) && (pass == 1)) {
+							Debug.Log ("EvaluateSkolemConstants: invoke " + methodToCall.Name);
+							object obj = methodToCall.Invoke (preds, new object[]{ objs.ToArray () });
+							Debug.Log (obj);
+
+							temp [kv.Key] = obj;
+						}
+						else if ((methodToCall.ReturnType == typeof(Vector3)) && (pass == 2)) {
+							Debug.Log ("EvaluateSkolemConstants: invoke " + methodToCall.Name);
+							object obj = methodToCall.Invoke (preds, new object[]{ objs.ToArray () });
+							Debug.Log (obj);
+
+							temp [kv.Key] = obj;
+						}
 					}
-					methodToCall = preds.GetType ().GetMethod (pred.ToUpper());
-
-					if (methodToCall == null) {
-						OutputHelper.PrintOutput ("Sorry, what does " + "\"" + pred + "\" mean?");
-						return false;
-					}
-
-					Debug.Log ("EvaluateSkolemConstants: invoke " + methodToCall.Name);
-					object obj = methodToCall.Invoke (preds, new object[]{ objs.ToArray () });
-					Debug.Log (obj);
-
-					temp [kv.Key] = obj;
 				}
 				else {
 					temp [kv.Key] = skolems [kv.Key];
@@ -430,7 +420,13 @@ public class EventManager : MonoBehaviour {
 					Debug.Log (replaceWith.GetType ());
 					//String replaced = ((String)skolems [kv.Key]).Replace ((String)argsMatch.Groups [0].Value,
 					//	replaceWith.ToString ().Replace (',', ';').Replace ('(', '<').Replace (')', '>'));
-					String replaced = ((String)skolems [kv.Key]).Replace ((String)argsMatch.Groups [0].Value, Helper.VectorToParsable((Vector3)replaceWith));
+					String replaced = (String)argsMatch.Groups [0].Value;
+					if (replaceWith is String) {
+						replaced = ((String)skolems [kv.Key]).Replace ((String)argsMatch.Groups [0].Value, (String)replaceWith);
+					}
+					else if (replaceWith is Vector3) {
+						replaced = ((String)skolems [kv.Key]).Replace ((String)argsMatch.Groups [0].Value, Helper.VectorToParsable ((Vector3)replaceWith));
+					}
 					Debug.Log (replaced);
 					//if (replace is Vector3) {
 					skolems [kv.Key] = replaced;
@@ -450,14 +446,25 @@ public class EventManager : MonoBehaviour {
 				argsMatch = r.Match ((String)kv.Value);
 
 				if (argsMatch.Groups [0].Value.Length > 0) {
-					newEvaluations++;
+					string pred = argsMatch.Groups [0].Value.Split ('(') [0];
+					methodToCall = pred.GetType ().GetMethod (pred.ToUpper());
+
+					if (methodToCall != null) {
+						if ((methodToCall.ReturnType == typeof(String)) && (pass == 1)) {
+							newEvaluations++;
+						}
+						if ((methodToCall.ReturnType == typeof(Vector3)) && (pass == 2)) {
+							newEvaluations++;
+						}
+					}
 				}
 			}
 		}
 
 		//Debug.Log (newEvaluations);
-		if (newEvaluations > 0)
-			EvaluateSkolemConstants ();
+		if (newEvaluations > 0) {
+			EvaluateSkolemConstants (pass);
+		}
 
 		return true;
 	}
