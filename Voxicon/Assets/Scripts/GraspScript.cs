@@ -3,7 +3,8 @@ using System.Collections;
 
 public class GraspScript : MonoBehaviour {
 	private Animator anim;
-	private int grasper;
+	public int grasper;
+	public GameObject leftGrasperCoord,rightGrasperCoord;
 
 	// Use this for initialization
 	void Start () {
@@ -32,6 +33,7 @@ public class GraspScript : MonoBehaviour {
 			Debug.Log (grasper);
 		} else if (Input.GetKeyDown (KeyCode.Space)) {
 			grasper = 0;
+			Debug.Log (grasper);
 		}
 		anim.SetInteger ("anim", grasper);
 	}

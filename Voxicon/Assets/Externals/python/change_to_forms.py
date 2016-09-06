@@ -90,11 +90,14 @@ def parse_sent(sent):
             form = form + 'paper_sheet'
             s[i+1] = ""
         elif s[i] in relations:
-            form = form + ',' + s[i] + '('
+            if form[-1] == '(':
+                form = form + s[i] + '('
+            else:
+                form = form + ',' + s[i] + '('
         elif s[i] in attributes:
             form = form + s[i] + '(' + s[i+1] + ')'
             s[i+1] = ""
-        else:
+        elif s[i] in objects:
             form = form + s[i]
     
         if s[i] == 'edge':
@@ -102,10 +105,11 @@ def parse_sent(sent):
 
         if s[i] == 'center':
             form = form + 'center'
-    
-    form = form + ')'
-    if ',' in form:
+
+    for i in range(form.count('(')-form.count(')')):
         form = form + ')'
+        #if ',' in form:
+        #form = form + ')'
 
 
     return form

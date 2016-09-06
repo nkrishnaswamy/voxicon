@@ -3,6 +3,15 @@ using System.Collections;
 
 public class Gestures : MonoBehaviour {
 
+	public enum HandPose {
+		LeftClaw = 1,
+		LeftPoint,
+		LeftThumbsUp,
+		RightClaw,
+		RightPoint,
+		RightThumbsUp
+	}
+
 	GameObject leftReachObj, rightReachObj, lookObj;
 
 	// Use this for initialization

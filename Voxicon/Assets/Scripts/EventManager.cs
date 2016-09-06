@@ -25,6 +25,11 @@ public class EventManager : MonoBehaviour {
 	Regex r = new Regex(@".*\(.*\)");
 	String nextIncompleteEvent;
 
+	public enum EvaluationPass {
+		Attributes,
+		RelationsAndFunctions
+	}
+
 	// Use this for initialization
 	void Start () {
 		preds = gameObject.GetComponent<Predicates> ();
@@ -76,11 +81,12 @@ public class EventManager : MonoBehaviour {
 		Debug.Log ("Skolemized command: " + skolemized);
 		//EvaluateSkolemizedCommand(skolemized);
 
-		if (!EvaluateSkolemConstants (1)) {
+		if (!EvaluateSkolemConstants (EvaluationPass.Attributes)) {
 			events.RemoveAt (events.Count - 1);
 			return;
 		}
 		string objectResolved = ApplySkolems (skolemized);
+		Debug.Log (objectResolved);
 
 		Triple<String,String,String> triple = Helper.MakeRDFTriples(objectResolved);
 		if (triple.Item1 != "" && triple.Item2 != "" && triple.Item3 != "") {
@@ -91,7 +97,7 @@ public class EventManager : MonoBehaviour {
 			Debug.Log ("Failed to make RDF triple");
 		}
 
-		if (!EvaluateSkolemConstants (2)) {
+		if (!EvaluateSkolemConstants (EvaluationPass.RelationsAndFunctions)) {
 			events.RemoveAt (events.Count - 1);
 			return;
 		}
@@ -315,13 +321,15 @@ public class EventManager : MonoBehaviour {
 		return outString;
 	}
 
-	public bool EvaluateSkolemConstants(int pass) {
+	public bool EvaluateSkolemConstants(EvaluationPass pass) {
 		Hashtable temp = new Hashtable ();
 		Regex regex = new Regex (argVarPrefix+@"[0-9]+");
 		Match argsMatch;
 		Hashtable predArgs;
 		List<object> objs = new List<object>();
 		Queue<String> argsStrings;
+		bool doSkolemReplacement = false;
+		Triple<String,String,String> replaceSkolems = null;
 
 		foreach (DictionaryEntry kv in skolems) {
 			objs.Clear ();
@@ -351,7 +359,7 @@ public class EventManager : MonoBehaviour {
 											}
 										}
 
-										if (matches.Count <= 1) {
+										if (matches.Count == 0) {
 											GameObject go = GameObject.Find (arg as String);
 											if (go == null) {
 												OutputHelper.PrintOutput (string.Format("What is a \"{0}\"?", (arg as String)));
@@ -359,10 +367,21 @@ public class EventManager : MonoBehaviour {
 											}
 											objs.Add (go);
 										}
+										else if (matches.Count == 1) {
+											GameObject go = matches[0];
+											if (go == null) {
+												OutputHelper.PrintOutput (string.Format("What is a \"{0}\"?", (arg as String)));
+												return false;	// abort
+											}
+											objs.Add (go);
+											doSkolemReplacement = true;
+											replaceSkolems = new Triple<String,String,String> (kv.Key as String, arg as String, go.name);
+											//skolems[kv] = go.name;
+										}
 										else {
-											//Debug.Log (string.Format ("Which {0}?", (arg as String)));
-											//OutputHelper.PrintOutput (string.Format("Which {0}?", (arg as String)));
-											//return false;	// abort
+											Debug.Log (string.Format ("Which {0}?", (arg as String)));
+											OutputHelper.PrintOutput (string.Format("Which {0}?", (arg as String)));
+											return false;	// abort
 										}
 									}
 								}
@@ -384,14 +403,14 @@ public class EventManager : MonoBehaviour {
 							return false;
 						}
 
-						if ((methodToCall.ReturnType == typeof(String)) && (pass == 1)) {
+						if ((methodToCall.ReturnType == typeof(String)) && (pass == EvaluationPass.Attributes)) {
 							Debug.Log ("EvaluateSkolemConstants: invoke " + methodToCall.Name);
 							object obj = methodToCall.Invoke (preds, new object[]{ objs.ToArray () });
 							Debug.Log (obj);
 
 							temp [kv.Key] = obj;
 						}
-						else if ((methodToCall.ReturnType == typeof(Vector3)) && (pass == 2)) {
+						else if ((methodToCall.ReturnType == typeof(Vector3)) && (pass == EvaluationPass.RelationsAndFunctions)) {
 							Debug.Log ("EvaluateSkolemConstants: invoke " + methodToCall.Name);
 							object obj = methodToCall.Invoke (preds, new object[]{ objs.ToArray () });
 							Debug.Log (obj);
@@ -401,9 +420,14 @@ public class EventManager : MonoBehaviour {
 					}
 				}
 				else {
-					temp [kv.Key] = skolems [kv.Key];
+					temp [kv.Key] = kv.Value;
 				}
 			}
+		}
+
+		// replace improperly named arguments
+		if (doSkolemReplacement) {
+			skolems [replaceSkolems.Item1] = ((String)skolems [replaceSkolems.Item1]).Replace (replaceSkolems.Item2, replaceSkolems.Item3);
 		}
 
 		foreach (DictionaryEntry kv in temp) {
@@ -450,10 +474,10 @@ public class EventManager : MonoBehaviour {
 					methodToCall = pred.GetType ().GetMethod (pred.ToUpper());
 
 					if (methodToCall != null) {
-						if ((methodToCall.ReturnType == typeof(String)) && (pass == 1)) {
+						if ((methodToCall.ReturnType == typeof(String)) && (pass == EvaluationPass.Attributes)) {
 							newEvaluations++;
 						}
-						if ((methodToCall.ReturnType == typeof(Vector3)) && (pass == 2)) {
+						if ((methodToCall.ReturnType == typeof(Vector3)) && (pass == EvaluationPass.RelationsAndFunctions)) {
 							newEvaluations++;
 						}
 					}

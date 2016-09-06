@@ -173,6 +173,22 @@ public class Predicates : MonoBehaviour {
 
 	// IN: Object (single element array)
 	// OUT: Location
+	public Vector3 FOR(object[] args)
+	{
+		Vector3 outValue = Vector3.zero;
+		if (args [0] is GameObject) {	// for an object
+			GameObject obj = args [0] as GameObject;
+			outValue = obj.transform.position;
+		}
+		else if (args [0] is Vector3) {	// for a location
+			outValue = (Vector3)args[0];
+		}
+
+		return outValue;
+	}
+
+	// IN: Object (single element array)
+	// OUT: Location
 	public Vector3 BEHIND(object[] args)
 	{
 		Vector3 outValue = Vector3.zero;
@@ -410,8 +426,6 @@ public class Predicates : MonoBehaviour {
 	// OUT: none
 	public void PUT(object[] args)
 	{
-		EventManager em = GameObject.Find ("BehaviorController").GetComponent<EventManager> ();
-
 		// override physics rigging
 		foreach (object arg in args) {
 			if (arg is GameObject) {
@@ -462,7 +476,7 @@ public class Predicates : MonoBehaviour {
 						}
 					}
 
-					if (args[args.Length-1] is bool) {
+					if (args [args.Length - 1] is bool) {
 						if ((bool)args [args.Length - 1] == false) {
 							targetPosition = new Vector3 (loc.x,
 								loc.y + (themeBounds.center.y - themeBounds.min.y) + yAdjust,
@@ -471,8 +485,23 @@ public class Predicates : MonoBehaviour {
 						else {
 							targetPosition = loc;
 						}
-						Debug.Log (Helper.VectorToParsable(targetPosition));
-						theme.GetComponent<Voxeme> ().targetPosition = targetPosition;
+
+						Debug.Log (Helper.VectorToParsable (targetPosition));
+
+						Voxeme voxComponent = theme.GetComponent<Voxeme> ();
+						if (voxComponent != null) {
+							if (!voxComponent.enabled) {
+								voxComponent.gameObject.transform.parent = null;
+								voxComponent.enabled = true;
+							}
+
+							voxComponent.targetPosition = targetPosition;
+
+							if (voxComponent.isGrasped) {
+								voxComponent.targetPosition = (voxComponent.targetPosition -
+									(voxComponent.gameObject.transform.position- voxComponent.graspTracker.position));
+							}
+						}
 					}
 				}
 			}
@@ -544,8 +573,16 @@ public class Predicates : MonoBehaviour {
 
 					Debug.Log (Helper.VectorToParsable (targetPosition));
 
-					theme.GetComponent<Voxeme> ().targetPosition = targetPosition;
-					theme.GetComponent<Voxeme> ().targetRotation = targetRotation;
+					Voxeme voxComponent = theme.GetComponent<Voxeme> ();
+					if (voxComponent != null) {
+						if (!voxComponent.enabled) {
+							voxComponent.gameObject.transform.parent = null;
+							voxComponent.enabled = true;
+						}
+
+						voxComponent.targetPosition = targetPosition;
+						voxComponent.targetRotation = targetRotation;
+					}
 				}
 			}
 		}
@@ -587,7 +624,16 @@ public class Predicates : MonoBehaviour {
 						}
 
 						Debug.Log (Helper.VectorToParsable(targetPosition));
-						theme.GetComponent<Voxeme> ().targetPosition = targetPosition;
+
+						Voxeme voxComponent = theme.GetComponent<Voxeme> ();
+						if (voxComponent != null) {
+							if (!voxComponent.enabled) {
+								voxComponent.gameObject.transform.parent = null;
+								voxComponent.enabled = true;
+							}
+
+							voxComponent.targetPosition = targetPosition;
+						}
 					}
 				}
 			}
@@ -630,7 +676,16 @@ public class Predicates : MonoBehaviour {
 						}
 
 						Debug.Log (Helper.VectorToParsable(targetPosition));
-						theme.GetComponent<Voxeme> ().targetPosition = targetPosition;
+
+						Voxeme voxComponent = theme.GetComponent<Voxeme> ();
+						if (voxComponent != null) {
+							if (!voxComponent.enabled) {
+								voxComponent.gameObject.transform.parent = null;
+								voxComponent.enabled = true;
+							}
+
+							voxComponent.targetPosition = targetPosition;
+						}
 					}
 				}
 			}
@@ -673,7 +728,16 @@ public class Predicates : MonoBehaviour {
 						}
 
 						Debug.Log (Helper.VectorToParsable(targetPosition));
-						theme.GetComponent<Voxeme> ().targetPosition = targetPosition;
+
+						Voxeme voxComponent = theme.GetComponent<Voxeme> ();
+						if (voxComponent != null) {
+							if (!voxComponent.enabled) {
+								voxComponent.gameObject.transform.parent = null;
+								voxComponent.enabled = true;
+							}
+
+							voxComponent.targetPosition = targetPosition;
+						}
 					}
 				}
 			}
@@ -715,7 +779,16 @@ public class Predicates : MonoBehaviour {
 							targetPosition = loc;
 						}
 						Debug.Log (Helper.VectorToParsable(targetPosition));
-						theme.GetComponent<Voxeme> ().targetPosition = targetPosition;
+
+						Voxeme voxComponent = theme.GetComponent<Voxeme> ();
+						if (voxComponent != null) {
+							if (!voxComponent.enabled) {
+								voxComponent.gameObject.transform.parent = null;
+								voxComponent.enabled = true;
+							}
+
+							voxComponent.targetPosition = targetPosition;
+						}
 					}
 				}
 			}
@@ -777,7 +850,16 @@ public class Predicates : MonoBehaviour {
 					targetPosition = new Vector3 (((Vector3)args [1]).x,
 					                              ((Vector3)args [1]).y + (bounds.center.y - bounds.min.y),
 					                              ((Vector3)args [1]).z);
-					obj.GetComponent<Voxeme> ().targetPosition = targetPosition;
+
+					Voxeme voxComponent = obj.GetComponent<Voxeme> ();
+					if (voxComponent != null) {
+						if (!voxComponent.enabled) {
+							voxComponent.gameObject.transform.parent = null;
+							voxComponent.enabled = true;
+						}
+
+						voxComponent.targetPosition = targetPosition;
+					}
 				}
 			}
 		}
@@ -802,7 +884,16 @@ public class Predicates : MonoBehaviour {
 			targetPosition = new Vector3 (obj.transform.position.x,obj.transform.position.y+UnityEngine.Random.value, obj.transform.position.z);
 			//Debug.Log (targetPosition);
 			//targetPosition = new Vector3 (obj.transform.position.x+1.0f, obj.transform.position.y, obj.transform.position.z);
-			obj.GetComponent<Voxeme> ().targetPosition = targetPosition;
+
+			Voxeme voxComponent = obj.GetComponent<Voxeme> ();
+			if (voxComponent != null) {
+				if (!voxComponent.enabled) {
+					voxComponent.gameObject.transform.parent = null;
+					voxComponent.enabled = true;
+				}
+
+				voxComponent.targetPosition = targetPosition;
+			}
 		}
 
 		// add to events manager
@@ -834,7 +925,16 @@ public class Predicates : MonoBehaviour {
 				obj.transform.position.y, obj.transform.position.z+UnityEngine.Random.insideUnitSphere.z);
 			//Debug.Log (targetPosition);
 			//targetPosition = new Vector3 (obj.transform.position.x+1.0f, obj.transform.position.y, obj.transform.position.z);
-			obj.GetComponent<Voxeme> ().targetPosition = targetPosition;
+
+			Voxeme voxComponent = obj.GetComponent<Voxeme> ();
+			if (voxComponent != null) {
+				if (!voxComponent.enabled) {
+					voxComponent.gameObject.transform.parent = null;
+					voxComponent.enabled = true;
+				}
+
+				voxComponent.targetPosition = targetPosition;
+			}
 		}
 
 		// add to events manager
@@ -912,7 +1012,16 @@ public class Predicates : MonoBehaviour {
 			//targetY = (rotation.y+180.0f < 0.0f) ? rotation.y+180.0f + 360.0f : rotation.y+180.0f;
 			//targetZ = (rotation.z+180.0f < 0.0f) ? rotation.z+180.0f + 360.0f : rotation.z+180.0f;
 			targetRotation = new Vector3 (targetX,targetY,targetZ);
-			obj.GetComponent<Voxeme> ().targetRotation = targetRotation;
+
+			Voxeme voxComponent = obj.GetComponent<Voxeme> ();
+			if (voxComponent != null) {
+				if (!voxComponent.enabled) {
+					voxComponent.gameObject.transform.parent = null;
+					voxComponent.enabled = true;
+				}
+
+				voxComponent.targetRotation = targetRotation;
+			}
 		}
 
 		// add to events manager
@@ -1077,22 +1186,110 @@ public class Predicates : MonoBehaviour {
 
 	// IN: Objects
 	// OUT: none
-	public void REACH(object[] args)
+	public void POINT(object[] args)
 	{
 		GameObject agent = GameObject.FindGameObjectWithTag ("Agent");
 		if (agent != null) {
-			Animator anim = agent.GetComponent<Animator> ();
-			GameObject grasper = anim.GetBoneTransform (HumanBodyBones.RightHand).transform.gameObject;
-			//anim["Grasp_3"].wrapMode = WrapMode.Once;
+			Animator anim = agent.GetComponentInChildren<Animator> ();
+			GameObject leftGrasper = anim.GetBoneTransform (HumanBodyBones.LeftHand).transform.gameObject;
+			GameObject rightGrasper = anim.GetBoneTransform (HumanBodyBones.RightHand).transform.gameObject;
+			GameObject grasper;
+
 			if (args [args.Length - 1] is bool) {
 				if ((bool)args [args.Length - 1] == true) {
 					foreach (object arg in args) {
 						if (arg is GameObject) {
 							// find bounds corner closest to grasper
 							Bounds bounds = Helper.GetObjectWorldSize((arg as GameObject));
-							Vector3 target = bounds.ClosestPoint(grasper.transform.position);
-							target = new Vector3 (bounds.max.x, bounds.center.y, bounds.center.z);
-							GameObject.Find ("ReachObject").transform.position = target;
+
+							// which hand is closer?
+							float leftToGoalDist = (leftGrasper.transform.position-bounds.ClosestPoint(leftGrasper.transform.position)).magnitude;
+							float rightToGoalDist = (rightGrasper.transform.position-bounds.ClosestPoint(rightGrasper.transform.position)).magnitude;
+
+							if (leftToGoalDist < rightToGoalDist) {
+								grasper = leftGrasper;
+								agent.GetComponent<GraspScript>().grasper = (int)Gestures.HandPose.LeftPoint;
+							}
+							else {
+								grasper = rightGrasper;
+								agent.GetComponent<GraspScript>().grasper = (int)Gestures.HandPose.RightPoint;
+							}
+								
+							IKControl ikControl = agent.GetComponent<IKControl> ();
+							if (ikControl != null) {
+								Vector3 target;
+								if (grasper == leftGrasper) {
+									target = new Vector3 (bounds.min.x, bounds.min.y, bounds.center.z);
+									ikControl.leftHandObj.transform.position = target;
+								}
+								else {
+									target = new Vector3 (bounds.max.x, bounds.min.y, bounds.center.z);
+									ikControl.rightHandObj.transform.position = target;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// IN: Objects
+	// OUT: none
+	public void REACH(object[] args)
+	{
+		GameObject agent = GameObject.FindGameObjectWithTag ("Agent");
+		if (agent != null) {
+			Animator anim = agent.GetComponentInChildren<Animator> ();
+			GameObject leftGrasper = anim.GetBoneTransform (HumanBodyBones.LeftHand).transform.gameObject;
+			GameObject rightGrasper = anim.GetBoneTransform (HumanBodyBones.RightHand).transform.gameObject;
+			GameObject grasper;
+
+			if (args [args.Length - 1] is bool) {
+				if ((bool)args [args.Length - 1] == true) {
+					foreach (object arg in args) {
+						if (arg is GameObject) {
+							// find bounds corner closest to grasper
+							Bounds bounds = Helper.GetObjectWorldSize((arg as GameObject));
+
+							// which hand is closer?
+							float leftToGoalDist = (leftGrasper.transform.position-bounds.ClosestPoint(leftGrasper.transform.position)).magnitude;
+							float rightToGoalDist = (rightGrasper.transform.position-bounds.ClosestPoint(rightGrasper.transform.position)).magnitude;
+
+							if (leftToGoalDist < rightToGoalDist) {
+								grasper = leftGrasper;
+							}
+							else {
+								grasper = rightGrasper;
+							}
+								
+							IKControl ikControl = agent.GetComponent<IKControl> ();
+							if (ikControl != null) {
+								Vector3 target;
+								if (grasper == leftGrasper) {
+									agent.GetComponent<GraspScript>().grasper = (int)Gestures.HandPose.LeftClaw;
+
+									if ((grasper.GetComponent<BoxCollider> ().bounds.size.x > bounds.size.x) &&
+									    (grasper.GetComponent<BoxCollider> ().bounds.size.z > bounds.size.z)) {
+										target = new Vector3 (bounds.center.x, bounds.center.y, bounds.center.z);
+									}
+									else {
+										target = new Vector3 (bounds.min.x, bounds.center.y, bounds.center.z);
+									}
+									ikControl.leftHandObj.transform.position = target;
+								}
+								else {
+									agent.GetComponent<GraspScript>().grasper = (int)Gestures.HandPose.RightClaw;
+									if ((grasper.GetComponent<BoxCollider> ().bounds.size.x > bounds.size.x) &&
+										(grasper.GetComponent<BoxCollider> ().bounds.size.z > bounds.size.z)) {
+										target = new Vector3 (bounds.center.x, bounds.center.y, bounds.center.z);
+									}
+									else {
+										target = new Vector3 (bounds.max.x, bounds.center.y, bounds.center.z);
+									}
+									ikControl.rightHandObj.transform.position = target;
+								}
+							}
 						}
 					}
 				}
@@ -1107,37 +1304,64 @@ public class Predicates : MonoBehaviour {
 		GameObject agent = GameObject.FindGameObjectWithTag ("Agent");
 		if (agent != null) {
 			Animator anim = agent.GetComponentInChildren<Animator> ();
-			GameObject grasper = anim.GetBoneTransform (HumanBodyBones.RightHand).gameObject;
-			//GameObject grasper = GameObject.Find("hand.R");
-			//anim["Grasp_3"].wrapMode = WrapMode.Once;
+			GameObject leftGrasper = anim.GetBoneTransform (HumanBodyBones.LeftHand).transform.gameObject;
+			GameObject rightGrasper = anim.GetBoneTransform (HumanBodyBones.RightHand).transform.gameObject;
+			GameObject grasper;
+
 			if (args [args.Length - 1] is bool) {
 				if ((bool)args [args.Length - 1] == true) {
 					foreach (object arg in args) {
 						if (arg is GameObject) {
-							//BoxCollider collider = grasper.GetComponent<BoxCollider> ();
-							//Debug.Log (collider.transform.position);
-							GameObject grasperCoord = GameObject.Find ("GrasperCoord");
-							//grasperCoord.transform.position = grasper.transform.position;
-							//Debug.Log(grasperCoord.transform.position);
-							//Debug.Log (GameObject.Find ("ReachObject").transform.position);
-							//Debug.Log((arg as GameObject).transform.position);
-							//Debug.Log((grasper.transform.position - (arg as GameObject).transform.position).magnitude);
-							//Debug.Log (Helper.GetObjectWorldSize ((arg as GameObject)).max);
-							//Debug.Log (Helper.GetObjectWorldSize ((arg as GameObject)).center);
-							//Debug.Log ((Helper.GetObjectWorldSize ((arg as GameObject)).max - Helper.GetObjectWorldSize ((arg as GameObject)).center).magnitude);
-							if ((grasperCoord.transform.position - (arg as GameObject).transform.position).magnitude <
-							    (Helper.GetObjectWorldSize ((arg as GameObject)).max - Helper.GetObjectWorldSize ((arg as GameObject)).center).magnitude) {
-								//if (RCC8.EC (Helper.GetObjectWorldSize((arg as GameObject)), Helper.GetObjectWorldSize(grasper)) ||	// do actual touching test
-								//	RCC8.PO (Helper.GetObjectWorldSize((arg as GameObject)), Helper.GetObjectWorldSize(grasper))) {
-								anim.Play ("Grasp_2");
-								anim.SetInteger ("grasp", 2);
+							GameObject leftGrasperCoord = agent.GetComponent<GraspScript>().leftGrasperCoord;
+							GameObject rightGrasperCoord = agent.GetComponent<GraspScript>().rightGrasperCoord;
+
+							if (leftGrasper.GetComponent<BoxCollider>().bounds.Intersects(Helper.GetObjectWorldSize(arg as GameObject))) {
 								(arg as GameObject).GetComponent<Rigging> ().ActivatePhysics (false);
-								RiggingHelper.RigTo ((arg as GameObject), grasperCoord);
-								(arg as GameObject).GetComponent<Voxeme> ().enabled = true;
-								(arg as GameObject).GetComponent<Voxeme> ().isGrasped = true;
+								RiggingHelper.RigTo ((arg as GameObject), leftGrasper);
+								Voxeme voxeme = (arg as GameObject).GetComponent<Voxeme> ();
+								voxeme.enabled = true;
+								voxeme.isGrasped = true;
+								voxeme.graspTracker = agent.GetComponent<IKControl>().leftHandObj;
+							}
+							else if (rightGrasper.GetComponent<BoxCollider>().bounds.Intersects(Helper.GetObjectWorldSize(arg as GameObject))) {
+								(arg as GameObject).GetComponent<Rigging> ().ActivatePhysics (false);
+								RiggingHelper.RigTo ((arg as GameObject), rightGrasper);
+								Voxeme voxeme = (arg as GameObject).GetComponent<Voxeme> ();
+								voxeme.enabled = true;
+								voxeme.isGrasped = true;
+								voxeme.graspTracker = agent.GetComponent<IKControl>().rightHandObj;
 							}
 							else {
 								OutputHelper.PrintOutput("I can't grasp the " + (arg as GameObject).name + ".  I'm not touching it."); 
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// IN: Objects
+	// OUT: none
+	public void UNGRASP(object[] args)
+	{
+		GameObject agent = GameObject.FindGameObjectWithTag ("Agent");
+		if (agent != null) {
+			Animator anim = agent.GetComponentInChildren<Animator> ();
+			GameObject leftGrasper = anim.GetBoneTransform (HumanBodyBones.LeftHand).transform.gameObject;
+			GameObject rightGrasper = anim.GetBoneTransform (HumanBodyBones.RightHand).transform.gameObject;
+			GameObject grasper;
+
+			if (args [args.Length - 1] is bool) {
+				if ((bool)args [args.Length - 1] == true) {
+					foreach (object arg in args) {
+						if (arg is GameObject) {
+							Voxeme voxComponent = (arg as GameObject).GetComponent<Voxeme> ();
+							if (voxComponent != null) {
+								if (voxComponent.isGrasped) {
+									RiggingHelper.UnRig ((arg as GameObject), voxComponent.graspTracker.gameObject);
+									voxComponent.isGrasped = false;
+								}
 							}
 						}
 					}

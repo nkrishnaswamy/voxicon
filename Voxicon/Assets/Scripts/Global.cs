@@ -9,9 +9,31 @@ namespace Global {
 	/// <summary>
 	/// Constants
 	/// </summary>
-
 	static class Constants {
 		public const float EPSILON = 0.003f;
+	}
+
+	/// <summary>
+	/// Region class
+	/// </summary>
+	public class Region {
+		Vector3 _min,_max;
+
+		public Vector3 min {
+			get { return _min; }
+			set { _min = value; }
+		}
+
+		public Vector3 max {
+			get { return _max; }
+			set { _max = value; }
+		}
+
+		public bool Contains(Vector3 point) {
+			return ((point.x >= min.x) && (point.x <= max.x) &&
+				(point.y >= min.y) && (point.y <= max.y) &&
+				(point.z >= min.z) && (point.z <= max.z));
+		}
 	}
 
 	/// <summary>

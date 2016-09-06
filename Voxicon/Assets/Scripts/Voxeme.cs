@@ -31,6 +31,7 @@ public class Voxeme : MonoBehaviour {
 	public GameObject supportingSurface = null;
 
 	public bool isGrasped = false;
+	public Transform graspTracker = null;
 
 	// Use this for initialization
 	void Start () {
@@ -68,12 +69,11 @@ public class Voxeme : MonoBehaviour {
 					}
 				}
 				else {
-					GameObject reachObj = GameObject.Find ("ReachObject");
-					if (reachObj.transform.position != targetPosition) {
+					if (graspTracker.transform.position != targetPosition) {
 						Vector3 offset = MoveToward (targetPosition);
 
 						if (offset.sqrMagnitude <= 0.01f) {
-							reachObj.transform.position = targetPosition;
+							graspTracker.transform.position = targetPosition;
 						}
 					}
 				}
@@ -96,12 +96,11 @@ public class Voxeme : MonoBehaviour {
 				}
 			}
 			else {
-				GameObject reachObj = GameObject.Find ("ReachObject");
-				if (reachObj.transform.position != interimTarget) {
+				if (graspTracker.transform.position != interimTarget) {
 					Vector3 offset = MoveToward (interimTarget);
 
 					if (offset.sqrMagnitude <= 0.01f) {
-						reachObj.transform.position = interimTarget;
+						graspTracker.transform.position = interimTarget;
 						interTargetPositions.Dequeue ();
 					}
 				}
@@ -185,10 +184,12 @@ public class Voxeme : MonoBehaviour {
 				}
 			}
 
-			if (transform.position.y < transform.position.y + (minYBound - objectBounds.min.y)) {
-				transform.position = new Vector3 (transform.position.x,
-					transform.position.y + (minYBound - objectBounds.min.y),
-					transform.position.z);
+			if (targetPosition.y >= minYBound) {
+				if (transform.position.y < transform.position.y + (minYBound - objectBounds.min.y)) {
+					transform.position = new Vector3 (transform.position.x,
+						transform.position.y + (minYBound - objectBounds.min.y),
+						transform.position.z);
+				}
 			}
 
 			/*if (supportingSurface.GetComponent<SupportingSurface> ().surfaceType == SupportingSurface.SupportingSurfaceType.Concave) {
@@ -243,11 +244,10 @@ public class Voxeme : MonoBehaviour {
 			return offset;
 		}
 		else {
-			GameObject reachObj = GameObject.Find ("ReachObject");
 			GameObject grasperCoord = GameObject.Find ("GrasperCoord");
 
 
-			Vector3 offset = reachObj.transform.position - target;
+			Vector3 offset = graspTracker.transform.position - target;
 			Vector3 normalizedOffset = Vector3.Normalize (offset);
 
 			/*if (rigging.usePhysicsRig) {
@@ -259,9 +259,9 @@ public class Voxeme : MonoBehaviour {
 				}
 			}*/
 
-			reachObj.transform.position = new Vector3 (reachObj.transform.position.x - normalizedOffset.x * Time.deltaTime * moveSpeed,
-				reachObj.transform.position.y - normalizedOffset.y * Time.deltaTime * moveSpeed,
-				reachObj.transform.position.z - normalizedOffset.z * Time.deltaTime * moveSpeed);
+			graspTracker.transform.position = new Vector3 (graspTracker.transform.position.x - normalizedOffset.x * Time.deltaTime * moveSpeed,
+				graspTracker.transform.position.y - normalizedOffset.y * Time.deltaTime * moveSpeed,
+				graspTracker.transform.position.z - normalizedOffset.z * Time.deltaTime * moveSpeed);
 
 			return offset;
 		}

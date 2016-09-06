@@ -83,6 +83,7 @@ namespace Satisfaction {
 							objs.Add (arg as String);
 						}
 						else {
+							GameObject go = null;
 							if ((arg as String).Count (f => f == '(') +
 						    	(arg as String).Count (f => f == ')') == 0) {
 								List<GameObject> matches = new List<GameObject> ();
@@ -92,20 +93,28 @@ namespace Satisfaction {
 									}
 								}
 
-								if (matches.Count <= 1) {
-									GameObject go = GameObject.Find (arg as String);
+								if (matches.Count == 0) {
+									go = GameObject.Find (arg as String);
+									if (go == null) {
+										OutputHelper.PrintOutput (string.Format("What is a \"{0}\"?", (arg as String)));
+										return false;	// abort
+									}
+								}
+								else if (matches.Count == 1) {
+									go = matches[0];
 									if (go == null) {
 										OutputHelper.PrintOutput (string.Format ("What is a \"{0}\"?", (arg as String)));
 										return false;	// abort
 									}
 								}
 								else {
-									//Debug.Log (string.Format ("Which {0}?", (arg as String)));
-									//OutputHelper.PrintOutput (string.Format("Which {0}?", (arg as String)));
-									//return false;	// abort
+									Debug.Log (string.Format ("Which {0}?", (arg as String)));
+									OutputHelper.PrintOutput (string.Format("Which {0}?", (arg as String)));
+									return false;	// abort
 								}
 							}
-							objs.Add (GameObject.Find (arg as String));
+							objs.Add (go);
+//							objs.Add (GameObject.Find (arg as String));
 						}
 					}
 				}
@@ -153,7 +162,8 @@ namespace Satisfaction {
 				// foreach voxeme
 				// get bounds of object being tested against
 				Bounds testBounds = Helper.GetObjectWorldSize(test.gameObject);
-				if (test.enabled) {	// if voxeme is active
+				if (!test.gameObject.name.Contains("*")) { // hacky fix to filter out unparented objects w/ disabled voxeme components
+				//if (test.enabled) {	// if voxeme is active
 					OperationalVox.OpAfford_Str affStr = test.opVox.Affordance;
 					foreach (int h in affStr.Affordances.Keys) {
 						for (int i = 0; i < affStr.Affordances[h].Count; i++) {	// condition/event/result list for this habitat index
