@@ -19,7 +19,7 @@ public class IKControl : MonoBehaviour {
 	}
 
 	//a callback for calculating IK
-	void OnAnimatorIK()
+	public void OnAnimatorIK()
 	{
 		if(animator) {
 

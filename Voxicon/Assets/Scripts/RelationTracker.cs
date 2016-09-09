@@ -6,6 +6,7 @@ using System.Collections.Generic;
 public class RelationTracker : MonoBehaviour {
 
 	public Hashtable relations = new Hashtable();
+	public List<String> relStrings = new List<String>();
 
 	// Use this for initialization
 	void Start () {
@@ -33,10 +34,23 @@ public class RelationTracker : MonoBehaviour {
 
 	public void AddNewRelation (List<GameObject> objs, string relation) {
 		relations.Add(objs,relation);	// add key-val pair or modify value if key already exists
+		UpdateRelationStrings();
 	}
 
 	public void RemoveRelation (List<GameObject> objs) {
 		relations.Remove(objs);
+		UpdateRelationStrings ();
+	}
+
+	void UpdateRelationStrings() {
+		relStrings.Clear ();
+		foreach (DictionaryEntry entry in relations) {
+			String str = (String)entry.Value;
+			foreach (GameObject go in (List<GameObject>)entry.Key) {
+				str = str + " " + go.name;
+			}
+			relStrings.Add (str);
+		}
 	}
 
 	bool IsSatisfied(string relation, List<GameObject> objs) {

@@ -4,7 +4,8 @@ using System.Collections;
 public class Gestures : MonoBehaviour {
 
 	public enum HandPose {
-		LeftClaw = 1,
+		Neutral,
+		LeftClaw,
 		LeftPoint,
 		LeftThumbsUp,
 		RightClaw,

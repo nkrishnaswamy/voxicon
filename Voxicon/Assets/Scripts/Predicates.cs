@@ -6,6 +6,7 @@ using System.Linq;
 
 using Global;
 using RCC;
+using Satisfaction;
 
 /// <summary>
 /// Semantics of each predicate should be explicated within the method itself
@@ -15,6 +16,8 @@ using RCC;
 
 public class Predicates : MonoBehaviour {
 	public List<Triple<String,String,String>> rdfTriples = new List<Triple<String,String,String>>();
+	public bool cameraRelativeDirections = true;
+
 	EventManager eventManager;
 	AStarSearch aStarSearch;
 	ObjectSelector objSelector;
@@ -85,6 +88,13 @@ public class Predicates : MonoBehaviour {
 				//mark.transform.localScale = new Vector3 (.07f, .07f, .07f);
 				//mark.GetComponent<MeshCollider> ().enabled = false;
 			}
+
+			/*Voxeme voxComponent = (args [0] as GameObject).GetComponent<Voxeme> ();
+			if (voxComponent.isGrasped) {
+				outValue = (outValue +
+					(voxComponent.graspTracker.position - voxComponent.gameObject.transform.position));
+			}*/
+
 			Debug.Log ("on: " + Helper.VectorToParsable (outValue));
 		}
 		else if (args [0] is Vector3) {	// on a location
@@ -200,7 +210,7 @@ public class Predicates : MonoBehaviour {
 			bounds = Helper.GetObjectWorldSize (obj);
 
 			GameObject camera = GameObject.Find ("Main Camera");
-			float povDir = camera.transform.eulerAngles.y;
+			float povDir = cameraRelativeDirections ? camera.transform.eulerAngles.y : 0.0f;
 			Vector3 rayStart = new Vector3 (0.0f, 0.0f,
 				Mathf.Abs(bounds.size.z));
 			rayStart = Quaternion.Euler (0.0f, povDir, 0.0f) * rayStart;
@@ -229,7 +239,7 @@ public class Predicates : MonoBehaviour {
 			bounds = Helper.GetObjectWorldSize (obj);
 
 			GameObject camera = GameObject.Find ("Main Camera");
-			float povDir = camera.transform.eulerAngles.y;
+			float povDir = cameraRelativeDirections ? camera.transform.eulerAngles.y : 0.0f;
 			Vector3 rayStart = new Vector3 (0.0f, 0.0f,
 				Mathf.Abs(bounds.size.z));
 			rayStart = Quaternion.Euler (0.0f, povDir+180.0f, 0.0f) * rayStart;
@@ -258,7 +268,7 @@ public class Predicates : MonoBehaviour {
 			bounds = Helper.GetObjectWorldSize (obj);
 
 			GameObject camera = GameObject.Find ("Main Camera");
-			float povDir = camera.transform.eulerAngles.y;
+			float povDir = cameraRelativeDirections ? camera.transform.eulerAngles.y : 0.0f;
 			Vector3 rayStart = new Vector3 (0.0f, 0.0f,
 				Mathf.Abs(bounds.size.z));
 			rayStart = Quaternion.Euler (0.0f, povDir+270.0f, 0.0f) * rayStart;
@@ -287,7 +297,7 @@ public class Predicates : MonoBehaviour {
 			bounds = Helper.GetObjectWorldSize (obj);
 
 			GameObject camera = GameObject.Find ("Main Camera");
-			float povDir = camera.transform.eulerAngles.y;
+			float povDir = cameraRelativeDirections ? camera.transform.eulerAngles.y : 0.0f;
 			Vector3 rayStart = new Vector3 (0.0f, 0.0f,
 				Mathf.Abs(bounds.size.z));
 			rayStart = Quaternion.Euler (0.0f, povDir+90.0f, 0.0f) * rayStart;
@@ -426,6 +436,34 @@ public class Predicates : MonoBehaviour {
 	// OUT: none
 	public void PUT(object[] args)
 	{
+		// look for agent
+		GameObject agent = GameObject.FindGameObjectWithTag("Agent");
+		if (agent != null) {
+			// add preconditions
+			if (!SatisfactionTest.IsSatisfied (string.Format ("reach({0})", (args [0] as GameObject).name))) {
+				eventManager.InsertEvent (string.Format ("reach({0})", (args [0] as GameObject).name), 0);
+				eventManager.InsertEvent (string.Format ("grasp({0})", (args [0] as GameObject).name), 1);
+				eventManager.InsertEvent (eventManager.evalOrig[string.Format("put({0},{1})", (args [0] as GameObject).name, Helper.VectorToParsable((Vector3)args [1]))], 2);
+				eventManager.RemoveEvent (3);
+				return;
+			}
+			else {
+				if (!SatisfactionTest.IsSatisfied (string.Format ("grasp({0})", (args [0] as GameObject).name))) {
+					eventManager.InsertEvent (string.Format ("grasp({0})", (args [0] as GameObject).name), 0);
+					eventManager.InsertEvent (eventManager.evalOrig[string.Format("put({0},{1})", (args [0] as GameObject).name, Helper.VectorToParsable((Vector3)args [1]))], 1);
+					eventManager.RemoveEvent (2);
+					return;
+				}
+			}
+
+			// add postconditions
+			if (args [args.Length - 1] is bool) {
+				if ((bool)args [args.Length - 1] == true) {
+					eventManager.InsertEvent (string.Format ("ungrasp({0})", (args [0] as GameObject).name), 1);
+				}
+			}
+		}
+
 		// override physics rigging
 		foreach (object arg in args) {
 			if (arg is GameObject) {
@@ -438,7 +476,7 @@ public class Predicates : MonoBehaviour {
 
 		Helper.PrintRDFTriples (rdfTriples);
 
-		string prep = rdfTriples [0].Item2.Replace ("put", "");
+		string prep = rdfTriples.Count > 0 ? rdfTriples [0].Item2.Replace ("put", "") : "";
 
 		if (prep == "_on") {	// fix for multiple RDF triples
 			if (args [0] is GameObject) {
@@ -461,14 +499,14 @@ public class Predicates : MonoBehaviour {
 					//Debug.Log (Helper.VectorToParsable(bounds.min));
 
 					float yAdjust = (theme.transform.position.y - themeBounds.center.y);
-					Debug.Log ("Y-size = " + (themeBounds.center.y-themeBounds.min.y));
+					Debug.Log ("Y-size = " + (themeBounds.center.y - themeBounds.min.y));
 					Debug.Log ("put_on: " + (theme.transform.position.y - themeBounds.min.y).ToString ());
 
 					// compose computed on(a) into put(x,y) formula
 					// if the glove don't fit, you must acquit! (recompute)
 					Vector3 loc = ((Vector3)args [1]);	// coord of "on"
 					if (dest.GetComponent<Voxeme> ().voxml.Type.Concavity == "Concave") {
-						if (!Helper.FitsIn(themeBounds,destBounds)) {
+						if (!Helper.FitsIn (themeBounds, destBounds)) {
 							loc = new Vector3 (dest.transform.position.x,
 								destBounds.max.y,
 								dest.transform.position.z);
@@ -481,7 +519,7 @@ public class Predicates : MonoBehaviour {
 							targetPosition = new Vector3 (loc.x,
 								loc.y + (themeBounds.center.y - themeBounds.min.y) + yAdjust,
 								loc.z);
-						}
+						} 
 						else {
 							targetPosition = loc;
 						}
@@ -497,15 +535,15 @@ public class Predicates : MonoBehaviour {
 
 							voxComponent.targetPosition = targetPosition;
 
-							if (voxComponent.isGrasped) {
-								voxComponent.targetPosition = (voxComponent.targetPosition -
-									(voxComponent.gameObject.transform.position- voxComponent.graspTracker.position));
-							}
+							/*if (voxComponent.isGrasped) {
+								voxComponent.targetPosition = voxComponent.targetPosition +
+								(voxComponent.grasperCoord.position - voxComponent.gameObject.transform.position);
+							}*/
 						}
 					}
 				}
 			}
-		}
+		} 
 		else if (prep == "_in") {	// fix for multiple RDF triples
 			if (args [0] is GameObject) {
 				if (args [1] is Vector3) {
@@ -519,7 +557,7 @@ public class Predicates : MonoBehaviour {
 					//Debug.Log (Helper.VectorToParsable(bounds.min));
 
 					float yAdjust = (theme.transform.position.y - themeBounds.center.y);
-					Debug.Log ("Y-size = " + (themeBounds.center.y-themeBounds.min.y));
+					Debug.Log ("Y-size = " + (themeBounds.center.y - themeBounds.min.y));
 					Debug.Log ("put_in: " + (theme.transform.position.y - themeBounds.min.y).ToString ());
 
 					// compose computed in(a) into put(x,y) formula
@@ -549,7 +587,7 @@ public class Predicates : MonoBehaviour {
 								dest.transform.position.z);
 							Debug.Log (destBounds.max.y);
 						}
-					}
+					} 
 					else {
 						targetRotation = new Vector3 (float.NaN, float.NaN, float.NaN);
 					}
@@ -560,12 +598,12 @@ public class Predicates : MonoBehaviour {
 								targetPosition = new Vector3 (loc.x,
 									loc.y + (themeBounds.center.y - themeBounds.min.y) + yAdjust,
 									loc.z);
-							}
+							} 
 							else {
 								targetPosition = loc;
 							}
 						}
-					}
+					} 
 					else {
 						targetPosition = new Vector3 (float.NaN, float.NaN, float.NaN);
 					}
@@ -582,10 +620,15 @@ public class Predicates : MonoBehaviour {
 
 						voxComponent.targetPosition = targetPosition;
 						voxComponent.targetRotation = targetRotation;
+
+						/*if (voxComponent.isGrasped) {
+							voxComponent.targetPosition = voxComponent.targetPosition +
+							(voxComponent.grasperCoord.position - voxComponent.gameObject.transform.position);
+						}*/
 					}
 				}
 			}
-		}
+		} 
 		else if (prep == "_behind") {	// fix for multiple RDF triples
 			if (args [0] is GameObject) {
 				if (args [1] is Vector3) {
@@ -596,13 +639,13 @@ public class Predicates : MonoBehaviour {
 					Bounds destBounds = Helper.GetObjectWorldSize (dest);	// bounds of dest obj => alter to get interior enumerated by VoxML structure
 
 					GameObject mainCamera = GameObject.Find ("Main Camera");
-					float povDir = mainCamera.transform.eulerAngles.y;
+					float povDir = cameraRelativeDirections ? mainCamera.transform.eulerAngles.y : 0.0f;
 
 					float zAdjust = (theme.transform.position.z - themeBounds.center.z);
 
 					Vector3 rayStart = new Vector3 (0.0f, 0.0f,
-						Mathf.Abs(themeBounds.size.z));
-					rayStart = Quaternion.Euler (0.0f, povDir+180.0f, 0.0f) * rayStart;
+						                   Mathf.Abs (themeBounds.size.z));
+					rayStart = Quaternion.Euler (0.0f, povDir + 180.0f, 0.0f) * rayStart;
 					rayStart += theme.transform.position;
 					Vector3 contactPoint = Helper.RayIntersectionPoint (rayStart, theme);
 
@@ -611,19 +654,19 @@ public class Predicates : MonoBehaviour {
 
 					Vector3 loc = ((Vector3)args [1]);	// coord of "behind"
 
-					if (args[args.Length-1] is bool) {
+					if (args [args.Length - 1] is bool) {
 						if ((bool)args [args.Length - 1] == false) {	// compute satisfaction condition
-							Vector3 dir = new Vector3 (loc.x - (contactPoint.x-theme.transform.position.x),
-								loc.y - (contactPoint.y-theme.transform.position.y),
-								loc.z - (contactPoint.z-theme.transform.position.z) + zAdjust) - loc;
+							Vector3 dir = new Vector3 (loc.x - (contactPoint.x - theme.transform.position.x),
+								              loc.y - (contactPoint.y - theme.transform.position.y),
+								              loc.z - (contactPoint.z - theme.transform.position.z) + zAdjust) - loc;
 
-							targetPosition = dir+loc;
+							targetPosition = dir + loc;
 						}
 						else {
 							targetPosition = loc;
 						}
 
-						Debug.Log (Helper.VectorToParsable(targetPosition));
+						Debug.Log (Helper.VectorToParsable (targetPosition));
 
 						Voxeme voxComponent = theme.GetComponent<Voxeme> ();
 						if (voxComponent != null) {
@@ -633,11 +676,16 @@ public class Predicates : MonoBehaviour {
 							}
 
 							voxComponent.targetPosition = targetPosition;
+
+							/*if (voxComponent.isGrasped) {
+								voxComponent.targetPosition = voxComponent.targetPosition +
+								(voxComponent.grasperCoord.position - voxComponent.gameObject.transform.position);
+							}*/
 						}
 					}
 				}
 			}
-		}
+		} 
 		else if (prep == "_in_front") {	// fix for multiple RDF triples
 			if (args [0] is GameObject) {
 				if (args [1] is Vector3) {
@@ -648,12 +696,12 @@ public class Predicates : MonoBehaviour {
 					Bounds destBounds = Helper.GetObjectWorldSize (dest);	// bounds of dest obj => alter to get interior enumerated by VoxML structure
 
 					GameObject mainCamera = GameObject.Find ("Main Camera");
-					float povDir = mainCamera.transform.eulerAngles.y;
+					float povDir = cameraRelativeDirections ? mainCamera.transform.eulerAngles.y : 0.0f;
 
 					float zAdjust = (theme.transform.position.z - themeBounds.center.z);
 
 					Vector3 rayStart = new Vector3 (0.0f, 0.0f,
-						Mathf.Abs(themeBounds.size.z));
+						                   Mathf.Abs (themeBounds.size.z));
 					rayStart = Quaternion.Euler (0.0f, povDir, 0.0f) * rayStart;
 					rayStart += theme.transform.position;
 					Vector3 contactPoint = Helper.RayIntersectionPoint (rayStart, theme);
@@ -663,19 +711,19 @@ public class Predicates : MonoBehaviour {
 
 					Vector3 loc = ((Vector3)args [1]);	// coord of "in front"
 
-					if (args[args.Length-1] is bool) {
+					if (args [args.Length - 1] is bool) {
 						if ((bool)args [args.Length - 1] == false) {	// compute satisfaction condition
-							Vector3 dir = new Vector3 (loc.x - (contactPoint.x-theme.transform.position.x),
-								loc.y - (contactPoint.y-theme.transform.position.y),
-								loc.z - (contactPoint.z-theme.transform.position.z) + zAdjust) - loc;
+							Vector3 dir = new Vector3 (loc.x - (contactPoint.x - theme.transform.position.x),
+								              loc.y - (contactPoint.y - theme.transform.position.y),
+								              loc.z - (contactPoint.z - theme.transform.position.z) + zAdjust) - loc;
 
-							targetPosition = dir+loc;
+							targetPosition = dir + loc;
 						}
 						else {
 							targetPosition = loc;
 						}
 
-						Debug.Log (Helper.VectorToParsable(targetPosition));
+						Debug.Log (Helper.VectorToParsable (targetPosition));
 
 						Voxeme voxComponent = theme.GetComponent<Voxeme> ();
 						if (voxComponent != null) {
@@ -685,11 +733,16 @@ public class Predicates : MonoBehaviour {
 							}
 
 							voxComponent.targetPosition = targetPosition;
+
+							/*if (voxComponent.isGrasped) {
+								voxComponent.targetPosition = voxComponent.targetPosition +
+								(voxComponent.grasperCoord.position - voxComponent.gameObject.transform.position);
+							}*/
 						}
 					}
 				}
 			}
-		}
+		} 
 		else if (prep == "_left") {	// fix for multiple RDF triples
 			if (args [0] is GameObject) {
 				if (args [1] is Vector3) {
@@ -700,13 +753,13 @@ public class Predicates : MonoBehaviour {
 					Bounds destBounds = Helper.GetObjectWorldSize (dest);	// bounds of dest obj => alter to get interior enumerated by VoxML structure
 
 					GameObject mainCamera = GameObject.Find ("Main Camera");
-					float povDir = mainCamera.transform.eulerAngles.y;
+					float povDir = cameraRelativeDirections ? mainCamera.transform.eulerAngles.y : 0.0f;
 
 					float xAdjust = (theme.transform.position.x - themeBounds.center.x);
 
 					Vector3 rayStart = new Vector3 (0.0f, 0.0f,
-						Mathf.Abs(themeBounds.size.z));
-					rayStart = Quaternion.Euler (0.0f, povDir+90.0f, 0.0f) * rayStart;
+						                   Mathf.Abs (themeBounds.size.z));
+					rayStart = Quaternion.Euler (0.0f, povDir + 90.0f, 0.0f) * rayStart;
 					rayStart += theme.transform.position;
 					Vector3 contactPoint = Helper.RayIntersectionPoint (rayStart, theme);
 
@@ -715,19 +768,19 @@ public class Predicates : MonoBehaviour {
 
 					Vector3 loc = ((Vector3)args [1]);	// coord of "left"
 
-					if (args[args.Length-1] is bool) {
+					if (args [args.Length - 1] is bool) {
 						if ((bool)args [args.Length - 1] == false) {	// compute satisfaction condition
-							Vector3 dir = new Vector3 (loc.x - (contactPoint.x-theme.transform.position.x) + xAdjust,
-								loc.y - (contactPoint.y-theme.transform.position.y),
-								loc.z - (contactPoint.z-theme.transform.position.z)) - loc;
+							Vector3 dir = new Vector3 (loc.x - (contactPoint.x - theme.transform.position.x) + xAdjust,
+								              loc.y - (contactPoint.y - theme.transform.position.y),
+								              loc.z - (contactPoint.z - theme.transform.position.z)) - loc;
 
-							targetPosition = dir+loc;
-						}
+							targetPosition = dir + loc;
+						} 
 						else {
 							targetPosition = loc;
 						}
 
-						Debug.Log (Helper.VectorToParsable(targetPosition));
+						Debug.Log (Helper.VectorToParsable (targetPosition));
 
 						Voxeme voxComponent = theme.GetComponent<Voxeme> ();
 						if (voxComponent != null) {
@@ -737,11 +790,16 @@ public class Predicates : MonoBehaviour {
 							}
 
 							voxComponent.targetPosition = targetPosition;
+
+							/*if (voxComponent.isGrasped) {
+								voxComponent.targetPosition = voxComponent.targetPosition +
+								(voxComponent.grasperCoord.position - voxComponent.gameObject.transform.position);
+							}*/
 						}
 					}
 				}
 			}
-		}
+		} 
 		else if (prep == "_right") {	// fix for multiple RDF triples
 			if (args [0] is GameObject) {
 				if (args [1] is Vector3) {
@@ -752,13 +810,13 @@ public class Predicates : MonoBehaviour {
 					Bounds destBounds = Helper.GetObjectWorldSize (dest);	// bounds of dest obj => alter to get interior enumerated by VoxML structure
 
 					GameObject mainCamera = GameObject.Find ("Main Camera");
-					float povDir = mainCamera.transform.eulerAngles.y;
+					float povDir = cameraRelativeDirections ? mainCamera.transform.eulerAngles.y : 0.0f;
 
 					float xAdjust = (theme.transform.position.x - themeBounds.center.x);
 
 					Vector3 rayStart = new Vector3 (0.0f, 0.0f,
-						Mathf.Abs(themeBounds.size.z));
-					rayStart = Quaternion.Euler (0.0f, povDir+270.0f, 0.0f) * rayStart;
+						                   Mathf.Abs (themeBounds.size.z));
+					rayStart = Quaternion.Euler (0.0f, povDir + 270.0f, 0.0f) * rayStart;
 					rayStart += theme.transform.position;
 					Vector3 contactPoint = Helper.RayIntersectionPoint (rayStart, theme);
 
@@ -767,18 +825,18 @@ public class Predicates : MonoBehaviour {
 
 					Vector3 loc = ((Vector3)args [1]);	// coord of "left"
 
-					if (args[args.Length-1] is bool) {
+					if (args [args.Length - 1] is bool) {
 						if ((bool)args [args.Length - 1] == false) {
-							Vector3 dir = new Vector3 (loc.x - (contactPoint.x-theme.transform.position.x) + xAdjust,
-								loc.y - (contactPoint.y-theme.transform.position.y),
-								loc.z - (contactPoint.z-theme.transform.position.z)) - loc;
+							Vector3 dir = new Vector3 (loc.x - (contactPoint.x - theme.transform.position.x) + xAdjust,
+								              loc.y - (contactPoint.y - theme.transform.position.y),
+								              loc.z - (contactPoint.z - theme.transform.position.z)) - loc;
 
-							targetPosition = dir+loc;
-						}
+							targetPosition = dir + loc;
+						} 
 						else {
 							targetPosition = loc;
 						}
-						Debug.Log (Helper.VectorToParsable(targetPosition));
+						Debug.Log (Helper.VectorToParsable (targetPosition));
 
 						Voxeme voxComponent = theme.GetComponent<Voxeme> ();
 						if (voxComponent != null) {
@@ -788,6 +846,39 @@ public class Predicates : MonoBehaviour {
 							}
 
 							voxComponent.targetPosition = targetPosition;
+
+							/*if (voxComponent.isGrasped) {
+								voxComponent.targetPosition = voxComponent.targetPosition +
+								(voxComponent.grasperCoord.position - voxComponent.gameObject.transform.position);
+							}*/
+						}
+					}
+				}
+			}
+		}
+		else {
+			if (args [0] is GameObject) {
+				if (args [1] is Vector3) {
+					GameObject theme = args [0] as GameObject;	// get theme obj ("apple" in "put apple on plate")
+
+					Vector3 loc = ((Vector3)args [1]);	// coord
+
+					targetPosition = loc;
+
+					Debug.Log (Helper.VectorToParsable (targetPosition));
+
+					Voxeme voxComponent = theme.GetComponent<Voxeme> ();
+					if (voxComponent != null) {
+						if (!voxComponent.enabled) {
+							voxComponent.gameObject.transform.parent = null;
+							voxComponent.enabled = true;
+						}
+
+						voxComponent.targetPosition = targetPosition;
+
+						if (voxComponent.isGrasped) {
+							voxComponent.targetPosition = voxComponent.targetPosition +
+								(voxComponent.grasperCoord.position - voxComponent.gameObject.transform.position);
 						}
 					}
 				}
@@ -1244,6 +1335,10 @@ public class Predicates : MonoBehaviour {
 			GameObject leftGrasper = anim.GetBoneTransform (HumanBodyBones.LeftHand).transform.gameObject;
 			GameObject rightGrasper = anim.GetBoneTransform (HumanBodyBones.RightHand).transform.gameObject;
 			GameObject grasper;
+			GraspScript graspController = agent.GetComponent<GraspScript> ();
+			Transform leftGrasperCoord = graspController.leftGrasperCoord;
+			Transform rightGrasperCoord = graspController.rightGrasperCoord;
+			Vector3 offset = graspController.graspTrackerOffset;
 
 			if (args [args.Length - 1] is bool) {
 				if ((bool)args [args.Length - 1] == true) {
@@ -1268,7 +1363,6 @@ public class Predicates : MonoBehaviour {
 								Vector3 target;
 								if (grasper == leftGrasper) {
 									agent.GetComponent<GraspScript>().grasper = (int)Gestures.HandPose.LeftClaw;
-
 									if ((grasper.GetComponent<BoxCollider> ().bounds.size.x > bounds.size.x) &&
 									    (grasper.GetComponent<BoxCollider> ().bounds.size.z > bounds.size.z)) {
 										target = new Vector3 (bounds.center.x, bounds.center.y, bounds.center.z);
@@ -1276,7 +1370,7 @@ public class Predicates : MonoBehaviour {
 									else {
 										target = new Vector3 (bounds.min.x, bounds.center.y, bounds.center.z);
 									}
-									ikControl.leftHandObj.transform.position = target;
+									ikControl.leftHandObj.transform.position = target+offset;
 								}
 								else {
 									agent.GetComponent<GraspScript>().grasper = (int)Gestures.HandPose.RightClaw;
@@ -1287,7 +1381,7 @@ public class Predicates : MonoBehaviour {
 									else {
 										target = new Vector3 (bounds.max.x, bounds.center.y, bounds.center.z);
 									}
-									ikControl.rightHandObj.transform.position = target;
+									ikControl.rightHandObj.transform.position = target+offset;
 								}
 							}
 						}
@@ -1302,34 +1396,48 @@ public class Predicates : MonoBehaviour {
 	public void GRASP(object[] args)
 	{
 		GameObject agent = GameObject.FindGameObjectWithTag ("Agent");
+
 		if (agent != null) {
+			Bounds bounds = Helper.GetObjectWorldSize((args[0] as GameObject));
 			Animator anim = agent.GetComponentInChildren<Animator> ();
 			GameObject leftGrasper = anim.GetBoneTransform (HumanBodyBones.LeftHand).transform.gameObject;
 			GameObject rightGrasper = anim.GetBoneTransform (HumanBodyBones.RightHand).transform.gameObject;
 			GameObject grasper;
+			Transform leftGraspTracker = agent.GetComponent<IKControl> ().leftHandObj;
+			Transform rightGraspTracker = agent.GetComponent<IKControl> ().rightHandObj;
+			Vector3 offset = agent.GetComponent<GraspScript> ().graspTrackerOffset;
+
+			// make sure we're reaching toward the object first
+			if (!bounds.Contains(leftGraspTracker.position-offset) && 
+				!bounds.Contains(rightGraspTracker.position-offset)) {
+				eventManager.InsertEvent (string.Format ("reach({0})", (args[0] as GameObject).name), 0);
+				//eventManager.RemoveEvent (eventManager.events.Count - 1);
+				return;
+			}
 
 			if (args [args.Length - 1] is bool) {
 				if ((bool)args [args.Length - 1] == true) {
 					foreach (object arg in args) {
 						if (arg is GameObject) {
-							GameObject leftGrasperCoord = agent.GetComponent<GraspScript>().leftGrasperCoord;
-							GameObject rightGrasperCoord = agent.GetComponent<GraspScript>().rightGrasperCoord;
-
-							if (leftGrasper.GetComponent<BoxCollider>().bounds.Intersects(Helper.GetObjectWorldSize(arg as GameObject))) {
+							//Debug.Log (rightGrasper.GetComponent<BoxCollider> ().bounds);
+							//Debug.Log (bounds);
+							if (leftGrasper.GetComponent<BoxCollider>().bounds.Intersects(bounds)) {
 								(arg as GameObject).GetComponent<Rigging> ().ActivatePhysics (false);
 								RiggingHelper.RigTo ((arg as GameObject), leftGrasper);
 								Voxeme voxeme = (arg as GameObject).GetComponent<Voxeme> ();
 								voxeme.enabled = true;
 								voxeme.isGrasped = true;
 								voxeme.graspTracker = agent.GetComponent<IKControl>().leftHandObj;
+								voxeme.grasperCoord = agent.GetComponent<GraspScript>().leftGrasperCoord;
 							}
-							else if (rightGrasper.GetComponent<BoxCollider>().bounds.Intersects(Helper.GetObjectWorldSize(arg as GameObject))) {
+							else if (rightGrasper.GetComponent<BoxCollider>().bounds.Intersects(bounds)) {
 								(arg as GameObject).GetComponent<Rigging> ().ActivatePhysics (false);
 								RiggingHelper.RigTo ((arg as GameObject), rightGrasper);
 								Voxeme voxeme = (arg as GameObject).GetComponent<Voxeme> ();
 								voxeme.enabled = true;
 								voxeme.isGrasped = true;
 								voxeme.graspTracker = agent.GetComponent<IKControl>().rightHandObj;
+								voxeme.grasperCoord = agent.GetComponent<GraspScript>().rightGrasperCoord;
 							}
 							else {
 								OutputHelper.PrintOutput("I can't grasp the " + (arg as GameObject).name + ".  I'm not touching it."); 
@@ -1350,7 +1458,10 @@ public class Predicates : MonoBehaviour {
 			Animator anim = agent.GetComponentInChildren<Animator> ();
 			GameObject leftGrasper = anim.GetBoneTransform (HumanBodyBones.LeftHand).transform.gameObject;
 			GameObject rightGrasper = anim.GetBoneTransform (HumanBodyBones.RightHand).transform.gameObject;
-			GameObject grasper;
+			GameObject grasper = null;
+			Transform leftGrasperCoord = agent.GetComponent<GraspScript>().leftGrasperCoord;
+			Transform rightGrasperCoord = agent.GetComponent<GraspScript>().rightGrasperCoord;
+			GraspScript graspController = agent.GetComponent<GraspScript> ();
 
 			if (args [args.Length - 1] is bool) {
 				if ((bool)args [args.Length - 1] == true) {
@@ -1359,8 +1470,24 @@ public class Predicates : MonoBehaviour {
 							Voxeme voxComponent = (arg as GameObject).GetComponent<Voxeme> ();
 							if (voxComponent != null) {
 								if (voxComponent.isGrasped) {
-									RiggingHelper.UnRig ((arg as GameObject), voxComponent.graspTracker.gameObject);
+									//voxComponent.transform.position = voxComponent.transform.position + 
+									//	(voxComponent.grasperCoord.position - voxComponent.gameObject.transform.position);
+
+									if (voxComponent.grasperCoord == leftGrasperCoord) {
+										grasper = leftGrasper;
+									}
+									else if (voxComponent.grasperCoord == rightGrasperCoord) {
+										grasper = rightGrasper;
+									}
+									RiggingHelper.UnRig ((arg as GameObject), grasper);
+									graspController.grasper = (int)Gestures.HandPose.Neutral;
+									//agent.GetComponent<GraspScript>().isGrasping = false;
+									agent.GetComponent<IKControl> ().leftHandObj.position = graspController.leftDefaultPosition;
+									agent.GetComponent<IKControl> ().rightHandObj.position = graspController.rightDefaultPosition;
+
 									voxComponent.isGrasped = false;
+									voxComponent.graspTracker = null;
+									voxComponent.grasperCoord = null;
 								}
 							}
 						}
