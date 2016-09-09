@@ -15,6 +15,8 @@ public class EventManager : MonoBehaviour {
 	public List<String> events = new List<String>();
 	public OrderedDictionary eventsStatus = new OrderedDictionary();
 	public ObjectSelector objSelector;
+	public Dictionary<String,String> evalOrig = new Dictionary<String, String>();
+
 	string skolemized, evaluated;
 	MethodInfo methodToCall;
 	public Predicates preds;
@@ -45,7 +47,7 @@ public class EventManager : MonoBehaviour {
 				for (int i = 0; i < events.Count - 1; i++) {
 					events [i] = events [i + 1];
 				}
-				events.RemoveAt (events.Count - 1);
+				RemoveEvent (events.Count - 1);
 				//Debug.Log (events.Count);
 
 				if (events.Count > 0) {
@@ -56,6 +58,14 @@ public class EventManager : MonoBehaviour {
 				}
 			}
 		}
+	}
+
+	public void RemoveEvent(int index) {
+		events.RemoveAt (index);
+	}
+
+	public void InsertEvent(String commandString, int before) {
+		events.Insert(before,commandString);
 	}
 
 	public void QueueEvent(String commandString) {
@@ -82,7 +92,7 @@ public class EventManager : MonoBehaviour {
 		//EvaluateSkolemizedCommand(skolemized);
 
 		if (!EvaluateSkolemConstants (EvaluationPass.Attributes)) {
-			events.RemoveAt (events.Count - 1);
+			RemoveEvent (events.Count - 1);
 			return;
 		}
 		string objectResolved = ApplySkolems (skolemized);
@@ -98,12 +108,15 @@ public class EventManager : MonoBehaviour {
 		}
 
 		if (!EvaluateSkolemConstants (EvaluationPass.RelationsAndFunctions)) {
-			events.RemoveAt (events.Count - 1);
+			RemoveEvent (events.Count - 1);
 			return;
 		}
 
 		evaluated = ApplySkolems (skolemized);
 		Debug.Log ("Evaluated command: " + evaluated);
+		if (!evalOrig.ContainsKey (evaluated)) {
+			evalOrig.Add (evaluated, command);
+		}
 		events [events.IndexOf (command)] = evaluated;
 	}
 

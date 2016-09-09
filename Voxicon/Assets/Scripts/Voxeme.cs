@@ -24,7 +24,6 @@ public class Voxeme : MonoBehaviour {
 	public Vector3 targetScale;
 	public float moveSpeed = 1.0f;
 	public float turnSpeed = 2.5f;
-	//public MajorAxis majorAxis;
 
 	public float minYBound;
 
@@ -32,6 +31,7 @@ public class Voxeme : MonoBehaviour {
 
 	public bool isGrasped = false;
 	public Transform graspTracker = null;
+	public Transform grasperCoord = null;
 
 	// Use this for initialization
 	void Start () {
@@ -69,11 +69,12 @@ public class Voxeme : MonoBehaviour {
 					}
 				}
 				else {
-					if (graspTracker.transform.position != targetPosition) {
-						Vector3 offset = MoveToward (targetPosition);
+					GraspScript graspController = grasperCoord.root.gameObject.GetComponent<GraspScript> ();
+					if (graspTracker.transform.position != targetPosition+graspController.graspTrackerOffset) {
+						Vector3 offset = MoveToward (targetPosition+graspController.graspTrackerOffset);
 
 						if (offset.sqrMagnitude <= 0.01f) {
-							graspTracker.transform.position = targetPosition;
+							graspTracker.transform.position = targetPosition+graspController.graspTrackerOffset;
 						}
 					}
 				}
@@ -244,9 +245,6 @@ public class Voxeme : MonoBehaviour {
 			return offset;
 		}
 		else {
-			GameObject grasperCoord = GameObject.Find ("GrasperCoord");
-
-
 			Vector3 offset = graspTracker.transform.position - target;
 			Vector3 normalizedOffset = Vector3.Normalize (offset);
 

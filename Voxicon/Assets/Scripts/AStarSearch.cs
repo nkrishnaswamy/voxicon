@@ -9,7 +9,7 @@ public class AStarSearch : MonoBehaviour {
 	Bounds embeddingSpaceBounds;
 	List<GameObject> debugVisual = new List<GameObject> ();
 
-	Vector3 defaultIncrement = new Vector3 (1.0f, 1.0f, 1.0f);
+	public Vector3 defaultIncrement = Vector3.one;
 	public Vector3 increment;
 	public List<Vector3> nodes = new List<Vector3>();
 	public List<Vector3> plannedPath;

@@ -208,7 +208,8 @@ namespace Global {
 						} else if (triple.Item3 == "") {
 							triple.Item3 = s;
 						}
-					} else {
+					}
+					else {
 						triple.Item2 = triple.Item2 + s + "_";
 					}
 				}
@@ -219,6 +220,10 @@ namespace Global {
 		}
 
 		public static void PrintRDFTriples(List<Triple<String,String,String>> triples) {
+			if (triples.Count == 0) {
+				Debug.Log ("No RDF triples to print");
+			}
+
 			foreach (Triple<String,String,String> triple in triples) {
 				Debug.Log (triple.Item1 + " " + triple.Item2 + " " + triple.Item3);
 			}
