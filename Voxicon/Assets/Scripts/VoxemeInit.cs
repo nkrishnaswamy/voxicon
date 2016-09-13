@@ -8,7 +8,8 @@ public class VoxemeInit : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		ObjectSelector objSelector = GameObject.Find ("BlocksWorld").GetComponent<ObjectSelector> ();
-		
+		Macros macros = GameObject.Find ("BehaviorController").GetComponent<Macros> ();
+
 		/* MAKE GLOBAL OBJECT RUNTIME ALTERATIONS */
 
 		// get all objects
@@ -95,6 +96,8 @@ public class VoxemeInit : MonoBehaviour {
 				}
 			}
 		}
+
+		macros.PopulateMacros ();
 	}
 	
 	// Update is called once per frame

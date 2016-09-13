@@ -80,7 +80,7 @@ public class Voxeme : MonoBehaviour {
 				}
 			}
 			else {	// cannot execute motion
-				OutputHelper.PrintOutput("I'm sorry, I can't do that.");
+				OutputHelper.PrintOutput(OutputController.Role.Affector,"I'm sorry, I can't do that.");
 				targetPosition = transform.position;
 			}
 		}
@@ -130,7 +130,7 @@ public class Voxeme : MonoBehaviour {
 			}
 		}
 		else {	// cannot execute motion
-			OutputHelper.PrintOutput("I'm sorry, I can't do that.");
+			OutputHelper.PrintOutput(OutputController.Role.Affector,"I'm sorry, I can't do that.");
 			targetPosition = transform.position;
 		}
 
@@ -408,6 +408,7 @@ public class Voxeme : MonoBehaviour {
 			}
 		}
 
+#if UNITY_EDITOR
 		using (System.IO.StreamWriter file = 
 			new System.IO.StreamWriter(gameObject.name+@".txt"))
 		{
@@ -449,5 +450,6 @@ public class Voxeme : MonoBehaviour {
 				}
 			}
 		}
+#endif
 	}
 }

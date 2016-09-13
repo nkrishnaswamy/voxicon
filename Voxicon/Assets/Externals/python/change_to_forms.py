@@ -59,7 +59,8 @@ def parse_sent(sent):
                  "in front of",
                  "near",
                  "left of",
-                 "right of"]
+                 "right of",
+                 "center of"]
                  
     attributes = ["brown",
                   "blue",
@@ -86,6 +87,9 @@ def parse_sent(sent):
         elif (i+1 < len(s) and s[i:i+2] == ['right', 'of']):
             form = form + ',right('
             s[i+1] = ""
+        elif (i+1 < len(s) and s[i:i+2] == ['center', 'of']):
+            form = form + ',center('
+            s[i+1] = ""
         elif (i+1 < len(s) and s[i:i+2] == ['paper', 'sheet']):
             form = form + 'paper_sheet'
             s[i+1] = ""
@@ -100,11 +104,11 @@ def parse_sent(sent):
         elif s[i] in objects:
             form = form + s[i]
     
-        if s[i] == 'edge':
-            form = form + 'edge'
-
-        if s[i] == 'center':
-            form = form + 'center'
+    #if s[i] == 'edge':
+    #       form = form + 'edge'
+    #
+    #   if s[i] == 'center':
+    #       form = form + 'center'
 
     for i in range(form.count('(')-form.count(')')):
         form = form + ')'

@@ -49,6 +49,28 @@ namespace Satisfaction {
 					}
 				}
 			}
+			else if (predString == "slide") {	// satisfy slide
+				GameObject theme = GameObject.Find (argsStrings [0] as String);
+				if (theme != null) {
+					//Debug.Log(Helper.ConvertVectorToParsable(obj.transform.position) + " " + (String)argsStrings[1]);
+					//Debug.Log(obj.transform.position);
+					//Debug.Log (Quaternion.Angle(obj.transform.rotation,Quaternion.Euler(Helper.ParsableToVector((String)argsStrings[1]))));
+					Voxeme voxComponent = theme.GetComponent<Voxeme>();
+					Vector3 testLocation = voxComponent.isGrasped ? voxComponent.graspTracker.transform.position : theme.transform.position;
+
+					if (Helper.CloseEnough (testLocation, Helper.ParsableToVector ((String)argsStrings [1]))) {
+						if (voxComponent.isGrasped) {
+							//preds.UNGRASP (new object[]{ theme, true });
+							//em.ExecuteCommand(string.Format("put({0},{1})",theme.name,(String)argsStrings [1]));
+							theme.transform.position = Helper.ParsableToVector ((String)argsStrings [1]);
+							theme.transform.rotation = Quaternion.identity;
+						}
+						satisfied = true;
+						ReasonFromAffordances (predString, voxComponent);	// we need to talk (do physics reactivation in here?) // replace ReevaluateRelationships
+						//theme.GetComponent<Rigging> ().ActivatePhysics (true);
+					}
+				}
+			}
 			else if (predString == "flip") {	// satisfy flip
 				GameObject theme = GameObject.Find (argsStrings [0] as String);
 				if (theme != null) {
@@ -139,20 +161,20 @@ namespace Satisfaction {
 								if (matches.Count == 0) {
 									go = GameObject.Find (arg as String);
 									if (go == null) {
-										OutputHelper.PrintOutput (string.Format("What is a \"{0}\"?", (arg as String)));
+										OutputHelper.PrintOutput (OutputController.Role.Affector,string.Format("What is a \"{0}\"?", (arg as String)));
 										return false;	// abort
 									}
 								}
 								else if (matches.Count == 1) {
 									go = matches[0];
 									if (go == null) {
-										OutputHelper.PrintOutput (string.Format ("What is a \"{0}\"?", (arg as String)));
+										OutputHelper.PrintOutput (OutputController.Role.Affector,string.Format ("What is a \"{0}\"?", (arg as String)));
 										return false;	// abort
 									}
 								}
 								else {
 									Debug.Log (string.Format ("Which {0}?", (arg as String)));
-									OutputHelper.PrintOutput (string.Format("Which {0}?", (arg as String)));
+									OutputHelper.PrintOutput (OutputController.Role.Affector,string.Format("Which {0}?", (arg as String)));
 									return false;	// abort
 								}
 							}
@@ -170,12 +192,12 @@ namespace Satisfaction {
 					object obj = methodToCall.Invoke (preds, new object[]{ objs.ToArray () });
 				}
 				else {
-					OutputHelper.PrintOutput ("Sorry, what does " + "\"" + pred + "\" mean?");
+					OutputHelper.PrintOutput (OutputController.Role.Affector,"Sorry, what does " + "\"" + pred + "\" mean?");
 					return false;
 				}
 			}
 			else {
-				OutputHelper.PrintOutput ("Sorry, I don't understand \"" + command + ".\"");
+				OutputHelper.PrintOutput (OutputController.Role.Affector,"Sorry, I don't understand \"" + command + ".\"");
 				return false;
 			}
 
@@ -184,8 +206,17 @@ namespace Satisfaction {
 
 		public static void ReasonFromAffordances(String program, Voxeme obj) {
 			Regex reentrancyForm = new Regex (@"\[[0-9]+\]");
-			List<string> supportedRelations = new List<string> (new string[]{ @"on\(.*\)",	// list of supported relations
-				@"in\(.*\)"});	// to do: move externally, draw from voxeme database
+			List<string> supportedRelations = new List<string> (
+				new string[]{
+					@"on\(.*\)",	// list of supported relations
+					@"in\(.*\)" });	// TODO: move externally, draw from voxeme database
+			List<string> genericRelations = new List<string> (
+				new string[]{
+					@"behind\(.*\)",	// list of habitat-independent relations
+					@"in_front\(.*\)",
+					@"left\(.*\)",
+					@"right\(.*\)",
+					@"touching\(.*\)" });	// TODO: move externally, draw from voxeme database
 		
 			// get relation tracker
 			RelationTracker relationTracker = (RelationTracker)GameObject.Find ("BehaviorController").GetComponent("RelationTracker");
@@ -257,6 +288,7 @@ namespace Satisfaction {
 																result = Helper.GetTopPredicate (result);
 																Debug.Log (string.Format ("{0}: {1} {2}s {3}",
 																	affStr.Affordances [h] [i].Item2.Item1, test.gameObject.name, result, obj.gameObject.name));
+																// TODO: maybe switch object order here below => passivize relation?
 																relationTracker.AddNewRelation (new List<GameObject>{ test.gameObject, obj.gameObject }, result);
 
 																if (result == "support") {
@@ -266,13 +298,20 @@ namespace Satisfaction {
 																	RiggingHelper.RigTo (obj.gameObject, test.gameObject);
 																}
 															}
-															else {
-																// add generic relations--left, right, etc.
-															}
 														}
 													}
 												}
 											}
+										}
+									}
+
+									// habitat-independent relation handling
+									foreach (string rel in genericRelations) {
+										string relation = rel.Split('\\')[0];	// not using relation as regex here
+
+										Debug.Log (string.Format ("Is {0} {1} {2}?", obj.gameObject.name, relation, test.gameObject.name));
+										if (TestRelation (obj.gameObject, relation, test.gameObject)) {
+											relationTracker.AddNewRelation (new List<GameObject>{ obj.gameObject, test.gameObject }, relation);
 										}
 									}
 								}
@@ -310,7 +349,7 @@ namespace Satisfaction {
 				habitats.Add ("Y");
 			}
 
-			if (relation == "on") {	// needs to be fixed: PO, TPP(i), NTPP(i) for contacting regions along axis//
+			if (relation == "on") {	// TODO: needs to be fixed: PO, TPP(i), NTPP(i) for contacting regions along axis
 				foreach (string axis in habitats) {
 					if ((Helper.GetMostImmediateParentVoxeme (obj2.gameObject).GetComponent<Voxeme> ().voxml.Type.Concavity == "Concave") &&
 					    (Helper.FitsIn (bounds1, bounds2))) {	// if test object is concave and placed object would fit inside
@@ -370,8 +409,36 @@ namespace Satisfaction {
 					r = RCC8.PO (bounds1, bounds2) || RCC8.ProperPart (bounds1, bounds2);
 				}
 			}
+			// add generic relations--left, right, etc.
+			// TODO: must transform to camera perspective if relative persp is on
 			else if (relation == "behind") {
-				r = RCC8.EC(bounds1, bounds2) || RCC8.DC(bounds1, bounds2);
+				r = (Vector3.Distance (
+					new Vector3 (obj1.gameObject.transform.position.x, obj1.gameObject.transform.position.y, obj2.gameObject.transform.position.z),
+					obj2.gameObject.transform.position) <= Constants.EPSILON);
+				r &= (obj1.gameObject.transform.position.z > obj2.gameObject.transform.position.z);
+
+			}
+			else if (relation == "in_front") {
+				r = (Vector3.Distance (
+					new Vector3 (obj1.gameObject.transform.position.x, obj1.gameObject.transform.position.y, obj2.gameObject.transform.position.z),
+					obj2.gameObject.transform.position) <= Constants.EPSILON);
+				r &= (obj1.gameObject.transform.position.x < obj2.gameObject.transform.position.x);
+
+			}
+			else if (relation == "left") {
+				r = (Vector3.Distance (
+					new Vector3 (obj2.gameObject.transform.position.x, obj1.gameObject.transform.position.y, obj1.gameObject.transform.position.z),
+					obj2.gameObject.transform.position) <= Constants.EPSILON);
+				r &= (obj1.gameObject.transform.position.x < obj2.gameObject.transform.position.x);
+			}
+			else if (relation == "right") {
+				r = (Vector3.Distance (
+					new Vector3 (obj2.gameObject.transform.position.x, obj1.gameObject.transform.position.y, obj1.gameObject.transform.position.z),
+					obj2.gameObject.transform.position) <= Constants.EPSILON);
+				r &= (obj1.gameObject.transform.position.x > obj2.gameObject.transform.position.x);
+			}
+			else if (relation == "touching") {
+				r = RCC8.EC(bounds1, bounds2);
 			}
 			else {
 			}

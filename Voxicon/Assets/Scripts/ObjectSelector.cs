@@ -9,6 +9,7 @@ public class ObjectSelector : MonoBehaviour {
 	public List<Voxeme> allVoxemes = new List<Voxeme> ();
 
 	public List<GameObject> selectedObjects = new List<GameObject>();
+	public List<GameObject> disabledObjects = new List<GameObject>();
 	
 	VoxemeInspector inspector;
 	

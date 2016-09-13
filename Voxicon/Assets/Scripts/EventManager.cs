@@ -32,6 +32,16 @@ public class EventManager : MonoBehaviour {
 		RelationsAndFunctions
 	}
 
+	public event EventHandler EventComplete;
+
+	public void OnEventComplete(object sender, EventArgs e)
+	{
+		if (EventComplete != null)
+		{
+			EventComplete(this, e);
+		}
+	}
+
 	// Use this for initialization
 	void Start () {
 		preds = gameObject.GetComponent<Predicates> ();
@@ -54,7 +64,8 @@ public class EventManager : MonoBehaviour {
 					ExecuteNextCommand ();
 				}
 				else {
-					OutputHelper.PrintOutput ("OK, I did it.");
+					OutputHelper.PrintOutput (OutputController.Role.Affector,"OK, I did it.");
+					OnEventComplete (this, EventArgs.Empty);
 				}
 			}
 		}
@@ -151,7 +162,7 @@ public class EventManager : MonoBehaviour {
 						if (matches.Count <= 1) {
 							GameObject go = GameObject.Find (arg as String);
 							if (go == null) {
-								OutputHelper.PrintOutput (string.Format("What is a \"{0}\"?", (arg as String)));
+								OutputHelper.PrintOutput (OutputController.Role.Affector,string.Format("What is a \"{0}\"?", (arg as String)));
 								return;	// abort
 							}
 							objs.Add (go);
@@ -375,7 +386,7 @@ public class EventManager : MonoBehaviour {
 										if (matches.Count == 0) {
 											GameObject go = GameObject.Find (arg as String);
 											if (go == null) {
-												OutputHelper.PrintOutput (string.Format("What is a \"{0}\"?", (arg as String)));
+												OutputHelper.PrintOutput (OutputController.Role.Affector,string.Format("What is a \"{0}\"?", (arg as String)));
 												return false;	// abort
 											}
 											objs.Add (go);
@@ -383,7 +394,7 @@ public class EventManager : MonoBehaviour {
 										else if (matches.Count == 1) {
 											GameObject go = matches[0];
 											if (go == null) {
-												OutputHelper.PrintOutput (string.Format("What is a \"{0}\"?", (arg as String)));
+												OutputHelper.PrintOutput (OutputController.Role.Affector,string.Format("What is a \"{0}\"?", (arg as String)));
 												return false;	// abort
 											}
 											objs.Add (go);
@@ -393,7 +404,7 @@ public class EventManager : MonoBehaviour {
 										}
 										else {
 											Debug.Log (string.Format ("Which {0}?", (arg as String)));
-											OutputHelper.PrintOutput (string.Format("Which {0}?", (arg as String)));
+											OutputHelper.PrintOutput (OutputController.Role.Affector,string.Format("Which {0}?", (arg as String)));
 											return false;	// abort
 										}
 									}
@@ -412,7 +423,7 @@ public class EventManager : MonoBehaviour {
 						methodToCall = preds.GetType ().GetMethod (pred.ToUpper());
 
 						if (methodToCall == null) {
-							OutputHelper.PrintOutput ("Sorry, what does " + "\"" + pred + "\" mean?");
+							OutputHelper.PrintOutput (OutputController.Role.Affector,"Sorry, what does " + "\"" + pred + "\" mean?");
 							return false;
 						}
 

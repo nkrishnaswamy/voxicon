@@ -21,11 +21,13 @@ public class Predicates : MonoBehaviour {
 	EventManager eventManager;
 	AStarSearch aStarSearch;
 	ObjectSelector objSelector;
+	Macros macros;
 
 	void Start () {
 		eventManager = gameObject.GetComponent<EventManager> ();
 		aStarSearch = GameObject.Find ("BlocksWorld").GetComponent<AStarSearch> ();
 		objSelector = GameObject.Find ("BlocksWorld").GetComponent<ObjectSelector> ();
+		macros = GameObject.Find ("BehaviorController").GetComponent<Macros> ();
 	}
 
 	/// <summary>
@@ -320,8 +322,21 @@ public class Predicates : MonoBehaviour {
 	// IN: Object (single element array)
 	// OUT: Location
 	public Vector3 CENTER(object[] args)
-	{
-		return ((GameObject)args[0]).transform.position;
+	{	// identical to TOP for now
+		Vector3 outValue = Vector3.zero;
+		if (args [0] is GameObject) {
+			GameObject obj = ((GameObject)args[0]);
+			Renderer[] renderers = obj.GetComponentsInChildren<Renderer>();
+			Bounds bounds = Helper.GetObjectWorldSize(obj);
+
+			Debug.Log("center: " + bounds.max.y);
+
+			//Debug.Log (bounds.ToString());
+			//Debug.Log (obj.transform.position.ToString());
+			outValue = new Vector3(bounds.center.x,bounds.max.y,bounds.center.z);
+		}
+
+		return outValue;
 	}
 
 	// IN: Object (single element array)
@@ -961,6 +976,34 @@ public class Predicates : MonoBehaviour {
 	// OUT: none
 	public void LIFT(object[] args)
 	{
+		// look for agent
+		GameObject agent = GameObject.FindGameObjectWithTag("Agent");
+		if (agent != null) {
+			// add preconditions
+			if (!SatisfactionTest.IsSatisfied (string.Format ("reach({0})", (args [0] as GameObject).name))) {
+				eventManager.InsertEvent (string.Format ("reach({0})", (args [0] as GameObject).name), 0);
+				eventManager.InsertEvent (string.Format ("grasp({0})", (args [0] as GameObject).name), 1);
+				eventManager.InsertEvent (eventManager.evalOrig [string.Format ("lift({0})", (args [0] as GameObject).name)], 1);
+				eventManager.RemoveEvent (3);
+				return;
+			}
+			else {
+				if (!SatisfactionTest.IsSatisfied (string.Format ("grasp({0})", (args [0] as GameObject).name))) {
+					eventManager.InsertEvent (string.Format ("grasp({0})", (args [0] as GameObject).name), 0);
+					eventManager.InsertEvent (eventManager.evalOrig [string.Format ("lift({0})", (args [0] as GameObject).name)], 1);
+					eventManager.RemoveEvent (2);
+					return;
+				}
+			}
+
+			// add postconditions
+			if (args [args.Length - 1] is bool) {
+				if ((bool)args [args.Length - 1] == true) {
+					eventManager.InsertEvent (string.Format ("ungrasp({0})", (args [0] as GameObject).name), 1);
+				}
+			}
+		}
+
 		// override physics rigging
 		foreach (object arg in args) {
 			if (arg is GameObject) {
@@ -1001,6 +1044,44 @@ public class Predicates : MonoBehaviour {
 	// OUT: none
 	public void SLIDE(object[] args)
 	{
+		// look for agent
+		GameObject agent = GameObject.FindGameObjectWithTag("Agent");
+		if (agent != null) {
+			// add preconditions
+			if (!SatisfactionTest.IsSatisfied (string.Format ("reach({0})", (args [0] as GameObject).name))) {
+				eventManager.InsertEvent (string.Format ("reach({0})", (args [0] as GameObject).name), 0);
+				eventManager.InsertEvent (string.Format ("grasp({0})", (args [0] as GameObject).name), 1);
+				if (args.Length > 2) {
+					eventManager.InsertEvent (eventManager.evalOrig [string.Format ("slide({0},{1})", (args [0] as GameObject).name, Helper.VectorToParsable ((Vector3)args [1]))], 1);
+				}
+				else {
+					eventManager.InsertEvent (eventManager.evalOrig [string.Format ("slide({0})", (args [0] as GameObject).name)], 1);
+				}
+				eventManager.RemoveEvent (3);
+				return;
+			}
+			else {
+				if (!SatisfactionTest.IsSatisfied (string.Format ("grasp({0})", (args [0] as GameObject).name))) {
+					eventManager.InsertEvent (string.Format ("grasp({0})", (args [0] as GameObject).name), 0);
+					if (args.Length > 2) {
+						eventManager.InsertEvent (eventManager.evalOrig [string.Format ("slide({0},{1})", (args [0] as GameObject).name, Helper.VectorToParsable ((Vector3)args [1]))], 1);
+					}
+					else {
+						eventManager.InsertEvent (eventManager.evalOrig [string.Format ("slide({0})", (args [0] as GameObject).name)], 1);
+					}
+					eventManager.RemoveEvent (2);
+					return;
+				}
+			}
+
+			// add postconditions
+			if (args [args.Length - 1] is bool) {
+				if ((bool)args [args.Length - 1] == true) {
+					eventManager.InsertEvent (string.Format ("ungrasp({0})", (args [0] as GameObject).name), 1);
+				}
+			}
+		}
+
 		// override physics rigging
 		/*foreach (object arg in args) {
 			if (arg is GameObject) {
@@ -1010,18 +1091,25 @@ public class Predicates : MonoBehaviour {
 
 		Vector3 targetPosition = Vector3.zero;
 
+		Helper.PrintRDFTriples (rdfTriples);
+
+		string prep = rdfTriples.Count > 0 ? rdfTriples [0].Item2.Replace ("slide", "") : "";
+
 		if (args [0] is GameObject) {
 			GameObject obj = (args [0] as GameObject);
-			targetPosition = new Vector3 (obj.transform.position.x+UnityEngine.Random.insideUnitSphere.x,
-				obj.transform.position.y, obj.transform.position.z+UnityEngine.Random.insideUnitSphere.z);
-			//Debug.Log (targetPosition);
-			//targetPosition = new Vector3 (obj.transform.position.x+1.0f, obj.transform.position.y, obj.transform.position.z);
-
 			Voxeme voxComponent = obj.GetComponent<Voxeme> ();
 			if (voxComponent != null) {
 				if (!voxComponent.enabled) {
 					voxComponent.gameObject.transform.parent = null;
 					voxComponent.enabled = true;
+				}
+
+				if (args [1] is Vector3) {
+					targetPosition  = (Vector3)args [1];
+				}
+				else {
+					targetPosition = new Vector3 (obj.transform.position.x + UnityEngine.Random.insideUnitSphere.x,
+						obj.transform.position.y, obj.transform.position.z + UnityEngine.Random.insideUnitSphere.z);
 				}
 
 				voxComponent.targetPosition = targetPosition;
@@ -1032,6 +1120,7 @@ public class Predicates : MonoBehaviour {
 		if (args[args.Length-1] is bool) {
 			if ((bool)args[args.Length-1] == false) {
 				eventManager.events[0] = "slide("+(args [0] as GameObject).name+","+Helper.VectorToParsable(targetPosition)+")";
+				Debug.Log (eventManager.events [0]);
 			}
 		}
 
@@ -1220,6 +1309,25 @@ public class Predicates : MonoBehaviour {
 	// OUT: none
 	public void CLOSE(object[] args)
 	{
+		if (args [0] is GameObject) {
+			GameObject theme = (args [0] as GameObject);
+
+			Voxeme voxComponent = theme.GetComponent<Voxeme> ();
+
+			if (voxComponent != null) {
+				if (voxComponent.voxml.Type.Concavity != "Concave") {
+					voxComponent.targetPosition = new Vector3 (float.NaN, float.NaN, float.NaN);
+					return;
+				}
+				else {
+					if (!SatisfactionTest.IsSatisfied (string.Format ("put(lid,on({0}))", (args [0] as GameObject).name))) {
+						eventManager.InsertEvent (string.Format ("put(lid,on({0}))", (args [0] as GameObject).name), 0);
+						eventManager.RemoveEvent (1);
+						return;
+					}
+				}
+			}
+		}
 	}
 
 	// IN: Objects
@@ -1250,14 +1358,19 @@ public class Predicates : MonoBehaviour {
 	// IN: Objects
 	// OUT: none
 	public void ENABLE(object[] args)
-	{	// it no work
+	{	
 		foreach (object obj in args) {
 			if (obj is GameObject) {
-				foreach (Renderer renderer in (obj as GameObject).GetComponentsInChildren<Renderer>()) {
-					renderer.enabled = true;
-				}
+				objSelector.disabledObjects.Remove((obj as GameObject));
+				(obj as GameObject).SetActive (true);
+//				foreach (Renderer renderer in (obj as GameObject).GetComponentsInChildren<Renderer>()) {
+//					renderer.enabled = true;
+//				}
 			}
 		}
+
+		macros.ClearMacros ();
+		macros.PopulateMacros ();
 	}
 
 	// IN: Objects
@@ -1266,11 +1379,16 @@ public class Predicates : MonoBehaviour {
 	{
 		foreach (object obj in args) {
 			if (obj is GameObject) {
-				foreach (Renderer renderer in (obj as GameObject).GetComponentsInChildren<Renderer>()) {
-					renderer.enabled = false;
-				}
+				objSelector.disabledObjects.Add((obj as GameObject));
+				(obj as GameObject).SetActive (false);
+//				foreach (Renderer renderer in (obj as GameObject).GetComponentsInChildren<Renderer>()) {
+//					renderer.enabled = false;
+//				}
 			}
 		}
+
+		macros.ClearMacros ();
+		macros.PopulateMacros ();
 	}
 
 	/* AGENT-DEPENDENT BEHAVIORS */
@@ -1440,7 +1558,7 @@ public class Predicates : MonoBehaviour {
 								voxeme.grasperCoord = agent.GetComponent<GraspScript>().rightGrasperCoord;
 							}
 							else {
-								OutputHelper.PrintOutput("I can't grasp the " + (arg as GameObject).name + ".  I'm not touching it."); 
+								OutputHelper.PrintOutput(OutputController.Role.Affector,"I can't grasp the " + (arg as GameObject).name + ".  I'm not touching it."); 
 							}
 						}
 					}
@@ -1503,24 +1621,41 @@ public class Predicates : MonoBehaviour {
 	{
 		GameObject agent = GameObject.FindGameObjectWithTag ("Agent");
 		if (agent != null) {
-			Animator anim = agent.GetComponent<Animator> ();
+			Animator anim = agent.GetComponentInChildren<Animator> ();
+			GameObject leftGrasper = anim.GetBoneTransform (HumanBodyBones.LeftHand).transform.gameObject;
+			GameObject rightGrasper = anim.GetBoneTransform (HumanBodyBones.RightHand).transform.gameObject;
+			GameObject grasper = null;
+			Transform leftGrasperCoord = agent.GetComponent<GraspScript>().leftGrasperCoord;
+			Transform rightGrasperCoord = agent.GetComponent<GraspScript>().rightGrasperCoord;
+			GraspScript graspController = agent.GetComponent<GraspScript> ();
+
 			if (args [args.Length - 1] is bool) {
 				if ((bool)args [args.Length - 1] == true) {
-					anim.CrossFade ("New State",0.2f);
-					anim.SetInteger ("grasp", 0);
 					foreach (object arg in args) {
 						if (arg is GameObject) {
-							GameObject grasperCoord = GameObject.Find ("GrasperCoord");
-							GameObject.Find ("ReachObject").transform.position = grasperCoord.transform.position;
-							//if ((arg as GameObject).transform.IsChildOf (anim.GetBoneTransform (HumanBodyBones.RightHand).transform)) {
-							if ((arg as GameObject).transform.IsChildOf (grasperCoord.transform)) {
-								(arg as GameObject).GetComponent<Rigging> ().ActivatePhysics (true);
-								//RiggingHelper.UnRig ((arg as GameObject), anim.GetBoneTransform (HumanBodyBones.RightHand).transform.gameObject);
-								RiggingHelper.UnRig ((arg as GameObject), grasperCoord);
-								(arg as GameObject).GetComponent<Voxeme> ().isGrasped = false;
-							}
-							else {
-								OutputHelper.PrintOutput("I can't drop the " + (arg as GameObject).name + ".  I'm not holding it."); 
+							Voxeme voxComponent = (arg as GameObject).GetComponent<Voxeme> ();
+							if (voxComponent != null) {
+								if (voxComponent.isGrasped) {
+									//voxComponent.transform.position = voxComponent.transform.position + 
+									//	(voxComponent.grasperCoord.position - voxComponent.gameObject.transform.position);
+
+									if (voxComponent.grasperCoord == leftGrasperCoord) {
+										grasper = leftGrasper;
+									}
+									else if (voxComponent.grasperCoord == rightGrasperCoord) {
+										grasper = rightGrasper;
+									}
+									RiggingHelper.UnRig ((arg as GameObject), grasper);
+									(arg as GameObject).GetComponent<Rigging> ().ActivatePhysics (true);
+									graspController.grasper = (int)Gestures.HandPose.Neutral;
+									//agent.GetComponent<GraspScript>().isGrasping = false;
+									//agent.GetComponent<IKControl> ().leftHandObj.position = graspController.leftDefaultPosition;
+									//agent.GetComponent<IKControl> ().rightHandObj.position = graspController.rightDefaultPosition;
+
+									voxComponent.isGrasped = false;
+									voxComponent.graspTracker = null;
+									voxComponent.grasperCoord = null;
+								}
 							}
 						}
 					}

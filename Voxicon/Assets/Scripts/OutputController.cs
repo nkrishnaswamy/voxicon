@@ -11,12 +11,30 @@ using Global;
 using Satisfaction;
 
 public class OutputController : MonoBehaviour {
+	public enum Role {
+		Planner,
+		Affector
+	}
+	public Role role;
+
+	public enum Alignment {
+		Left,
+		Right
+	}
+	public Alignment alignment;
+
+	public String outputLabel;
 	public String outputString;
 	public int outputHeight = 25;
-	public Rect outputRect;
+	public Rect outputRect = new Rect();
 
 	void Start() {
-		outputRect = new Rect (Screen.width - 370, 5, 365, outputHeight);
+		if (alignment == Alignment.Left) {
+			outputRect = new Rect (5, outputRect.y, 365, outputHeight);
+		}
+		else if (alignment == Alignment.Right) {
+			outputRect = new Rect (Screen.width - 370, outputRect.y, 365, outputHeight);
+		}
 	}
 
 	void Update() {
@@ -25,7 +43,7 @@ public class OutputController : MonoBehaviour {
 	void OnGUI() {
 		GUILayout.BeginArea (outputRect);
 		GUILayout.BeginHorizontal();
-		GUILayout.Label("Computer:");
+		GUILayout.Label(outputLabel+":");
 		outputString = GUILayout.TextArea(outputString, GUILayout.Width(300), GUILayout.ExpandHeight (false));
 		GUILayout.EndHorizontal ();
 		GUILayout.EndArea();
@@ -33,7 +51,14 @@ public class OutputController : MonoBehaviour {
 }
 
 public static class OutputHelper {
-	public static void PrintOutput(String str) {
-		((OutputController)(GameObject.Find ("IOController").GetComponent ("OutputController"))).outputString = str;
+	public static void PrintOutput(OutputController.Role role, String str) {
+		OutputController[] outputs;
+		outputs = GameObject.Find ("IOController").GetComponents<OutputController>();
+
+		foreach (OutputController outputController in outputs) {
+			if (outputController.role == role) {
+				outputController.outputString = str;
+			}
+		}
 	}
 }

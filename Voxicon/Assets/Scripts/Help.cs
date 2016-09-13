@@ -2,7 +2,8 @@
 using System.Collections;
 
 public class Help : ModalWindow {
-	string helpText = "Available behaviors:\n" +
+	[TextArea(3,10)]
+	public string helpText = "Available behaviors:\n" +
 		"- put(x,f(y)), where f={on,in} -- places object x at position f(y)\n" +
 		"- flip(x) -- flips object x over\n" +
 		"- slide(x) -- slide object x in random direction\n\n" +

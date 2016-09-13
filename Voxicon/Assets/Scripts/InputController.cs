@@ -7,14 +7,19 @@ using System.Text.RegularExpressions;
 using Global;
 
 public class InputController : MonoBehaviour {
+	public String inputLabel;
 	public String inputString;
+	public int inputHeight = 25;
+	public Rect inputRect;
+
 	String[] commands;
 	EventManager eventManager;
 	Macros macros;
 
 	PluginImport commBridge;
+	ObjectSelector objSelector;
 
-	public Rect inputRect;
+	String disableEnable;
 
 	GUIStyle textAreaStyle = new GUIStyle();
 
@@ -23,9 +28,12 @@ public class InputController : MonoBehaviour {
 		eventManager = bc.GetComponent<EventManager> ();
 		macros = bc.GetComponent<Macros> ();
 
+		objSelector = GameObject.Find ("BlocksWorld").GetComponent<ObjectSelector> ();
+
 		commBridge = GameObject.Find ("CommunicationsBridge").GetComponent<PluginImport> ();
 
-		inputRect = new Rect (5, 5, 50, 25);
+		//inputRect = new Rect (5, 5, 50, 25);
+		inputRect = new Rect (5, 5, 365, inputHeight);
 	}
 
 	void Update() {
@@ -38,14 +46,28 @@ public class InputController : MonoBehaviour {
 				MessageReceived (inputString);
 
 				// warning: switching to TextArea here (and below) seems to cause crash
-				GUI.Label (inputRect, "Human:");
-				inputString = GUI.TextField (inputRect, ""); 
+				GUILayout.BeginArea (inputRect);
+				GUILayout.BeginHorizontal();
+				GUILayout.Label(inputLabel+":");
+				inputString = GUILayout.TextField("", GUILayout.Width(300), GUILayout.ExpandHeight (false));
+				GUILayout.EndHorizontal ();
+				GUILayout.EndArea();
+
+				//GUI.Label (inputRect, inputLabel+":");
+				//inputString = GUI.TextField (inputRect, ""); 
 			}
 		}
 		else {
 
-			GUI.Label (new Rect (5, 5, 50, 25), "Human:");
-			inputString = GUI.TextField (new Rect (55, 5, 300, 25), inputString);
+			//GUI.Label (inputRect, inputLabel+":");
+			//inputString = GUI.TextField (inputRect, inputString);
+
+			GUILayout.BeginArea (inputRect);
+			GUILayout.BeginHorizontal();
+			GUILayout.Label(inputLabel+":");
+			inputString = GUILayout.TextField(inputString, GUILayout.Width(300), GUILayout.ExpandHeight (false));
+			GUILayout.EndHorizontal ();
+			GUILayout.EndArea();
 		}
 
 			/* DEBUG BUTTONS */
@@ -55,8 +77,18 @@ public class InputController : MonoBehaviour {
 			return;
 		}
 
-		if (GUI.Button (new Rect (10, Screen.height - 55, 100, 20), "Disable Agent")) {
-			eventManager.preds.DISABLE(new object[]{GameObject.Find("human1")});
+		disableEnable = (objSelector.disabledObjects.FirstOrDefault (t => t.tag == "Agent") == null) ? "Disable Agent" : "Enable Agent";
+		if (GUI.Button (new Rect (10, Screen.height - 55, 100, 20), disableEnable)) {
+			GameObject agent = GameObject.FindGameObjectWithTag ("Agent");
+			if (agent != null) {
+				if (agent.activeInHierarchy) {
+					eventManager.preds.DISABLE (new object[]{ agent });
+				}
+			}
+			else {
+				agent = objSelector.disabledObjects.First (t => t.tag == "Agent");
+				eventManager.preds.ENABLE (new object[]{ agent });
+			}
 			return;
 		}
 	}
@@ -68,6 +100,11 @@ public class InputController : MonoBehaviour {
 		if (inputString != "") {
 			if (inputString == "reset") {
 				StartCoroutine(SceneHelper.LoadScene (UnityEngine.SceneManagement.SceneManager.GetActiveScene ().name));
+				return;
+			}
+
+			if (inputString == "repeat") {
+				GameObject.Find ("BlocksWorld").GetComponent<ScenarioManager> ().scenarioScript.SendMessage("Repeat");
 				return;
 			}
 
@@ -96,7 +133,8 @@ public class InputController : MonoBehaviour {
 					}
 				}
 				Debug.Log ("Parsed as: " + functionalCommand);
-				OutputHelper.PrintOutput ("");
+				OutputHelper.PrintOutput (OutputController.Role.Affector,"");
+				OutputHelper.PrintOutput (OutputController.Role.Planner,"");
 				commands = functionalCommand.Split (';');
 				foreach (String commandString in commands) {
 					// add to queue

@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 public class RelationTracker : MonoBehaviour {
 
@@ -33,6 +34,13 @@ public class RelationTracker : MonoBehaviour {
 	}
 
 	public void AddNewRelation (List<GameObject> objs, string relation) {
+		foreach (List<GameObject> key in relations.Keys) {
+			if (key.SequenceEqual (objs)) {
+				relations [key] += string.Format (",{0}", relation);
+				UpdateRelationStrings();
+				return;
+			}
+		}
 		relations.Add(objs,relation);	// add key-val pair or modify value if key already exists
 		UpdateRelationStrings();
 	}

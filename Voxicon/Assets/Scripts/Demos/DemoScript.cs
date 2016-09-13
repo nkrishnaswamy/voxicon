@@ -1,5 +1,9 @@
 ﻿using UnityEngine;
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Timers;
 
 using Global;
 
@@ -10,9 +14,11 @@ public class DemoScript : MonoBehaviour {
 		Step1A,
 		Step1B,
 		Step1C,
+		Step1D,
 		Step2A,
 		Step2B,
 		Step2C,
+		Step2D,
 		Step3A,
 		Step3B,
 		Step3C,
@@ -25,113 +31,514 @@ public class DemoScript : MonoBehaviour {
 		Step6
 	}
 
+	enum WilsonState {
+		Rest = 1,
+		Point = (1 << 1),
+		LookForward = (1 << 2),
+		PushTogether = (1 << 3),
+		Claw = (1 << 4),
+		ThumbsUp = (1 << 5),
+		HeadNod = (1 << 6),
+		HeadShake = (1 << 7)
+	}
+
 	GameObject Wilson;
+	GameObject Diana;
 	Animator animator;
 
 	DemoStep currentStep;
+	WilsonState wilsonState = 0;
+
+	RelationTracker relationTracker;
+	EventManager eventManager;
+
+	public double initialLeaderTime = 6000.0;
+	Timer waitTimer;
+	const double WAIT_TIME = 2000.0;
+
+	bool humanMoveComplete;
+	bool leftAtTarget,rightAtTarget;
+
+	GameObject leftGrasper,rightGrasper;
+
+	GraspScript graspController;
+
+	IKControl ikControl;
+	IKTarget leftTarget;
+	IKTarget rightTarget;
+	IKTarget headTarget;
+
+	OutputModality outputModality;
+
+	bool goBack;
 
 	// Use this for initialization
 	void Start () {
 		Wilson = GameObject.Find ("Wilson");
+		Diana = GameObject.Find ("Diana");
 		animator = Wilson.GetComponent<Animator> ();
+		relationTracker = GameObject.Find ("BehaviorController").GetComponent<RelationTracker> ();
+		eventManager = GameObject.Find ("BehaviorController").GetComponent<EventManager> ();
+
+		leftGrasper = animator.GetBoneTransform (HumanBodyBones.LeftHand).transform.gameObject;
+		rightGrasper = animator.GetBoneTransform (HumanBodyBones.RightHand).transform.gameObject;
+
+		graspController = Wilson.GetComponent<GraspScript> ();
+			
+		ikControl = Wilson.GetComponent<IKControl> ();
+		leftTarget = ikControl.leftHandObj.GetComponent<IKTarget> ();
+		rightTarget = ikControl.rightHandObj.GetComponent<IKTarget> ();
+		headTarget = ikControl.lookObj.GetComponent<IKTarget> ();
+
+		outputModality = GameObject.Find ("OutputModality").GetComponent<OutputModality>();
+
+		goBack = false;
 
 		currentStep = DemoStep.Step0;
+		waitTimer = new Timer (WAIT_TIME);
+		waitTimer.Enabled = false;
+		waitTimer.Elapsed += Proceed;
+
+		humanMoveComplete = false;
+		leftAtTarget = false;
+		rightAtTarget = false;
+		eventManager.EventComplete += HumanMoveComplete;
+		leftTarget.AtTarget += LeftAtTarget;
+		rightTarget.AtTarget += RightAtTarget;
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		if (currentStep == DemoStep.Step0) {
-			Rest ();
+			if ((int)(wilsonState & WilsonState.Rest) == 0) {
+				waitTimer.Interval = WAIT_TIME + initialLeaderTime;
+				waitTimer.Enabled = true;
+				wilsonState |= WilsonState.Rest;
+				Rest ();
+				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+					OutputHelper.PrintOutput (OutputController.Role.Planner, "Let's build a staircase!");
+				}
+			}
 		}
 
 		if (currentStep == DemoStep.Step1A) {
-			PointAt (GameObject.Find ("block4"));
+			goBack = false;
+			if ((int)(wilsonState & WilsonState.Point) == 0) {
+				waitTimer.Enabled = true;
+				wilsonState |= WilsonState.Point;
+				PointAt (GameObject.Find ("block4"));
+				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+					OutputHelper.PrintOutput (OutputController.Role.Planner, "Take that block");
+				}
+			}
 		}
 
 		if (currentStep == DemoStep.Step1B) {
-			PointAt (GameObject.Find ("block3"));
+			if ((int)(wilsonState & WilsonState.Point) == 0) {
+				waitTimer.Enabled = true;
+				wilsonState |= WilsonState.Point;
+				PointAt (GameObject.Find ("block3"));
+				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+					OutputHelper.PrintOutput (OutputController.Role.Planner, "And that block");
+				}
+			}
 		}
 
 		if (currentStep == DemoStep.Step1C) {
-			PushTogether ();
+			if ((int)(wilsonState & WilsonState.LookForward) == 0) {
+				wilsonState |= WilsonState.LookForward;
+				LookForward ();
+			} 
+
+			leftTarget.targetPosition = new Vector3 (1.0f, 2.5f, 0.0f);
+			rightTarget.targetPosition = new Vector3 (-1.0f, 2.5f, 0.0f);
+
+			if (leftAtTarget && rightAtTarget) {
+				currentStep = (DemoStep)((int)currentStep + 1);
+			}
+		}
+
+		if (currentStep == DemoStep.Step1D) {
+			if ((int)(wilsonState & WilsonState.PushTogether) == 0) {
+				wilsonState |= WilsonState.PushTogether;
+				PushTogether ();
+				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+					OutputHelper.PrintOutput (OutputController.Role.Planner, "And put them together");
+				}
+			} 
+			else {
+				bool satisfied = false;
+				foreach (List<GameObject> key in relationTracker.relations.Keys) {
+					if (key.SequenceEqual (new List<GameObject> (new GameObject[] {
+						GameObject.Find ("block4"),
+						GameObject.Find ("block3")
+					}))) {
+						string[] relations = relationTracker.relations [key].ToString ().Split (',');
+						if (relations.Contains ("left") && relations.Contains ("touching")) {
+							satisfied = true;
+							break;
+						}
+					}
+				}
+
+				if (humanMoveComplete) {
+					if (satisfied) {
+						if ((int)(wilsonState & (WilsonState.ThumbsUp | WilsonState.HeadNod)) == 0) {
+							waitTimer.Enabled = true;
+							wilsonState |= (WilsonState.ThumbsUp | WilsonState.HeadNod);
+							ThumbsUp ();
+							HeadNod ();
+							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+								OutputHelper.PrintOutput (OutputController.Role.Planner, "Great!");
+							}
+						}
+					}
+					else {
+						if ((int)(wilsonState & WilsonState.HeadShake) == 0) {
+							waitTimer.Enabled = true;
+							wilsonState |= WilsonState.HeadShake;
+							HeadShake ();
+							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+								OutputHelper.PrintOutput (OutputController.Role.Planner, "That's not quite what I had in mind.");
+								goBack = true;
+							}
+						}
+					}
+				}
+			}
 		}
 
 		if (currentStep == DemoStep.Step2A) {
-			PointAt (GameObject.Find ("block6"));
+			goBack = false;
+			if ((int)(wilsonState & WilsonState.Point) == 0) {
+				waitTimer.Enabled = true;
+				wilsonState |= WilsonState.Point;
+				PointAt (GameObject.Find ("block6"));
+				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+					OutputHelper.PrintOutput (OutputController.Role.Planner, "Take that block");
+				}
+			}
 		}
 
 		if (currentStep == DemoStep.Step2B) {
-			PointAt (GameObject.Find ("block3"));
+			if ((int)(wilsonState & WilsonState.Point) == 0) {
+				waitTimer.Enabled = true;
+				wilsonState |= WilsonState.Point;
+				PointAt (GameObject.Find ("block3"));
+				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+					OutputHelper.PrintOutput (OutputController.Role.Planner, "And that block");
+				}
+			}
 		}
 
 		if (currentStep == DemoStep.Step2C) {
-			PushTogether ();
+			if ((int)(wilsonState & WilsonState.LookForward) == 0) {
+				wilsonState |= WilsonState.LookForward;
+				LookForward ();
+			} 
+
+			leftTarget.targetPosition = new Vector3 (1.0f, 2.5f, 0.0f);
+			rightTarget.targetPosition = new Vector3 (-1.0f, 2.5f, 0.0f);
+
+			if (leftAtTarget && rightAtTarget) {
+				currentStep = (DemoStep)((int)currentStep + 1);
+			}
+		}
+
+		if (currentStep == DemoStep.Step2D) {
+			if ((int)(wilsonState & WilsonState.PushTogether) == 0) {
+				wilsonState |= WilsonState.PushTogether;
+				PushTogether ();
+				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+					OutputHelper.PrintOutput (OutputController.Role.Planner, "And put them together");
+				}
+			}
+			else {
+				bool satisfied = false;
+				foreach (List<GameObject> key in relationTracker.relations.Keys) {
+					if (key.SequenceEqual (new List<GameObject> (new GameObject[] {
+						GameObject.Find ("block6"),
+						GameObject.Find ("block3")
+					}))) {
+						string[] relations = relationTracker.relations [key].ToString ().Split (',');
+						if (relations.Contains ("right") && relations.Contains ("touching")) {
+							satisfied = true;
+							break;
+						}
+					}
+				}
+
+				if (humanMoveComplete) {
+					if (satisfied) {
+						if ((int)(wilsonState & (WilsonState.ThumbsUp | WilsonState.HeadNod)) == 0) {
+							waitTimer.Enabled = true;
+							wilsonState |= (WilsonState.ThumbsUp | WilsonState.HeadNod);
+							ThumbsUp ();
+							HeadNod ();
+							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+								OutputHelper.PrintOutput (OutputController.Role.Planner, "Great!");
+							}
+						}
+					} 
+					else {
+						if ((int)(wilsonState & WilsonState.HeadShake) == 0) {
+							waitTimer.Enabled = true;
+							wilsonState |= WilsonState.HeadShake;
+							HeadShake ();
+							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+								OutputHelper.PrintOutput (OutputController.Role.Planner, "That's not quite what I had in mind.");
+								goBack = true;
+							}
+						}
+					}
+				}
+			}
 		}
 
 		if (currentStep == DemoStep.Step3A) {
-			PointAt (GameObject.Find ("block5"));
+			goBack = false;
+			if ((int)(wilsonState & WilsonState.Point) == 0) {
+				waitTimer.Enabled = true;
+				wilsonState |= WilsonState.Point;
+				PointAt (GameObject.Find ("block5"));
+				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+					OutputHelper.PrintOutput (OutputController.Role.Planner, "Take that block");
+				}
+			}
 		}
 
 		if (currentStep == DemoStep.Step3B) {
-			PointAt (GameObject.Find ("block6"));
+			if ((int)(wilsonState & WilsonState.Point) == 0) {
+				waitTimer.Enabled = true;
+				wilsonState |= WilsonState.Point;
+				PointAt (GameObject.Find ("block6"));
+				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+					OutputHelper.PrintOutput (OutputController.Role.Planner, "And put it on that block");
+				}
+			}
 		}
 
 		if (currentStep == DemoStep.Step3C) {
-			Claw (Vector3.zero,Vector3.one);
+			if ((int)(wilsonState & WilsonState.Claw) == 0) {
+				wilsonState |= (WilsonState.Claw | WilsonState.LookForward);
+				Claw (GameObject.Find ("block5").transform.position, GameObject.Find ("block6").transform.position);
+				LookForward ();
+			} 
+			else {
+				bool satisfied = false;
+				foreach (List<GameObject> key in relationTracker.relations.Keys) {
+					if (key.SequenceEqual (new List<GameObject> (new GameObject[] {
+						GameObject.Find ("block6"),
+						GameObject.Find ("block5")
+					}))) {
+						string[] relations = relationTracker.relations [key].ToString ().Split (',');
+						if (relations.Contains ("support")) {
+							satisfied = true;
+							break;
+						}
+					}
+				}
+
+				if (humanMoveComplete) {
+					if (satisfied) {
+						if ((int)(wilsonState & (WilsonState.ThumbsUp | WilsonState.HeadNod)) == 0) {
+							waitTimer.Enabled = true;
+							wilsonState |= (WilsonState.ThumbsUp | WilsonState.HeadNod);
+							ThumbsUp ();
+							HeadNod ();
+							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+								OutputHelper.PrintOutput (OutputController.Role.Planner, "Great!");
+							}
+						}
+					} 
+					else {
+						if ((int)(wilsonState & WilsonState.HeadShake) == 0) {
+							waitTimer.Enabled = true;
+							wilsonState |= WilsonState.HeadShake;
+							HeadShake ();
+							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+								OutputHelper.PrintOutput (OutputController.Role.Planner, "That's not quite what I had in mind.");
+								goBack = true;
+							}
+						}
+					}
+				}
+			}
 		}
 
 		if (currentStep == DemoStep.Step4A) {
-			PointAt (GameObject.Find ("block2"));
+			goBack = false;
+			if ((int)(wilsonState & WilsonState.Point) == 0) {
+				waitTimer.Enabled = true;
+				wilsonState |= WilsonState.Point;
+				PointAt (GameObject.Find ("block2"));
+				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+					OutputHelper.PrintOutput (OutputController.Role.Planner, "Take that block");
+				}
+			}
 		}
 
 		if (currentStep == DemoStep.Step4B) {
-			PointAt (GameObject.Find ("block3"));
+			if ((int)(wilsonState & WilsonState.Point) == 0) {
+				waitTimer.Enabled = true;
+				wilsonState |= WilsonState.Point;
+				PointAt (GameObject.Find ("block3"));
+				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+					OutputHelper.PrintOutput (OutputController.Role.Planner, "And put it on that block");
+				}
+			};
 		}
 
 		if (currentStep == DemoStep.Step4C) {
-			Claw (Vector3.zero,Vector3.one);
+			if ((int)(wilsonState & WilsonState.Claw) == 0) {
+				wilsonState |= (WilsonState.Claw | WilsonState.LookForward);
+				Claw (GameObject.Find ("block2").transform.position,GameObject.Find ("block3").transform.position);
+				LookForward ();
+			}
+			else {
+				bool satisfied = false;
+				foreach (List<GameObject> key in relationTracker.relations.Keys) {
+					if (key.SequenceEqual (new List<GameObject> (new GameObject[] {
+						GameObject.Find ("block3"),
+						GameObject.Find ("block2")
+					}))) {
+						string[] relations = relationTracker.relations [key].ToString ().Split (',');
+						if (relations.Contains ("support")) {
+							satisfied = true;
+							break;
+						}
+					}
+				}
+
+				if (humanMoveComplete) {
+					if (satisfied) {
+						if ((int)(wilsonState & (WilsonState.ThumbsUp | WilsonState.HeadNod)) == 0) {
+							waitTimer.Enabled = true;
+							wilsonState |= (WilsonState.ThumbsUp | WilsonState.HeadNod);
+							ThumbsUp ();
+							HeadNod ();
+							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+								OutputHelper.PrintOutput (OutputController.Role.Planner, "Great!");
+							}
+						}
+					} 
+					else {
+						if ((int)(wilsonState & WilsonState.HeadShake) == 0) {
+							waitTimer.Enabled = true;
+							wilsonState |= WilsonState.HeadShake;
+							HeadShake ();
+							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+								OutputHelper.PrintOutput (OutputController.Role.Planner, "That's not quite what I had in mind.");
+								goBack = true;
+							}
+						}
+					}
+				}
+			}
 		}
 
 		if (currentStep == DemoStep.Step5A) {
-			PointAt (GameObject.Find ("block1"));
+			goBack = false;
+			if ((int)(wilsonState & WilsonState.Point) == 0) {
+				waitTimer.Enabled = true;
+				wilsonState |= WilsonState.Point;
+				PointAt (GameObject.Find ("block1"));
+				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+					OutputHelper.PrintOutput (OutputController.Role.Planner, "Take that block");
+				}
+			}
 		}
 
 		if (currentStep == DemoStep.Step5B) {
-			PointAt (GameObject.Find ("block5"));
+			if ((int)(wilsonState & WilsonState.Point) == 0) {
+				waitTimer.Enabled = true;
+				wilsonState |= WilsonState.Point;
+				PointAt (GameObject.Find ("block5"));
+				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+					OutputHelper.PrintOutput (OutputController.Role.Planner, "And put it on that block");
+				}
+			}
 		}
 
 		if (currentStep == DemoStep.Step5C) {
-			Claw (Vector3.zero,Vector3.one);
+			if ((int)(wilsonState & WilsonState.Claw) == 0) {
+				wilsonState |= (WilsonState.Claw | WilsonState.LookForward);
+				Claw (GameObject.Find ("block1").transform.position,GameObject.Find ("block5").transform.position);
+				LookForward ();
+			}
+			else {
+				bool satisfied = false;
+				foreach (List<GameObject> key in relationTracker.relations.Keys) {
+					if (key.SequenceEqual (new List<GameObject> (new GameObject[] {
+						GameObject.Find ("block5"),
+						GameObject.Find ("block1")
+					}))) {
+						string[] relations = relationTracker.relations [key].ToString ().Split (',');
+						if (relations.Contains ("support")) {
+							satisfied = true;
+							break;
+						}
+					}
+				}
+
+				if (humanMoveComplete) {
+					if (satisfied) {
+						if ((int)(wilsonState & (WilsonState.ThumbsUp | WilsonState.HeadNod)) == 0) {
+							waitTimer.Enabled = true;
+							wilsonState |= (WilsonState.ThumbsUp | WilsonState.HeadNod);
+							ThumbsUp ();
+							HeadNod ();
+							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+								OutputHelper.PrintOutput (OutputController.Role.Planner, "Great!");
+							}
+						}
+					} 
+					else {
+						if ((int)(wilsonState & WilsonState.HeadShake) == 0) {
+							waitTimer.Enabled = true;
+							wilsonState |= WilsonState.HeadShake;
+							HeadShake ();
+							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+								OutputHelper.PrintOutput (OutputController.Role.Planner, "That's not quite what I had in mind.");
+								goBack = true;
+							}
+						}
+					}
+				}
+			}
 		}
 
 		if (currentStep == DemoStep.Step6) {
-			Rest ();
+			if ((int)(wilsonState & WilsonState.Rest) == 0) {
+				wilsonState |= WilsonState.Rest;
+				Rest ();
+				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+					OutputHelper.PrintOutput (OutputController.Role.Planner, "OK, we're done!");
+				}
+			}		
 		}
 
-		if (Input.GetKeyDown (KeyCode.Space)) {
+		/*if (Input.GetKeyDown (KeyCode.Space)) {
+			wilsonState = 0;
 			currentStep = (DemoStep)((int)currentStep + 1);
-		}
+		}*/
 	}
 
 	void Rest() {
-		GraspScript graspController = Wilson.GetComponent<GraspScript> ();
-		IKControl ikControl = Wilson.GetComponent<IKControl> ();
+		Debug.Log ("Enter Rest");
 
 		graspController.grasper = (int)Gestures.HandPose.Neutral;
 
 		if (ikControl != null) {
-			ikControl.leftHandObj.transform.position = graspController.leftDefaultPosition;
-			ikControl.rightHandObj.transform.position = graspController.rightDefaultPosition;
+			leftTarget.targetPosition = graspController.leftDefaultPosition;
+			rightTarget.targetPosition = graspController.rightDefaultPosition;
 		}
 	}
 
 	void PointAt(GameObject obj) {
-		GameObject leftGrasper = animator.GetBoneTransform (HumanBodyBones.LeftHand).transform.gameObject;
-		GameObject rightGrasper = animator.GetBoneTransform (HumanBodyBones.RightHand).transform.gameObject;
+		Debug.Log ("Enter Point");
 		GameObject grasper;
-		GraspScript graspController = Wilson.GetComponent<GraspScript> ();
 
-		// find bounds corner closest to grasper
 		Bounds bounds = Helper.GetObjectWorldSize (obj);
 
 		// which hand is closer?
@@ -151,35 +558,196 @@ public class DemoScript : MonoBehaviour {
 		if (ikControl != null) {
 			Vector3 target = new Vector3 (bounds.center.x, bounds.center.y-0.2f, bounds.center.z+0.3f);
 			if (grasper == leftGrasper) {
-				ikControl.leftHandObj.transform.position = target;
-				ikControl.rightHandObj.transform.position = graspController.rightDefaultPosition;
+				leftTarget.targetPosition = target;
+				headTarget.targetPosition = target;
 			}
 			else {
-				ikControl.leftHandObj.transform.position = graspController.leftDefaultPosition;
-				ikControl.rightHandObj.transform.position = target;
+				rightTarget.GetComponent<IKTarget> ().targetPosition = target;
+				headTarget.GetComponent<IKTarget> ().targetPosition = target;
 			}
+		}
+	}
+
+	void LookForward() {
+		Debug.Log ("Enter LookForward");
+
+		if (ikControl != null) {
+			headTarget.targetPosition = Diana.GetComponent<IKControl>().lookObj.transform.position;
 		}
 	}
 
 	void PushTogether() {
-		GameObject leftGrasper = animator.GetBoneTransform (HumanBodyBones.LeftHand).transform.gameObject;
-		GameObject rightGrasper = animator.GetBoneTransform (HumanBodyBones.RightHand).transform.gameObject;
-		GameObject grasper;
-		IKControl ikControl = Wilson.GetComponent<IKControl> ();
+		Debug.Log ("Enter PushTogether");
 
-		Wilson.GetComponent<GraspScript> ().grasper = (int)Gestures.HandPose.Neutral;
+		leftAtTarget = false;
+		rightAtTarget = false;
+
+		graspController.grasper = (int)Gestures.HandPose.Neutral;
 
 		if (ikControl != null) {
-			ikControl.leftHandObj.transform.position = new Vector3(0.5f,2.5f,0.0f);
-			ikControl.rightHandObj.transform.position = new Vector3(-0.5f,2.5f,0.0f);
+			headTarget.targetPosition = Diana.GetComponent<IKControl>().lookObj.transform.position;
+
+			leftTarget.targetPosition = new Vector3 (0.1f, 2.5f, 0.0f);
+			rightTarget.targetPosition = new Vector3 (-0.1f, 2.5f, 0.0f);
 		}
 	}
 
-	void Claw(Vector3 from, Vector3 to) {
-		GameObject leftGrasper = animator.GetBoneTransform (HumanBodyBones.LeftHand).transform.gameObject;
-		GameObject rightGrasper = animator.GetBoneTransform (HumanBodyBones.RightHand).transform.gameObject;
+	void Claw(Vector3 fromCoord, Vector3 toCoord) {
+		Debug.Log ("Enter Claw");
+
 		GameObject grasper;
 
-		Wilson.GetComponent<GraspScript> ().grasper = (int)Gestures.HandPose.RightClaw;
+		// which hand is closer?
+		float leftToGoalDist = (leftGrasper.transform.position - fromCoord).magnitude;
+		float rightToGoalDist = (rightGrasper.transform.position - fromCoord).magnitude;
+
+		if (leftToGoalDist < rightToGoalDist) {
+			grasper = leftGrasper;
+			graspController.grasper = (int)Gestures.HandPose.LeftClaw;
+		}
+		else {
+			grasper = rightGrasper;
+			graspController.grasper = (int)Gestures.HandPose.RightClaw;
+		}
+
+		if (ikControl != null) {
+			if (grasper == leftGrasper) {
+				leftTarget.interTargetPositions.Enqueue(fromCoord);
+				leftTarget.interTargetPositions.Enqueue(new Vector3(fromCoord.x, fromCoord.y + 0.5f, fromCoord.z));
+				leftTarget.interTargetPositions.Enqueue(new Vector3(toCoord.x, toCoord.y + 0.5f, toCoord.z));
+				leftTarget.targetPosition = toCoord;
+			}
+			else {
+				rightTarget.interTargetPositions.Enqueue(fromCoord);
+				rightTarget.interTargetPositions.Enqueue(new Vector3(fromCoord.x, fromCoord.y + 0.5f, fromCoord.z));
+				rightTarget.interTargetPositions.Enqueue(new Vector3(toCoord.x, toCoord.y + 0.5f, toCoord.z));
+				rightTarget.targetPosition = toCoord;
+			}
+		}
+	}
+
+	void ThumbsUp() {
+		Debug.Log ("Enter ThumbsUp");
+
+		graspController.grasper = (int)Gestures.HandPose.RightThumbsUp;
+
+		if (ikControl != null) {
+
+			leftTarget.targetPosition = graspController.leftDefaultPosition;
+			rightTarget.targetPosition = new Vector3(0.0f,3.0f,0.0f);
+		}
+	}
+
+	void HeadNod() {
+		Debug.Log ("Enter HeadNod");
+
+		if (ikControl != null) {
+			Vector3 headStartPos = headTarget.targetPosition;
+
+			headTarget.interTargetPositions.Enqueue(new Vector3(headStartPos.x,headStartPos.y+0.2f,headStartPos.z));
+			headTarget.interTargetPositions.Enqueue(new Vector3(headStartPos.x,headStartPos.y-0.2f,headStartPos.z));
+			headTarget.interTargetPositions.Enqueue(new Vector3(headStartPos.x,headStartPos.y+0.2f,headStartPos.z));
+			headTarget.interTargetPositions.Enqueue(new Vector3(headStartPos.x,headStartPos.y-0.2f,headStartPos.z));
+			headTarget.interTargetPositions.Enqueue(new Vector3(headStartPos.x,headStartPos.y+0.2f,headStartPos.z));
+			headTarget.targetPosition = headStartPos;
+		}
+	}
+
+	void HeadShake() {
+		Debug.Log ("Enter HeadShake");
+
+		if (ikControl != null) {
+			Vector3 headStartPos = headTarget.targetPosition;
+
+			headTarget.interTargetPositions.Enqueue(new Vector3(headStartPos.x+0.2f,headStartPos.y,headStartPos.z));
+			headTarget.interTargetPositions.Enqueue(new Vector3(headStartPos.x-0.2f,headStartPos.y,headStartPos.z));
+			headTarget.interTargetPositions.Enqueue(new Vector3(headStartPos.x+0.2f,headStartPos.y,headStartPos.z));
+			headTarget.interTargetPositions.Enqueue(new Vector3(headStartPos.x-0.2f,headStartPos.y,headStartPos.z));
+			headTarget.interTargetPositions.Enqueue(new Vector3(headStartPos.x+0.2f,headStartPos.y,headStartPos.z));
+			headTarget.targetPosition = headStartPos;
+		}
+	}
+
+	void Repeat() {
+		switch (currentStep) {
+			case DemoStep.Step1A:
+			case DemoStep.Step1B:
+			case DemoStep.Step1C:
+			case DemoStep.Step1D:
+				currentStep = DemoStep.Step1A;
+				break;
+
+			case DemoStep.Step2A:
+			case DemoStep.Step2B:
+			case DemoStep.Step2C:
+			case DemoStep.Step2D:
+				currentStep = DemoStep.Step2A;
+				break;
+
+			case DemoStep.Step3A:
+			case DemoStep.Step3B:
+			case DemoStep.Step3C:
+				currentStep = DemoStep.Step3A;
+				break;
+
+			case DemoStep.Step4A:
+			case DemoStep.Step4B:
+			case DemoStep.Step4C:
+				currentStep = DemoStep.Step4A;
+				break;
+
+			case DemoStep.Step5A:
+			case DemoStep.Step5B:
+			case DemoStep.Step5C:
+				currentStep = DemoStep.Step5A;
+				break;
+
+			default:
+				break;
+		}
+	}
+
+	void Proceed(object sender, ElapsedEventArgs e) {
+		waitTimer.Enabled = false;
+		waitTimer.Interval = WAIT_TIME;
+
+		humanMoveComplete = false;
+		leftAtTarget = false;
+		rightAtTarget = false;
+
+		wilsonState = 0;
+
+		if (goBack) {	// try again
+			if (currentStep < DemoStep.Step2A) {
+				currentStep = DemoStep.Step1A;	
+			}
+			else if (currentStep < DemoStep.Step3A) {
+				currentStep = DemoStep.Step2A;	
+			}
+			else if (currentStep < DemoStep.Step4A) {
+				currentStep = DemoStep.Step3A;	
+			}
+			else if (currentStep < DemoStep.Step5A) {
+				currentStep = DemoStep.Step4A;	
+			}
+			else if (currentStep < DemoStep.Step6) {
+				currentStep = DemoStep.Step5A;	
+			}
+		}
+		else {
+			currentStep = (DemoStep)((int)currentStep + 1);
+		}
+	}
+
+	void HumanMoveComplete(object sender, EventArgs e) {
+		humanMoveComplete = true;
+	}
+
+	void LeftAtTarget(object sender, EventArgs e) {
+		leftAtTarget = true;
+	}
+
+	void RightAtTarget(object sender, EventArgs e) {
+		rightAtTarget = true;
 	}
 }
