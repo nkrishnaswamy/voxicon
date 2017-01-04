@@ -11,6 +11,14 @@ namespace Global {
 	/// </summary>
 	static class Constants {
 		public const float EPSILON = 0.003f;
+		public static Vector3 xAxis = Vector3.right;
+		public static Vector3 yAxis = Vector3.up;
+		public static Vector3 zAxis = Vector3.forward;
+		public static Dictionary<string,Vector3> Axes = new Dictionary<string,Vector3>{
+			{"X", xAxis},
+			{"Y", yAxis},
+			{"Z", zAxis}
+		};
 	}
 
 	/// <summary>
@@ -150,7 +158,9 @@ namespace Global {
 	/// </summary>
 	public static class Helper {
 		public static Regex v = new Regex (@"<.*>");
+		public static Regex cv = new Regex (@",<.*>");
 
+		// DATA METHODS
 		public static Hashtable ParsePredicate(String predicate) {
 			Hashtable predArgs = new Hashtable ();
 			
@@ -214,7 +224,9 @@ namespace Global {
 		public static Triple<String,String,String> MakeRDFTriples(String formula) {		// fix for multiple RDF triples
 			Triple<String,String,String> triple = new Triple<String,String,String> ("","","");
 			Debug.Log ("MakeRDFTriple: " + formula);
+			formula = cv.Replace (formula, "");
 			String[] components = formula.Replace ('(', '/').Replace (')', '/').Replace (',','/').Split ('/');
+
 			if (components.Length <= 3) {
 				triple.Item1 = "NULL";
 			}
@@ -250,6 +262,55 @@ namespace Global {
 			}
 		}
 
+		public static Hashtable DiffHashtables(Hashtable baseline, Hashtable comparand) {
+			Hashtable diff = new Hashtable ();
+
+			foreach (DictionaryEntry entry in comparand) {
+				if (!baseline.ContainsKey (entry.Key)) {
+					object key = entry.Key;
+					if (entry.Key is List<object>) {
+						key = string.Join (",", ((List<object>)entry.Value).Cast<string>().ToArray ());
+					}
+
+					object value = entry.Value;
+					if (entry.Value is List<object>) {
+						value = string.Join (",", ((List<object>)entry.Value).Cast<string>().ToArray ());
+					}
+
+					diff.Add (key, value);
+				}
+				else if (baseline[entry.Key] != entry.Value) {
+					object key = entry.Key;
+					if (entry.Key is List<object>) {
+						key = string.Join (",", ((List<object>)entry.Key).Cast<string>().ToArray ());
+					}
+
+					object value = entry.Value;
+					if (entry.Value is List<object>) {
+						value = string.Join (",", ((List<object>)entry.Value).Cast<string>().ToArray ());
+					}
+
+					diff.Add(key,value);
+				}
+			}
+
+			return diff;
+		}
+
+		public static string HashtableToString(Hashtable ht) {
+			string output = string.Empty;
+			foreach (DictionaryEntry entry in ht) {
+				output += string.Format ("{0} {1};", entry.Key, entry.Value);
+			}
+
+			return output;
+		}
+
+		public static List<object> DiffLists(List<object> baseline, List<object> comparand) {
+			return comparand.Except (baseline).ToList ();
+		}
+
+		// VECTOR METHODS
 		public static bool VectorIsNaN(Vector3 vec) {
 			return (float.IsNaN (vec.x) || float.IsNaN (vec.y) || float.IsNaN (vec.z));
 		}
@@ -291,6 +352,22 @@ namespace Global {
 			return closestHit.point;
 		}
 
+		public static bool Parallel(Vector3 v1, Vector3 v2) {
+			return (1-Vector3.Dot (v1, v2) < Constants.EPSILON * 10);
+		}
+
+		public static bool Perpendicular(Vector3 v1, Vector3 v2) {
+			return (Mathf.Abs (Vector3.Dot (v1, v2)) < Constants.EPSILON * 10);
+		}
+
+		public static Vector3 RotatePointAroundPivot(Vector3 point, Vector3 pivot, Vector3 eulerAngles) {
+			Vector3 dir = point - pivot; // get point direction relative to pivot
+			dir = Quaternion.Euler(eulerAngles) * dir; // rotate it
+			point = dir + pivot; // calculate rotated point
+			return point; // return it
+		}
+
+		// OBJECT METHODS
 		public static Bounds GetObjectSize(GameObject obj) {
 			Renderer[] renderers = obj.GetComponentsInChildren<Renderer>();
 
@@ -349,6 +426,17 @@ namespace Global {
 				foreach (Renderer renderer in renderers) {
 					combinedBounds.Encapsulate (renderer.bounds);
 				}
+			}
+
+			return combinedBounds;
+		}
+
+		// get the collective bounds of the objects in the current world
+		public static Bounds GetPointsWorldSize(List<Vector3> pts) {
+			Bounds combinedBounds = new Bounds (pts[0], Vector3.zero);
+
+			foreach (Vector3 pt in pts) {
+				combinedBounds.Encapsulate (pt);
 			}
 
 			return combinedBounds;
@@ -439,6 +527,20 @@ namespace Global {
 			}
 
 			return voxObject;
+		}
+
+		public static List<GameObject> ContainingObjects(Vector3 point) {
+			List<GameObject> objs = new List<GameObject>();
+
+			GameObject[] allObjects = UnityEngine.Object.FindObjectsOfType<GameObject>();
+
+			foreach (GameObject o in allObjects) {
+				if (Helper.GetObjectWorldSize (o).Contains (point)) {
+					objs.Add(o);
+				}
+			}
+
+			return objs;
 		}
 	}
 

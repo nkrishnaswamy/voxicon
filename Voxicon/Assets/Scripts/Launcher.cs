@@ -6,11 +6,13 @@ using System.Net;
 
 using Global;
 
-public class Launcher : MonoBehaviour {
-	
+public class Launcher : FontManager {
+	public int fontSize = 12;
+
 	string ip;
 	string inPort;
 	string sriUrl;
+	bool makeLogs;
 
 	int bgLeft = Screen.width/6;
 	int bgTop = Screen.height/12;
@@ -29,9 +31,19 @@ public class Launcher : MonoBehaviour {
 	object[] scenes;
 	
 	GUIStyle customStyle;
+
+	GUIStyle labelStyle = new GUIStyle ("Label");
+	GUIStyle textFieldStyle = new GUIStyle ("TextField");
+	GUIStyle buttonStyle = new GUIStyle ("Button");
+
+	float fontSizeModifier;
 	
 	// Use this for initialization
 	void Start () {
+		labelStyle = new GUIStyle ("Label");
+		textFieldStyle = new GUIStyle ("TextField");
+		buttonStyle = new GUIStyle ("Button");
+		fontSizeModifier = (int)(fontSize / defaultFontSize);
 		LoadPrefs ();
 		
 #if UNITY_EDITOR
@@ -40,7 +52,7 @@ public class Launcher : MonoBehaviour {
 		foreach (string s in fileEntries) {
 			if (!s.EndsWith(".meta")) {
 				string sceneName = s.Remove(0,scenesDirPath.Length).Replace(".unity","");
-				if (!sceneName.Equals("VoxiconMenu")) {
+				if (!sceneName.Equals(UnityEngine.SceneManagement.SceneManager.GetActiveScene ().name)) {
 					availableScenes.Add(sceneName);
 				}
 			}
@@ -80,16 +92,19 @@ public class Launcher : MonoBehaviour {
 		
 		GUI.Box (new Rect (bgLeft, bgTop, bgWidth, bgHeight), "");
 		
-		GUI.Label (new Rect (bgLeft + 10, bgTop + 35, 90, 25), "Listener Port");
-		inPort = GUI.TextField (new Rect (bgLeft+100, bgTop+35, 60, 25), inPort);
+		GUI.Label (new Rect (bgLeft + 10, bgTop + 35, 90*fontSizeModifier, 25*fontSizeModifier), "Listener Port");
+		inPort = GUI.TextField (new Rect (bgLeft+100, bgTop+35, 60, 25*fontSizeModifier), inPort);
 
 		GUI.Button (new Rect (bgLeft + 165, bgTop + 35, 10, 10), new GUIContent ("*", "IP: " + ip));
-		if (GUI.tooltip != "") {
+		if (GUI.tooltip != string.Empty) {
 			GUI.TextArea (new Rect (bgLeft + 175, bgTop + 35, GUI.skin.label.CalcSize (new GUIContent ("IP: "+ip)).x+10, 20), GUI.tooltip);
 		}
 
-		GUI.Label (new Rect (bgLeft + 10, bgTop + 65, 90, 25), "SRI URL");
-		sriUrl = GUI.TextField (new Rect (bgLeft+100, bgTop+65, 150, 25), sriUrl);
+		GUI.Label (new Rect (bgLeft + 10, bgTop + 65, 90*fontSizeModifier, 25*fontSizeModifier), "SRI URL");
+		sriUrl = GUI.TextField (new Rect (bgLeft+100, bgTop+65, 150, 25*fontSizeModifier), sriUrl);
+
+		GUI.Label (new Rect (bgLeft + 10, bgTop + 95, 90*fontSizeModifier, 25*fontSizeModifier), "Make Logs");
+		makeLogs = GUI.Toggle (new Rect (bgLeft+100, bgTop+95, 150, 25*fontSizeModifier), makeLogs, string.Empty);
 
 		GUILayout.BeginArea(new Rect(13*Screen.width/24, bgTop + 35, 3*Screen.width/12, 3*Screen.height/6), GUI.skin.window);
 		scrollPosition = GUILayout.BeginScrollView(scrollPosition, false, false); 
@@ -122,18 +137,20 @@ public class Launcher : MonoBehaviour {
 			}
 		}
 
-		textDimensions = GUI.skin.label.CalcSize (new GUIContent ("Voxicon"));
-		GUI.Label (new Rect (((2 * bgLeft + bgWidth) / 2) - textDimensions.x / 2, bgTop, textDimensions.x, 25), "Voxicon");
+		textDimensions = GUI.skin.label.CalcSize (new GUIContent ("VoxSim"));
+		GUI.Label (new Rect (((2 * bgLeft + bgWidth) / 2) - textDimensions.x / 2, bgTop, textDimensions.x, 25), "VoxSim");
 	}
 	
 	void LoadPrefs() {
 		inPort = PlayerPrefs.GetString("Listener Port");
 		sriUrl = PlayerPrefs.GetString("SRI URL");
+		makeLogs = (PlayerPrefs.GetInt("Make Logs") == 1);
 	}
 	
 	void SavePrefs() {
 		PlayerPrefs.SetString("Listener Port", inPort);
 		PlayerPrefs.SetString("SRI URL", sriUrl);
+		PlayerPrefs.SetInt("Make Logs", System.Convert.ToInt32(makeLogs));
 	}
 }
 

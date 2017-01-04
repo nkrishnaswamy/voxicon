@@ -11,7 +11,7 @@ public class RelationTracker : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-	
+		UpdateRelationStrings ();
 	}
 	
 	// Update is called once per frame

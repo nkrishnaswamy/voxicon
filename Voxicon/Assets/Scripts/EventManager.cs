@@ -11,6 +11,16 @@ using System.Text.RegularExpressions;
 using Global;
 using Satisfaction;
 
+public class EventManagerArgs : EventArgs {
+
+	public string EventString {get; set; }
+
+	public EventManagerArgs(string str)
+	{
+		this.EventString = str;
+	}
+}
+
 public class EventManager : MonoBehaviour {
 	public List<String> events = new List<String>();
 	public OrderedDictionary eventsStatus = new OrderedDictionary();
@@ -32,6 +42,8 @@ public class EventManager : MonoBehaviour {
 		RelationsAndFunctions
 	}
 
+	public bool immediateExecution = true;
+
 	public event EventHandler EventComplete;
 
 	public void OnEventComplete(object sender, EventArgs e)
@@ -52,20 +64,21 @@ public class EventManager : MonoBehaviour {
 	void Update () {
 		if (events.Count > 0) {
 			if (SatisfactionTest.IsSatisfied (events [0]) == true) {
-				GameObject.Find ("BlocksWorld").GetComponent<AStarSearch> ().plannedPath.Clear ();
+				GameObject.Find ("BlocksWorld").GetComponent<AStarSearch> ().path.Clear ();
 				Debug.Log ("Satisfied " + events [0]);
 				for (int i = 0; i < events.Count - 1; i++) {
 					events [i] = events [i + 1];
 				}
+				string completedEvent = events [events.Count - 1];
 				RemoveEvent (events.Count - 1);
 				//Debug.Log (events.Count);
 
 				if (events.Count > 0) {
 					ExecuteNextCommand ();
-				}
-				else {
-					OutputHelper.PrintOutput (OutputController.Role.Affector,"OK, I did it.");
-					OnEventComplete (this, EventArgs.Empty);
+				} else {
+					OutputHelper.PrintOutput (OutputController.Role.Affector, "OK, I did it.");
+					EventManagerArgs eventArgs = new EventManagerArgs (completedEvent);
+					OnEventComplete (this, eventArgs);
 				}
 			}
 		}
@@ -84,11 +97,20 @@ public class EventManager : MonoBehaviour {
 		events.Add(commandString);
 	}
 
+	public void PrintEvents() {
+		foreach (String e in events) {
+			Debug.Log (e);
+		}
+	}
+
 	public void ExecuteNextCommand() {
 		EvaluateCommand (events [0]);
 		if (events.Count > 0) {
 			if (SatisfactionTest.ComputeSatisfactionConditions (events [0])) {
 				ExecuteCommand (events [0]);
+			}
+			else {
+				RemoveEvent (0);
 			}
 		}
 	}
@@ -162,7 +184,7 @@ public class EventManager : MonoBehaviour {
 						if (matches.Count <= 1) {
 							GameObject go = GameObject.Find (arg as String);
 							if (go == null) {
-								OutputHelper.PrintOutput (OutputController.Role.Affector,string.Format("What is a \"{0}\"?", (arg as String)));
+								OutputHelper.PrintOutput (OutputController.Role.Affector,string.Format("What is that?", (arg as String)));
 								return;	// abort
 							}
 							objs.Add (go);
@@ -182,6 +204,12 @@ public class EventManager : MonoBehaviour {
 				Debug.Log ("ExecuteCommand: invoke " + methodToCall.Name);
 				object obj = methodToCall.Invoke (preds, new object[]{ objs.ToArray () });
 			}
+		}
+	}
+
+	void AbortEvent() {
+		if (events.Count > 0) {
+			RemoveEvent (events.Count - 1);
 		}
 	}
 
@@ -330,11 +358,15 @@ public class EventManager : MonoBehaviour {
 
 		foreach (DictionaryEntry kv in skolems) {
 			if (kv.Value is Vector3) {
-				outString = (String)outString.Replace((String)kv.Key,Helper.VectorToParsable((Vector3)kv.Value));
+				outString = (String)outString.Replace ((String)kv.Key, Helper.VectorToParsable ((Vector3)kv.Value));
 				//Debug.Log (outString);
 			}
-			else {
-				outString = (String)outString.Replace((String)kv.Key,(String)kv.Value);
+			else if (kv.Value is String) {
+				outString = (String)outString.Replace ((String)kv.Key, (String)kv.Value);
+			}
+			else if (kv.Value is List<String>) {
+				String list = String.Join (",", ((List<String>)kv.Value).ToArray());
+				outString = (String)outString.Replace ((String)kv.Key, list);
 			}
 		}
 		temp = outString;
@@ -375,7 +407,7 @@ public class EventManager : MonoBehaviour {
 							else if (arg is String) {	// if arg is String
 								if ((arg as String).Count (f => f == '(') +	// not a predicate
 								    (arg as String).Count (f => f == ')') == 0) {
-									if (preds.GetType ().GetMethod (pred.ToUpper ()).ReturnType != typeof(String)) {	// if predicate not going to return string (as in "AS")
+									//if (preds.GetType ().GetMethod (pred.ToUpper ()).ReturnType != typeof(String)) {	// if predicate not going to return string (as in "AS")
 										List<GameObject> matches = new List<GameObject> ();
 										foreach (Voxeme voxeme in objSelector.allVoxemes) {
 											if (voxeme.voxml.Lex.Pred.Equals(arg)) {
@@ -384,38 +416,47 @@ public class EventManager : MonoBehaviour {
 										}
 
 										if (matches.Count == 0) {
-											GameObject go = GameObject.Find (arg as String);
-											if (go == null) {
-												OutputHelper.PrintOutput (OutputController.Role.Affector,string.Format("What is a \"{0}\"?", (arg as String)));
-												return false;	// abort
+											if (preds.GetType ().GetMethod (pred.ToUpper ()).ReturnType != typeof(String)) {	// if predicate not going to return string (as in "AS")
+												GameObject go = GameObject.Find (arg as String);
+												if (go == null) {
+													OutputHelper.PrintOutput (OutputController.Role.Affector, string.Format ("What is that", (arg as String)));
+													return false;	// abort
+												}
+												objs.Add (go);
 											}
-											objs.Add (go);
 										}
 										else if (matches.Count == 1) {
-											GameObject go = matches[0];
-											if (go == null) {
-												OutputHelper.PrintOutput (OutputController.Role.Affector,string.Format("What is a \"{0}\"?", (arg as String)));
-												return false;	// abort
+											if (preds.GetType ().GetMethod (pred.ToUpper ()).ReturnType != typeof(String)) {	// if predicate not going to return string (as in "AS")
+												GameObject go = matches[0];
+												if (go == null) {
+													OutputHelper.PrintOutput (OutputController.Role.Affector,string.Format("What is that", (arg as String)));
+													return false;	// abort
+												}
+												objs.Add (go);
+												doSkolemReplacement = true;
+												replaceSkolems = new Triple<String,String,String> (kv.Key as String, arg as String, go.name);
+												//skolems[kv] = go.name;
 											}
-											objs.Add (go);
-											doSkolemReplacement = true;
-											replaceSkolems = new Triple<String,String,String> (kv.Key as String, arg as String, go.name);
-											//skolems[kv] = go.name;
 										}
 										else {
-											Debug.Log (string.Format ("Which {0}?", (arg as String)));
-											OutputHelper.PrintOutput (OutputController.Role.Affector,string.Format("Which {0}?", (arg as String)));
-											return false;	// abort
+											//Debug.Log (string.Format ("Which {0}?", (arg as String)));
+											//OutputHelper.PrintOutput (OutputController.Role.Affector,string.Format("Which {0}?", (arg as String)));
+											//return false;	// abort
+											foreach (GameObject match in matches) {
+												objs.Add (match);
+											}
 										}
-									}
+									//}
 								}
 
-								Regex q = new Regex("\".*\"");
-								if (q.IsMatch(arg as String)) {
-									objs.Add (arg);
-								}
-								else {
-									objs.Add (GameObject.Find (arg as String));
+								if (objs.Count == 0) {
+									Regex q = new Regex ("\".*\"");
+									if (q.IsMatch (arg as String)) {
+										objs.Add (arg);
+									}
+									else {
+										objs.Add (GameObject.Find (arg as String));
+									}
 								}
 							}
 						}
@@ -427,19 +468,23 @@ public class EventManager : MonoBehaviour {
 							return false;
 						}
 
-						if ((methodToCall.ReturnType == typeof(String)) && (pass == EvaluationPass.Attributes)) {
-							Debug.Log ("EvaluateSkolemConstants: invoke " + methodToCall.Name);
-							object obj = methodToCall.Invoke (preds, new object[]{ objs.ToArray () });
-							Debug.Log (obj);
+						if (pass == EvaluationPass.Attributes) {
+							if ((methodToCall.ReturnType == typeof(String)) ||  (methodToCall.ReturnType == typeof(List<String>))) {
+								Debug.Log ("EvaluateSkolemConstants: invoke " + methodToCall.Name);
+								object obj = methodToCall.Invoke (preds, new object[]{ objs.ToArray () });
+								Debug.Log (obj);
 
-							temp [kv.Key] = obj;
+								temp [kv.Key] = obj;
+							}
 						}
-						else if ((methodToCall.ReturnType == typeof(Vector3)) && (pass == EvaluationPass.RelationsAndFunctions)) {
-							Debug.Log ("EvaluateSkolemConstants: invoke " + methodToCall.Name);
-							object obj = methodToCall.Invoke (preds, new object[]{ objs.ToArray () });
-							Debug.Log (obj);
+						else if (pass == EvaluationPass.RelationsAndFunctions) {
+							if (methodToCall.ReturnType == typeof(Vector3)) {
+								Debug.Log ("EvaluateSkolemConstants: invoke " + methodToCall.Name);
+								object obj = methodToCall.Invoke (preds, new object[]{ objs.ToArray () });
+								Debug.Log (obj);
 
-							temp [kv.Key] = obj;
+								temp [kv.Key] = obj;
+							}
 						}
 					}
 				}

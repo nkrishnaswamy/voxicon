@@ -57,10 +57,11 @@ namespace RCC
 			bool po = false;
 
 			if (x.Intersects (y)) {
+				float xOff = Mathf.Abs(Mathf.Abs((x.center - y.center).x) - Mathf.Abs(((x.size.x / 2) + (y.size.x / 2))));
+				float yOff = Mathf.Abs(Mathf.Abs((x.center - y.center).y) - Mathf.Abs(((x.size.y / 2) + (y.size.y / 2))));
+				float zOff = Mathf.Abs(Mathf.Abs((x.center - y.center).z) - Mathf.Abs(((x.size.z / 2) + (y.size.z / 2))));
 				// intersects but not too much, system is a little fuzzy
-				if ((Mathf.Abs((x.center - y.center).x - ((x.size.x / 2) + (y.size.x / 2))) > Constants.EPSILON) &&
-					(Mathf.Abs((x.center - y.center).y - ((x.size.y / 2) + (y.size.y / 2))) > Constants.EPSILON) &&
-					(Mathf.Abs((x.center - y.center).z - ((x.size.z / 2) + (y.size.z / 2))) > Constants.EPSILON)) {
+				if ((xOff > Constants.EPSILON) && (yOff > Constants.EPSILON) && (zOff > Constants.EPSILON)) {
 					po = true;
 				}
 			}

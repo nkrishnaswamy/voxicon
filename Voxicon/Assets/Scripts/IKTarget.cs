@@ -41,6 +41,7 @@ public class IKTarget : MonoBehaviour {
 			}
 			else {	// cannot execute motion
 				OutputHelper.PrintOutput(OutputController.Role.Affector,"I'm sorry, I can't do that.");
+				GameObject.Find ("BehaviorController").GetComponent<EventManager> ().SendMessage("AbortEvent");
 				targetPosition = transform.position;
 			}
 		}

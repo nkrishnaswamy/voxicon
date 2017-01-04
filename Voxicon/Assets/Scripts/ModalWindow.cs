@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class ModalWindow : MonoBehaviour
+public class ModalWindow : FontManager
 {
 	public Rect windowRect;
 	public Vector2 scrollPosition;

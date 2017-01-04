@@ -6,8 +6,8 @@ using System.IO;
 [CustomEditor(typeof(Builder))]
 public class Builder : Editor {
 
-	public string buildName = "Voxicon_Build6";
-	List<string> scenes = new List<string>(){"Assets/Scenes/VoxiconMenu.unity"};
+	public string buildName = "VoxSim_Build7";
+	List<string> scenes = new List<string>(){"Assets/Scenes/VoxSimMenu.unity"};
 
 	public override void OnInspectorGUI () 
 	{
@@ -30,7 +30,7 @@ public class Builder : Editor {
 				}
 			}
 			BuildPipeline.BuildPlayer(scenes.ToArray(),"Build/mac/"+buildName,BuildTarget.StandaloneOSXUniversal,BuildOptions.None);
-			BuildPipeline.BuildPlayer(scenes.ToArray(),"Build/web/"+buildName,BuildTarget.WebPlayer,BuildOptions.None);
+			//BuildPipeline.BuildPlayer(scenes.ToArray(),"Build/web/"+buildName,BuildTarget.WebPlayer,BuildOptions.None);
 		}
 	}
 }

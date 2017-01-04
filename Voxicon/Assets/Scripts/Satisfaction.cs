@@ -33,6 +33,7 @@ namespace Satisfaction {
 					//Debug.Log(Helper.VectorToParsable(theme.transform.position) + " " + (String)argsStrings[1]);
 					//Debug.Log(obj.transform.position);
 					Voxeme voxComponent = theme.GetComponent<Voxeme>();
+					//Debug.Log (voxComponent);
 					Vector3 testLocation = voxComponent.isGrasped ? voxComponent.graspTracker.transform.position : theme.transform.position;
 
 					if (Helper.CloseEnough (testLocation, Helper.ParsableToVector ((String)argsStrings [1]))) {
@@ -71,6 +72,57 @@ namespace Satisfaction {
 					}
 				}
 			}
+			else if (predString == "roll") {	// satisfy roll
+				GameObject theme = GameObject.Find (argsStrings [0] as String);
+				if (theme != null) {
+					//Debug.Log(Helper.ConvertVectorToParsable(obj.transform.position) + " " + (String)argsStrings[1]);
+					//Debug.Log(obj.transform.position);
+					//Debug.Log (Quaternion.Angle(obj.transform.rotation,Quaternion.Euler(Helper.ParsableToVector((String)argsStrings[1]))));
+					Voxeme voxComponent = theme.GetComponent<Voxeme>();
+					Vector3 testLocation = voxComponent.isGrasped ? voxComponent.graspTracker.transform.position : theme.transform.position;
+
+					if (argsStrings.Length > 1) {
+						if (Helper.CloseEnough (testLocation, Helper.ParsableToVector ((String)argsStrings [1]))) {
+							if (voxComponent.isGrasped) {
+								//preds.UNGRASP (new object[]{ theme, true });
+								//em.ExecuteCommand(string.Format("put({0},{1})",theme.name,(String)argsStrings [1]));
+								theme.transform.position = Helper.ParsableToVector ((String)argsStrings [1]);
+								theme.transform.rotation = Quaternion.identity;
+							}
+							satisfied = true;
+							ReasonFromAffordances (predString, voxComponent);	// we need to talk (do physics reactivation in here?) // replace ReevaluateRelationships
+							//theme.GetComponent<Rigging> ().ActivatePhysics (true);
+						}
+					}
+				}
+			}
+			else if (predString == "turn") {	// satisfy turn
+				GameObject theme = GameObject.Find (argsStrings [0] as String);
+				if (theme != null) {
+					//Debug.Log(Helper.ConvertVectorToParsable(obj.transform.position) + " " + (String)argsStrings[1]);
+					//Debug.Log(obj.transform.position);
+					//Debug.Log (Quaternion.Angle(obj.transform.rotation,Quaternion.Euler(Helper.ParsableToVector((String)argsStrings[1]))));
+					Voxeme voxComponent = theme.GetComponent<Voxeme>();
+					Vector3 testRotation = voxComponent.isGrasped ? voxComponent.graspTracker.transform.eulerAngles : theme.transform.eulerAngles;
+
+					//Debug.DrawRay(theme.transform.position, theme.transform.up * 5, Color.blue, 0.01f);
+					//Debug.Log(Vector3.Angle (theme.transform.rotation * Helper.ParsableToVector ((String)argsStrings [1]), Helper.ParsableToVector ((String)argsStrings [2])));
+					//Debug.Log(Helper.ParsableToVector ((String)argsStrings [1]));
+					//Debug.Log(Helper.ParsableToVector ((String)argsStrings [2]));
+					if (Mathf.Deg2Rad * Vector3.Angle (theme.transform.rotation * Helper.ParsableToVector ((String)argsStrings [1]), Helper.ParsableToVector ((String)argsStrings [2])) < Constants.EPSILON) {
+						if (voxComponent.isGrasped) {
+							//theme.transform.rotation = Quaternion.Euler(Helper.ParsableToVector ((String)argsStrings [1]));
+							//theme.transform.rotation = Quaternion.identity;
+						}
+						satisfied = true;
+
+						//bar;
+						// ROLL once - roll again - voxeme object satisfied TURN but rigidbody subobjects have moved under physics 
+						ReasonFromAffordances (predString, voxComponent);	// we need to talk (do physics reactivation in here?) // replace ReevaluateRelationships
+						//theme.GetComponent<Rigging> ().ActivatePhysics (true);
+					}
+				}
+			}
 			else if (predString == "flip") {	// satisfy flip
 				GameObject theme = GameObject.Find (argsStrings [0] as String);
 				if (theme != null) {
@@ -81,6 +133,28 @@ namespace Satisfaction {
 						satisfied = true;
 						ReasonFromAffordances (predString, theme.GetComponent<Voxeme>());	// we need to talk (do physics reactivation in here?) // replace ReevaluateRelationships
 						theme.GetComponent<Rigging> ().ActivatePhysics (true);
+					}
+				}
+			}
+			else if (predString == "lift") {	// satisfy lift
+				GameObject theme = GameObject.Find (argsStrings [0] as String);
+				if (theme != null) {
+					//Debug.Log(Helper.ConvertVectorToParsable(obj.transform.position) + " " + (String)argsStrings[1]);
+					//Debug.Log(obj.transform.position);
+					//Debug.Log (Quaternion.Angle(obj.transform.rotation,Quaternion.Euler(Helper.ParsableToVector((String)argsStrings[1]))));
+					Voxeme voxComponent = theme.GetComponent<Voxeme>();
+					Vector3 testLocation = voxComponent.isGrasped ? voxComponent.graspTracker.transform.position : theme.transform.position;
+
+					if (Helper.CloseEnough (testLocation, Helper.ParsableToVector ((String)argsStrings [1]))) {
+						if (voxComponent.isGrasped) {
+							//preds.UNGRASP (new object[]{ theme, true });
+							//em.ExecuteCommand(string.Format("put({0},{1})",theme.name,(String)argsStrings [1]));
+							theme.transform.position = Helper.ParsableToVector ((String)argsStrings [1]);
+							theme.transform.rotation = Quaternion.identity;
+						}
+						satisfied = true;
+						ReasonFromAffordances (predString, voxComponent);	// we need to talk (do physics reactivation in here?) // replace ReevaluateRelationships
+						//theme.GetComponent<Rigging> ().ActivatePhysics (true);
 					}
 				}
 			}
@@ -97,6 +171,17 @@ namespace Satisfaction {
 				//Debug.Log (string.Format ("Reach {0}", satisfied));
 			}
 			else if (predString == "grasp") {	// satisfy grasp
+				GameObject theme = GameObject.Find (argsStrings [0] as String);
+				GameObject agent = GameObject.FindGameObjectWithTag ("Agent");
+				if (theme != null) {
+					if (agent != null) {
+						if (theme.transform.IsChildOf (agent.transform)) {
+							satisfied = true;
+						}
+					}
+				}
+			}
+			else if (predString == "hold") {	// satisfy hold
 				GameObject theme = GameObject.Find (argsStrings [0] as String);
 				GameObject agent = GameObject.FindGameObjectWithTag ("Agent");
 				if (theme != null) {
@@ -161,14 +246,14 @@ namespace Satisfaction {
 								if (matches.Count == 0) {
 									go = GameObject.Find (arg as String);
 									if (go == null) {
-										OutputHelper.PrintOutput (OutputController.Role.Affector,string.Format("What is a \"{0}\"?", (arg as String)));
+										OutputHelper.PrintOutput (OutputController.Role.Affector,string.Format("What is that?", (arg as String)));
 										return false;	// abort
 									}
 								}
 								else if (matches.Count == 1) {
 									go = matches[0];
 									if (go == null) {
-										OutputHelper.PrintOutput (OutputController.Role.Affector,string.Format ("What is a \"{0}\"?", (arg as String)));
+										OutputHelper.PrintOutput (OutputController.Role.Affector,string.Format ("What is that?", (arg as String)));
 										return false;	// abort
 									}
 								}
@@ -206,13 +291,17 @@ namespace Satisfaction {
 
 		public static void ReasonFromAffordances(String program, Voxeme obj) {
 			Regex reentrancyForm = new Regex (@"\[[0-9]+\]");
+			Regex themeFirst = new Regex (@".*(\[[0-9]+\], .*x.*)");	// check the order of the arguments
+			Regex themeSecond = new Regex (@".*(x, .*\[[0-9]+\].*)");
 			List<string> supportedRelations = new List<string> (
-				new string[]{
-					@"on\(.*\)",	// list of supported relations
-					@"in\(.*\)" });	// TODO: move externally, draw from voxeme database
+				new string[]{	// list of supported relations
+					@"on\(.*\)",	
+					@"in\(.*\)",
+					@"under\(.*\)"});	// TODO: move externally, draw from voxeme database
 			List<string> genericRelations = new List<string> (
-				new string[]{
-					@"behind\(.*\)",	// list of habitat-independent relations
+				new string[]{	// list of habitat-independent relations
+					@"under\(.*\)",
+					@"behind\(.*\)",	
 					@"in_front\(.*\)",
 					@"left\(.*\)",
 					@"right\(.*\)",
@@ -231,71 +320,113 @@ namespace Satisfaction {
 			bool reactivatePhysics = true;
 			obj.minYBound = objBounds.min.y;
 
-			// reasoning from affordances
-			foreach (Voxeme test in allVoxemes) {
-				if (test.gameObject != obj.gameObject) {
-					// foreach voxeme
-					// get bounds of object being tested against
-					Bounds testBounds = Helper.GetObjectWorldSize (test.gameObject);
-					if (!test.gameObject.name.Contains ("*")) { // hacky fix to filter out unparented objects w/ disabled voxeme components
-						//if (test.enabled) {	// if voxeme is active
-						OperationalVox.OpAfford_Str affStr = test.opVox.Affordance;
-						foreach (int h in affStr.Affordances.Keys) {
-							for (int i = 0; i < affStr.Affordances[h].Count; i++) {	// condition/event/result list for this habitat index
-								//if (test.opVox.Habitat condition blah blah)	// ignore habitat conditionals for now
-								string ev = affStr.Affordances[h][i].Item2.Item1;
-								if (ev.Contains (program)) {
-									//Debug.Log (test.opVox.Lex.Pred);
-									//Debug.Log (program);
+			// reason from affordances
+			OperationalVox.OpAfford_Str affStr = obj.opVox.Affordance;
+			string result;
 
-									foreach (string rel in supportedRelations) {
-										Regex r = new Regex (rel);
-										if (r.Match (ev).Length > 0) {	// found a relation that might apply between these objects
-											string relation = r.Match(ev).Groups[0].Value.Split('(')[0];
+			// relation-based reasoning from affordances
+			foreach (int objHabitat in affStr.Affordances.Keys) {
+				if (TestHabitat (obj.gameObject, objHabitat)) {
+					foreach (Voxeme test in allVoxemes) {
+						if (test.gameObject != obj.gameObject) {
+							// foreach voxeme
+							// get bounds of object being tested against
+							Bounds testBounds = Helper.GetObjectWorldSize (test.gameObject);
+							if (!test.gameObject.name.Contains ("*")) { // hacky fix to filter out unparented objects w/ disabled voxeme components
+								//if (test.enabled) {	// if voxeme is active
+								foreach (int testHabitat in test.opVox.Affordance.Affordances.Keys) {
+									//if (TestHabitat (test.gameObject, testHabitat)) {	// test habitats
+										for (int i = 0; i < test.opVox.Affordance.Affordances[testHabitat].Count; i++) {	// condition/event/result list for this habitat index
+											string ev = test.opVox.Affordance.Affordances[testHabitat][i].Item2.Item1;
+											Debug.Log (ev);
+											if (ev.Contains (program) || ev.Contains ("put")) {	// TODO: resultant states should persist
+												//Debug.Log (test.opVox.Lex.Pred);
+												//Debug.Log (program);
 
-											MatchCollection matches = reentrancyForm.Matches(ev);
-											foreach (Match m in matches) {
-												foreach (Group g in m.Groups) {
-													int componentIndex = Helper.StringToInt (
-														                    g.Value.Replace (g.Value, g.Value.Trim (new char[]{ '[', ']' })));
-													//Debug.Log (componentIndex);
-													if (test.opVox.Type.Components.FindIndex (c => c.Item3 == componentIndex) != -1) {
-														Triple<string, GameObject, int> component = test.opVox.Type.Components.First (c => c.Item3 == componentIndex);
-														//Debug.Log (ev.Replace(g.Value,component.Item2.name));
-														Debug.Log (string.Format ("Is {0} {1} {2}?", obj.gameObject.name, relation, component.Item2.name));
-														if (TestRelation (obj.gameObject, relation, test.gameObject)) {
-															string result = affStr.Affordances[h][i].Item2.Item2;
+												foreach (string rel in supportedRelations) {
+													Regex r = new Regex (rel);
+													if (r.Match (ev).Length > 0) {	// found a relation that might apply between these objects
+														string relation = r.Match(ev).Groups[0].Value.Split('(')[0];
 
-															// things are getting a little ad hoc here
-															if (relation == "on") {
-																if (!((Helper.GetMostImmediateParentVoxeme (test.gameObject).GetComponent<Voxeme> ().voxml.Type.Concavity == "Concave") &&
-																   (Helper.FitsIn (objBounds, testBounds)))) {
-																	//if (obj.enabled) {
-																	//	obj.gameObject.GetComponent<Rigging> ().ActivatePhysics (true);
-																	//}
-																	obj.minYBound = testBounds.max.y;
-																}
-															}
-															else if (relation == "in") {
-																reactivatePhysics = false;
-																obj.minYBound = objBounds.min.y;
-															}
+														MatchCollection matches = reentrancyForm.Matches(ev);
+														foreach (Match m in matches) {
+															foreach (Group g in m.Groups) {
+																int componentIndex = Helper.StringToInt (
+																	                    g.Value.Replace (g.Value, g.Value.Trim (new char[]{ '[', ']' })));
+																//Debug.Log (componentIndex);
+																if (test.opVox.Type.Components.FindIndex (c => c.Item3 == componentIndex) != -1) {
+																	Triple<string, GameObject, int> component = test.opVox.Type.Components.First (c => c.Item3 == componentIndex);
+																	//Debug.Log (ev.Replace(g.Value,component.Item2.name));
+																	//Debug.Log (string.Format ("Is {0} {1} {2} {3}?", obj.gameObject.name, relation, component.Item2.name, component.Item1));
+																	
+																	bool relationSatisfied = false;
 
-															if (result != "") {
-																result = result.Replace ("x", obj.gameObject.name);
-																// any component reentrancy ultimately inherits from the parent voxeme itself
-																result = reentrancyForm.Replace (result, test.gameObject.name);
-																result = Helper.GetTopPredicate (result);
-																Debug.Log (string.Format ("{0}: {1} {2}s {3}",
-																	affStr.Affordances [h] [i].Item2.Item1, test.gameObject.name, result, obj.gameObject.name));
-																// TODO: maybe switch object order here below => passivize relation?
-																relationTracker.AddNewRelation (new List<GameObject>{ test.gameObject, obj.gameObject }, result);
+																	if (themeFirst.Match (ev).Length > 0) {
+																		relationSatisfied = TestRelation (test.gameObject, relation, obj.gameObject);
+																	}
+																	else if (themeSecond.Match (ev).Length > 0) {
+																		relationSatisfied = TestRelation (obj.gameObject, relation, test.gameObject);
+																	}
 
-																if (result == "support") {
-																	RiggingHelper.RigTo (obj.gameObject, test.gameObject);
-																}
-																else if (result == "contain") {
-																	RiggingHelper.RigTo (obj.gameObject, test.gameObject);
+																	if (relationSatisfied) {
+																		result = test.opVox.Affordance.Affordances[testHabitat][i].Item2.Item2;
+
+																		// things are getting a little ad hoc here
+																		if (relation == "on") {
+																			if (!((Helper.GetMostImmediateParentVoxeme (test.gameObject).GetComponent<Voxeme> ().voxml.Type.Concavity == "Concave") &&
+																			   (Helper.FitsIn (objBounds, testBounds)))) {
+																				//if (obj.enabled) {
+																				//	obj.gameObject.GetComponent<Rigging> ().ActivatePhysics (true);
+																				//}
+																				obj.minYBound = testBounds.max.y;
+																			}
+																		}
+																		else if (relation == "in") {
+																			reactivatePhysics = false;
+																			obj.minYBound = objBounds.min.y;
+																		}
+//																		else if (relation == "under") {
+//																			GameObject voxObj = Helper.GetMostImmediateParentVoxeme (test.gameObject);
+//																			if ((voxObj.GetComponent<Voxeme> ().voxml.Type.Concavity == "Concave") &&	// this is a concave object
+//																				(Concavity.IsEnabled (voxObj)) && (Mathf.Abs (Vector3.Dot (voxObj.transform.up, Vector3.up) + 1.0f) <= Constants.EPSILON)) { // TODO: Run this through habitat verification
+//																				reactivatePhysics = false;
+//																				obj.minYBound = objBounds.min.y;
+//																			}
+//																		}
+
+																		if (result != "") {
+																			result = result.Replace ("x", obj.gameObject.name);
+																			// any component reentrancy ultimately inherits from the parent voxeme itself
+																			result = reentrancyForm.Replace (result, test.gameObject.name);
+																			result = Helper.GetTopPredicate (result);
+																			Debug.Log (string.Format ("{0}: {1} {2}.3sg {3}",
+																				test.opVox.Affordance.Affordances [testHabitat] [i].Item2.Item1, test.gameObject.name, result, obj.gameObject.name));
+																			// TODO: maybe switch object order here below => passivize relation?
+																			if (themeFirst.Match (ev).Length > 0) {
+																				relationTracker.AddNewRelation (new List<GameObject>{ obj.gameObject, test.gameObject }, result);
+																			}
+																			else if (themeSecond.Match (ev).Length > 0) {
+																				relationTracker.AddNewRelation (new List<GameObject>{ test.gameObject, obj.gameObject }, result);
+																			}
+
+																			if (result == "support") {
+																				if (themeFirst.Match (ev).Length > 0) {
+																					RiggingHelper.RigTo (test.gameObject, obj.gameObject);
+																				}
+																				else if (themeSecond.Match (ev).Length > 0) {
+																					RiggingHelper.RigTo (obj.gameObject, test.gameObject);
+																				}
+																			}
+																			else if (result == "contain") {
+																				if (themeFirst.Match (ev).Length > 0) {
+																					RiggingHelper.RigTo (test.gameObject, obj.gameObject);
+																				}
+																				else if (themeSecond.Match (ev).Length > 0) {
+																					RiggingHelper.RigTo (obj.gameObject, test.gameObject);
+																				}
+																			}
+																		}
+																	}
 																}
 															}
 														}
@@ -303,16 +434,58 @@ namespace Satisfaction {
 												}
 											}
 										}
-									}
+									//}
 
 									// habitat-independent relation handling
 									foreach (string rel in genericRelations) {
 										string relation = rel.Split('\\')[0];	// not using relation as regex here
 
-										Debug.Log (string.Format ("Is {0} {1} {2}?", obj.gameObject.name, relation, test.gameObject.name));
+										//Debug.Log (string.Format ("Is {0} {1} {2}?", obj.gameObject.name, relation, test.gameObject.name));
 										if (TestRelation (obj.gameObject, relation, test.gameObject)) {
 											relationTracker.AddNewRelation (new List<GameObject>{ obj.gameObject, test.gameObject }, relation);
 										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+
+			// non-relation-based reasoning from affordances
+			foreach (int objHabitat in affStr.Affordances.Keys) {
+				if (TestHabitat (obj.gameObject, objHabitat)) {	// test habitats
+					for (int i = 0; i < affStr.Affordances [objHabitat].Count; i++) {	// condition/event/result list for this habitat index
+						string ev = affStr.Affordances [objHabitat] [i].Item2.Item1;
+						Debug.Log (ev);
+						if (ev.Contains (program)) {
+							bool relationIndependent = true;
+							foreach (string rel in supportedRelations) {
+								Regex r = new Regex (rel);
+								if (r.Match (ev).Length > 0) {
+									relationIndependent = false;
+								}
+							}
+
+							if (relationIndependent) {
+								Debug.Log (obj.opVox.Lex.Pred);
+								Debug.Log (program);
+
+								result = affStr.Affordances [objHabitat] [i].Item2.Item2;
+								Debug.Log (result);
+
+								if (result != "") {
+									result = result.Replace ("x", obj.gameObject.name);
+									// any component reentrancy ultimately inherits from the parent voxeme itself
+									result = reentrancyForm.Replace (result, obj.gameObject.name);
+									result = Helper.GetTopPredicate (result);
+									Debug.Log (string.Format ("{0}: {1} {2}.pp",
+										affStr.Affordances [objHabitat] [i].Item2.Item1, obj.gameObject.name, result));
+									// TODO: maybe switch object order here below => passivize relation?
+									relationTracker.AddNewRelation (new List<GameObject>{ obj.gameObject }, result);
+
+									if (result == "hold") {
+										reactivatePhysics = false;
 									}
 								}
 							}
@@ -326,6 +499,72 @@ namespace Satisfaction {
 					obj.gameObject.GetComponent<Rigging> ().ActivatePhysics (true);
 				}
 			}
+		}
+
+		public static bool TestHabitat(GameObject obj, int habitatIndex) {
+			HabitatSolver habitatSolver = GameObject.Find ("BehaviorController").GetComponent<HabitatSolver> ();
+
+			MethodInfo methodToCall;
+			bool r = true;
+
+			Debug.Log (string.Format ("H[{0}]", habitatIndex));
+			if (habitatIndex != 0) {	// index 0 = affordance enabled in all habitats
+				OperationalVox opVox = obj.GetComponent<Voxeme> ().opVox;
+				if (opVox != null) {
+					r = true;
+					if (opVox.Habitat.IntrinsicHabitats.ContainsKey (habitatIndex)) {	// do intrinsic habitats first
+						List<String> conditioningEnvs = opVox.Habitat.IntrinsicHabitats [habitatIndex];
+						foreach (String env in conditioningEnvs) {
+							string label = env.Split ('=') [0].Trim ();
+							string formula = env.Split ('=') [1].Trim (new char[]{' ','{','}'});
+							string methodName = formula.Split ('(') [0].Trim();
+							string[] methodArgs = new string[]{string.Empty};
+
+							if (formula.Split ('(').Length > 1) {
+								methodArgs = formula.Split ('(') [1].Trim (')').Split (',');
+							}
+
+							List<object> args = new List<object> ();
+							args.Add (obj);
+							foreach (string arg in methodArgs) {
+								args.Add (arg);
+							}
+
+							methodToCall = habitatSolver.GetType ().GetMethod (methodName);
+							if (methodToCall != null) {
+								object result = methodToCall.Invoke (habitatSolver, new object[]{ args.ToArray () });
+								r &= (bool)result;
+							}
+						}
+					}
+
+					if (opVox.Habitat.ExtrinsicHabitats.ContainsKey (habitatIndex)) {	// then do extrinsic habitats
+						List<String> conditioningEnvs = opVox.Habitat.ExtrinsicHabitats [habitatIndex];
+						foreach (String env in conditioningEnvs) {
+							string label = env.Split ('=') [0].Trim ();
+							string formula = env.Split ('=') [1].Trim (new char[]{' ','{','}'});
+							string methodName = formula.Split ('(') [0].Trim();
+							string[] methodArgs = formula.Split ('(') [1].Trim(')').Split(',');
+
+							List<object> args = new List<object> ();
+							args.Add (obj);
+							foreach (string arg in methodArgs) {
+								args.Add (arg);
+							}
+
+							methodToCall = habitatSolver.GetType ().GetMethod (methodName);
+							if (methodToCall != null) {
+								object result = methodToCall.Invoke (habitatSolver, new object[]{ args.ToArray () });
+								r &= (bool)result;
+							}
+						}
+					}
+
+					//flip(cup1);put(ball,under(cup1))
+				}
+			}
+			Debug.Log (r);
+			return r;
 		}
 
 		public static bool TestRelation(GameObject obj1, string relation, GameObject obj2) {
@@ -349,7 +588,7 @@ namespace Satisfaction {
 				habitats.Add ("Y");
 			}
 
-			if (relation == "on") {	// TODO: needs to be fixed: PO, TPP(i), NTPP(i) for contacting regions along axis
+			if (relation == "on") {	// TODO: needs to be fixed: PO, TPP(i), NTPP(i) for contacting regions along axis; relation satisfied only within EPSILON radius of ground obj position
 				foreach (string axis in habitats) {
 					if ((Helper.GetMostImmediateParentVoxeme (obj2.gameObject).GetComponent<Voxeme> ().voxml.Type.Concavity == "Concave") &&
 					    (Helper.FitsIn (bounds1, bounds2))) {	// if test object is concave and placed object would fit inside
@@ -405,9 +644,26 @@ namespace Satisfaction {
 				}
 			}
 			else if (relation == "in") {
+				Debug.Log (bounds1);
+				Debug.Log (bounds2);
 				if (Helper.FitsIn (bounds1, bounds2)) {
 					r = RCC8.PO (bounds1, bounds2) || RCC8.ProperPart (bounds1, bounds2);
 				}
+			}
+			else if (relation == "under") {
+				//Debug.Log (obj1.name);
+				//Debug.Log (new Vector3 (obj1.gameObject.transform.position.x, obj2.gameObject.transform.position.y, obj1.gameObject.transform.position.z));
+				//Debug.Log (obj2.name);
+				//Debug.Log (obj2.transform.position);
+				float dist = Vector3.Distance (new Vector3 (obj1.gameObject.transform.position.x, obj2.gameObject.transform.position.y, obj1.gameObject.transform.position.z),
+					obj2.gameObject.transform.position);
+				//Debug.Log (Vector3.Distance (
+				//	new Vector3 (obj1.gameObject.transform.position.x, obj2.gameObject.transform.position.y, obj1.gameObject.transform.position.z),
+				//	obj2.gameObject.transform.position));
+				r = (Vector3.Distance (
+					new Vector3 (obj1.gameObject.transform.position.x, obj2.gameObject.transform.position.y, obj1.gameObject.transform.position.z),
+					obj2.gameObject.transform.position) <= Constants.EPSILON);
+				r &= (obj1.gameObject.transform.position.y < obj2.gameObject.transform.position.y);
 			}
 			// add generic relations--left, right, etc.
 			// TODO: must transform to camera perspective if relative persp is on
@@ -422,7 +678,7 @@ namespace Satisfaction {
 				r = (Vector3.Distance (
 					new Vector3 (obj1.gameObject.transform.position.x, obj1.gameObject.transform.position.y, obj2.gameObject.transform.position.z),
 					obj2.gameObject.transform.position) <= Constants.EPSILON);
-				r &= (obj1.gameObject.transform.position.x < obj2.gameObject.transform.position.x);
+				r &= (obj1.gameObject.transform.position.z < obj2.gameObject.transform.position.z);
 
 			}
 			else if (relation == "left") {

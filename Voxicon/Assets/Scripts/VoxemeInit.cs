@@ -68,8 +68,24 @@ public class VoxemeInit : MonoBehaviour {
 									// use Reynolds number for drag coefficient - assume 1
 									// https://en.wikipedia.org/wiki/Drag_coefficient
 									rigidbody.drag = 1.225f * voxeme.moveSpeed * ((2 * x * y) + (2 * y * z) + (2 * x * z)) * 1.0f;
+									//rigidbody.drag = 0f;
+									//rigidbody.angularDrag = 0f;
 
 									//rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
+
+									// get subobject initial rotations
+									//Debug.Log(rigidbody.name);
+									//Debug.Log(rigidbody.rotation.eulerAngles);
+									//container.GetComponent<Voxeme> ().startEventRotations.Add(rigidbody.name,rigidbody.rotation.eulerAngles);
+
+									// log the orientational displacement of each rigidbody relative to the main body
+									// relativeDisplacement = rotation to get from main body rotation to rigidbody rotation
+									// = rigidbody rotation * (main body rotation)^-1
+									Vector3 displacement = rigidbody.transform.localPosition;//-container.transform.position;
+									Vector3 rotationalDisplacement = (rigidbody.transform.localRotation * Quaternion.Inverse(container.transform.rotation)).eulerAngles;
+									//Debug.Log(rotationalDisplacement);
+									container.GetComponent<Voxeme> ().displacement.Add (rigidbody.name, displacement);
+									container.GetComponent<Voxeme> ().rotationalDisplacement.Add (rigidbody.name, rotationalDisplacement);
 								}
 							}
 						}
@@ -96,7 +112,7 @@ public class VoxemeInit : MonoBehaviour {
 				}
 			}
 		}
-
+			
 		macros.PopulateMacros ();
 	}
 	

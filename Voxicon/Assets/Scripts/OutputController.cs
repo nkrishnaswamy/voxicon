@@ -10,7 +10,7 @@ using System.Text.RegularExpressions;
 using Global;
 using Satisfaction;
 
-public class OutputController : MonoBehaviour {
+public class OutputController : FontManager {
 	public enum Role {
 		Planner,
 		Affector
@@ -23,17 +23,33 @@ public class OutputController : MonoBehaviour {
 	}
 	public Alignment alignment;
 
+	public int fontSize = 12;
+
 	public String outputLabel;
 	public String outputString;
 	public int outputHeight = 25;
 	public Rect outputRect = new Rect();
 
+	GUIStyle labelStyle = new GUIStyle ("Label");
+	GUIStyle textFieldStyle = new GUIStyle ("TextField");
+
+	float fontSizeModifier;
+
 	void Start() {
+		labelStyle = new GUIStyle ("Label");
+		textFieldStyle = new GUIStyle ("TextField");
+		fontSizeModifier = (int)(fontSize / defaultFontSize);
+
+		outputHeight = (int)(25 * fontSizeModifier);
+
+		labelStyle.fontSize = fontSize;
+		textFieldStyle.fontSize = fontSize;
+
 		if (alignment == Alignment.Left) {
-			outputRect = new Rect (5, outputRect.y, 365, outputHeight);
+			outputRect = new Rect (5, outputRect.y, (int)(365*fontSizeModifier), outputHeight);
 		}
 		else if (alignment == Alignment.Right) {
-			outputRect = new Rect (Screen.width - 370, outputRect.y, 365, outputHeight);
+			outputRect = new Rect (Screen.width - (5 + (int)(365*fontSizeModifier)), outputRect.y, (int)(365*fontSizeModifier), outputHeight);
 		}
 	}
 
@@ -43,8 +59,8 @@ public class OutputController : MonoBehaviour {
 	void OnGUI() {
 		GUILayout.BeginArea (outputRect);
 		GUILayout.BeginHorizontal();
-		GUILayout.Label(outputLabel+":");
-		outputString = GUILayout.TextArea(outputString, GUILayout.Width(300), GUILayout.ExpandHeight (false));
+		GUILayout.Label(outputLabel+":", labelStyle);
+		outputString = GUILayout.TextArea(outputString, textFieldStyle, GUILayout.Width(300*fontSizeModifier), GUILayout.ExpandHeight (false));
 		GUILayout.EndHorizontal ();
 		GUILayout.EndArea();
 	}

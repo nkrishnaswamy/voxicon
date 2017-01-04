@@ -11,11 +11,10 @@ public class GhostFreeRoamCamera : MonoBehaviour
 	public bool allowMovement = true;
 	public bool allowRotation = true;
 	
-	public KeyCode upButton = KeyCode.W;
-	public KeyCode downButton = KeyCode.S;
+	public KeyCode forwardButton = KeyCode.W;
+	public KeyCode backwardButton = KeyCode.S;
 	public KeyCode rightButton = KeyCode.D;
 	public KeyCode leftButton = KeyCode.A;
-	public KeyCode homeButton = KeyCode.H;
 	
 	public float cursorSensitivity = 0.025f;
 	public bool cursorToggleAllowed = true;
@@ -25,7 +24,7 @@ public class GhostFreeRoamCamera : MonoBehaviour
 	private Vector3 mouseOrigin;	// Position of cursor when mouse dragging starts
 
 	float zoomAmount = 0; 
-	float maxToClamp = 1000f;
+	float maxToClamp = 10f;
 	float zoomSpeed = 0.5f;
 
 	private float currentSpeed = 0f;
@@ -37,11 +36,6 @@ public class GhostFreeRoamCamera : MonoBehaviour
 
 	private float angle = 0;
 
-	[HideInInspector]
-	public Vector3 initialPosition;
-	[HideInInspector]
-	public Vector3 initialRotation;
-
 	Help help;
 	InputController inputController;
 	OutputController outputController;
@@ -50,9 +44,6 @@ public class GhostFreeRoamCamera : MonoBehaviour
 
 	private void OnEnable()
 	{
-		initialPosition = transform.position;
-		initialRotation = transform.eulerAngles;
-
 		help = GameObject.Find ("Help").GetComponent<Help> ();
 		inputController = GameObject.Find ("IOController").GetComponent<InputController> ();
 		outputController = GameObject.Find ("IOController").GetComponent<OutputController> ();
@@ -122,17 +113,10 @@ public class GhostFreeRoamCamera : MonoBehaviour
 			
 			moving = false;
 			
-			CheckMove(upButton, transform.up);
-			CheckMove(downButton, -transform.up);
+			CheckMove(forwardButton, transform.forward);
+			CheckMove(backwardButton, -transform.forward);
 			CheckMove(rightButton, transform.right);
 			CheckMove(leftButton, -transform.right);
-
-			// snap home
-			if (Input.GetKeyDown(homeButton))
-			{
-				transform.position = initialPosition;
-				transform.eulerAngles = initialRotation;
-			} 
 
 			//adding in zooming
 			if (Input.mousePosition.x >= 0 && Input.mousePosition.x <= Screen.width &&
@@ -213,10 +197,6 @@ public class GhostFreeRoamCamera : MonoBehaviour
 	{
 		if (Input.GetKey(keyCode))
 		{
-//			if (Input.GetKey (KeyCode.LeftShift) || Input.GetKey (KeyCode.RightShift)) {
-//				directionVector = Quaternion.Euler (new Vector3 (90.0f, transform.eulerAngles.y, transform.eulerAngles.z)) * directionVector;
-//			}
-
 			moving = true;
 			deltaPosition += directionVector;
 		}

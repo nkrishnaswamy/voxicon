@@ -6,10 +6,11 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Global;
 
-public class InputController : MonoBehaviour {
+public class InputController : FontManager {
 	public String inputLabel;
 	public String inputString;
-	public int inputHeight = 25;
+	public int fontSize = 12;
+	public int inputHeight = 50;
 	public Rect inputRect;
 
 	String[] commands;
@@ -18,10 +19,17 @@ public class InputController : MonoBehaviour {
 
 	PluginImport commBridge;
 	ObjectSelector objSelector;
+	ExitToMenu exitToMenu;
 
 	String disableEnable;
 
 	GUIStyle textAreaStyle = new GUIStyle();
+
+	GUIStyle labelStyle = new GUIStyle ("Label");
+	GUIStyle textFieldStyle = new GUIStyle ("TextField");
+	GUIStyle buttonStyle = new GUIStyle ("Button");
+
+	float fontSizeModifier;
 
 	void Start() {
 		GameObject bc = GameObject.Find ("BehaviorController");
@@ -29,11 +37,23 @@ public class InputController : MonoBehaviour {
 		macros = bc.GetComponent<Macros> ();
 
 		objSelector = GameObject.Find ("BlocksWorld").GetComponent<ObjectSelector> ();
+		exitToMenu = GameObject.Find ("BlocksWorld").GetComponent<ExitToMenu> ();
 
 		commBridge = GameObject.Find ("CommunicationsBridge").GetComponent<PluginImport> ();
 
+		labelStyle = new GUIStyle ("Label");
+		textFieldStyle = new GUIStyle ("TextField");
+		buttonStyle = new GUIStyle ("Button");
+		labelStyle.fontSize = fontSize;
+		textFieldStyle.fontSize = fontSize;
+		buttonStyle.fontSize = fontSize;
+
+		fontSizeModifier = (int)(fontSize / defaultFontSize);
+
 		//inputRect = new Rect (5, 5, 50, 25);
-		inputRect = new Rect (5, 5, 365, inputHeight);
+		inputHeight = (int)(25*fontSizeModifier);
+
+		inputRect = new Rect (5, 5, (int)(365*fontSizeModifier), inputHeight);
 	}
 
 	void Update() {
@@ -48,8 +68,8 @@ public class InputController : MonoBehaviour {
 				// warning: switching to TextArea here (and below) seems to cause crash
 				GUILayout.BeginArea (inputRect);
 				GUILayout.BeginHorizontal();
-				GUILayout.Label(inputLabel+":");
-				inputString = GUILayout.TextField("", GUILayout.Width(300), GUILayout.ExpandHeight (false));
+				GUILayout.Label(inputLabel+":", labelStyle);
+				inputString = GUILayout.TextField("", textFieldStyle, GUILayout.Width(300*fontSizeModifier), GUILayout.ExpandHeight (false));
 				GUILayout.EndHorizontal ();
 				GUILayout.EndArea();
 
@@ -61,35 +81,38 @@ public class InputController : MonoBehaviour {
 
 			//GUI.Label (inputRect, inputLabel+":");
 			//inputString = GUI.TextField (inputRect, inputString);
-
 			GUILayout.BeginArea (inputRect);
 			GUILayout.BeginHorizontal();
-			GUILayout.Label(inputLabel+":");
-			inputString = GUILayout.TextField(inputString, GUILayout.Width(300), GUILayout.ExpandHeight (false));
+			GUILayout.Label(inputLabel+":", labelStyle);
+			inputString = GUILayout.TextField(inputString, textFieldStyle, GUILayout.Width(300*fontSizeModifier), GUILayout.ExpandHeight (false));
 			GUILayout.EndHorizontal ();
 			GUILayout.EndArea();
 		}
 
 			/* DEBUG BUTTONS */
 
-		if (GUI.Button (new Rect (10, Screen.height - 80, 100, 20), "Reset")) {
-			StartCoroutine(SceneHelper.LoadScene (UnityEngine.SceneManagement.SceneManager.GetActiveScene ().name));
-			return;
-		}
+//		if (GUI.Button (new Rect (10, Screen.height - ((10 + (int)(20*exitToMenu.FontSizeModifier)) + (10 + (int)(40*fontSizeModifier))),
+//			100*fontSizeModifier, 20*fontSizeModifier), "Reset", buttonStyle)) {
+//			StartCoroutine(SceneHelper.LoadScene (UnityEngine.SceneManagement.SceneManager.GetActiveScene ().name));
+//			return;
+//		}
 
-		disableEnable = (objSelector.disabledObjects.FirstOrDefault (t => t.tag == "Agent") == null) ? "Disable Agent" : "Enable Agent";
-		if (GUI.Button (new Rect (10, Screen.height - 55, 100, 20), disableEnable)) {
-			GameObject agent = GameObject.FindGameObjectWithTag ("Agent");
-			if (agent != null) {
-				if (agent.activeInHierarchy) {
-					eventManager.preds.DISABLE (new object[]{ agent });
+		if (GameObject.FindGameObjectWithTag ("Agent") != null) {
+			disableEnable = (objSelector.disabledObjects.FirstOrDefault (t => t.tag == "Agent") == null) ? "Disable Agent" : "Enable Agent";
+			if (GUI.Button (new Rect (10, Screen.height - ((10 + (int)(20 * exitToMenu.FontSizeModifier)) + (10 + (int)(40 * fontSizeModifier))),
+				   100 * fontSizeModifier, 20 * fontSizeModifier), disableEnable, buttonStyle)) {
+				GameObject agent = GameObject.FindGameObjectWithTag ("Agent");
+				if (agent != null) {
+					if (agent.activeInHierarchy) {
+						eventManager.preds.DISABLE (new object[]{ agent });
+					}
 				}
+				else {
+					agent = objSelector.disabledObjects.First (t => t.tag == "Agent");
+					eventManager.preds.ENABLE (new object[]{ agent });
+				}
+				return;
 			}
-			else {
-				agent = objSelector.disabledObjects.First (t => t.tag == "Agent");
-				eventManager.preds.ENABLE (new object[]{ agent });
-			}
-			return;
 		}
 	}
 
@@ -105,6 +128,11 @@ public class InputController : MonoBehaviour {
 
 			if (inputString == "repeat") {
 				GameObject.Find ("BlocksWorld").GetComponent<ScenarioManager> ().scenarioScript.SendMessage("Repeat");
+				return;
+			}
+
+			if (inputString == "that's all") {
+				GameObject.Find ("BlocksWorld").GetComponent<ScenarioManager> ().scenarioScript.SendMessage("PlayGame");
 				return;
 			}
 
@@ -125,7 +153,7 @@ public class InputController : MonoBehaviour {
 			}
 
 			if (functionalCommand.Count (x => x == '(') == functionalCommand.Count (x => x == ')')) {
-				eventManager.ClearEvents ();
+				//eventManager.ClearEvents ();
 				foreach (KeyValuePair<String,String> kv in macros.commandMacros) {	// if input is a macro
 					if (functionalCommand == kv.Key) {									// sub in value
 						functionalCommand = kv.Value;
@@ -133,7 +161,7 @@ public class InputController : MonoBehaviour {
 					}
 				}
 				Debug.Log ("Parsed as: " + functionalCommand);
-				OutputHelper.PrintOutput (OutputController.Role.Affector,"");
+				OutputHelper.PrintOutput (OutputController.Role.Affector,"OK.");
 				OutputHelper.PrintOutput (OutputController.Role.Planner,"");
 				commands = functionalCommand.Split (';');
 				foreach (String commandString in commands) {
@@ -141,7 +169,9 @@ public class InputController : MonoBehaviour {
 					eventManager.QueueEvent (commandString);
 				}
 
-				eventManager.ExecuteNextCommand ();
+				if (eventManager.immediateExecution) {
+					eventManager.ExecuteNextCommand ();
+				}
 			}
 		}
 	}

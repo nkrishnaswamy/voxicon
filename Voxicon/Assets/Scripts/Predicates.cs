@@ -21,12 +21,14 @@ public class Predicates : MonoBehaviour {
 	EventManager eventManager;
 	AStarSearch aStarSearch;
 	ObjectSelector objSelector;
+	RelationTracker relationTracker;
 	Macros macros;
 
 	void Start () {
 		eventManager = gameObject.GetComponent<EventManager> ();
 		aStarSearch = GameObject.Find ("BlocksWorld").GetComponent<AStarSearch> ();
 		objSelector = GameObject.Find ("BlocksWorld").GetComponent<ObjectSelector> ();
+		relationTracker = GameObject.Find ("BehaviorController").GetComponent<RelationTracker> ();
 		macros = GameObject.Find ("BehaviorController").GetComponent<Macros> ();
 	}
 
@@ -164,7 +166,23 @@ public class Predicates : MonoBehaviour {
 	// OUT: Location
 	public Vector3 UNDER(object[] args)
 	{
-		return ((GameObject)args[0]).transform.position;
+		Vector3 outValue = Vector3.zero;
+		if (args [0] is GameObject) {	// under an object
+			GameObject obj = ((GameObject)args [0]);
+
+			Bounds bounds = new Bounds ();
+
+			bounds = Helper.GetObjectWorldSize (obj);
+
+			outValue = new Vector3(obj.transform.position.x,bounds.min.y,obj.transform.position.z);
+
+			Debug.Log ("under: " + Helper.VectorToParsable (outValue));
+		}
+		else if (args [0] is Vector3) {	// behind a location
+			outValue = (Vector3)args[0];
+		}
+
+		return outValue;
 	}
 
 	// IN: Object (single element array)
@@ -380,9 +398,13 @@ public class Predicates : MonoBehaviour {
 	public String BROWN(object[] args) {
 		String objName = "";
 
-		List<Voxeme> attrObjs = objSelector.allVoxemes.FindAll (v => v.gameObject.GetComponent<AttributeSet> ().attributes.Contains ("brown"));
-		if (attrObjs.Count > 0) {
-			objName = attrObjs [0].gameObject.name;
+		if (args [0] is GameObject) {	// assume all inputs are of same type
+			List<GameObject> objs = args.Cast<GameObject>().ToList();
+			List<GameObject> attrObjs = objs.FindAll (o => o.GetComponent<AttributeSet> ().attributes.Contains ("brown"));
+
+			if (attrObjs.Count > 0) {
+				objName = attrObjs [0].name;
+			}
 		}
 
 		return objName;
@@ -391,9 +413,13 @@ public class Predicates : MonoBehaviour {
 	public String BLUE(object[] args) {
 		String objName = "";
 
-		List<Voxeme> attrObjs = objSelector.allVoxemes.FindAll (v => v.gameObject.GetComponent<AttributeSet> ().attributes.Contains ("blue"));
-		if (attrObjs.Count > 0) {
-			objName = attrObjs [0].gameObject.name;
+		if (args [0] is GameObject) {	// assume all inputs are of same type
+			List<GameObject> objs = args.Cast<GameObject>().ToList();
+			List<GameObject> attrObjs = objs.FindAll (o => o.GetComponent<AttributeSet> ().attributes.Contains ("blue"));
+
+			if (attrObjs.Count > 0) {
+				objName = attrObjs [0].name;
+			}
 		}
 
 		return objName;
@@ -402,9 +428,13 @@ public class Predicates : MonoBehaviour {
 	public String BLACK(object[] args) {
 		String objName = "";
 
-		List<Voxeme> attrObjs = objSelector.allVoxemes.FindAll (v => v.gameObject.GetComponent<AttributeSet> ().attributes.Contains ("black"));
-		if (attrObjs.Count > 0) {
-			objName = attrObjs [0].gameObject.name;
+		if (args [0] is GameObject) {	// assume all inputs are of same type
+			List<GameObject> objs = args.Cast<GameObject>().ToList();
+			List<GameObject> attrObjs = objs.FindAll (o => o.GetComponent<AttributeSet> ().attributes.Contains ("black"));
+
+			if (attrObjs.Count > 0) {
+				objName = attrObjs [0].name;
+			}
 		}
 
 		return objName;
@@ -413,9 +443,13 @@ public class Predicates : MonoBehaviour {
 	public String GREEN(object[] args) {
 		String objName = "";
 
-		List<Voxeme> attrObjs = objSelector.allVoxemes.FindAll (v => v.gameObject.GetComponent<AttributeSet> ().attributes.Contains ("green"));
-		if (attrObjs.Count > 0) {
-			objName = attrObjs [0].gameObject.name;
+		if (args [0] is GameObject) {	// assume all inputs are of same type
+			List<GameObject> objs = args.Cast<GameObject>().ToList();
+			List<GameObject> attrObjs = objs.FindAll (o => o.GetComponent<AttributeSet> ().attributes.Contains ("green"));
+
+			if (attrObjs.Count > 0) {
+				objName = attrObjs [0].name;
+			}
 		}
 
 		return objName;
@@ -424,9 +458,13 @@ public class Predicates : MonoBehaviour {
 	public String YELLOW(object[] args) {
 		String objName = "";
 
-		List<Voxeme> attrObjs = objSelector.allVoxemes.FindAll (v => v.gameObject.GetComponent<AttributeSet> ().attributes.Contains ("yellow"));
-		if (attrObjs.Count > 0) {
-			objName = attrObjs [0].gameObject.name;
+		if (args [0] is GameObject) {	// assume all inputs are of same type
+			List<GameObject> objs = args.Cast<GameObject>().ToList();
+			List<GameObject> attrObjs = objs.FindAll (o => o.GetComponent<AttributeSet> ().attributes.Contains ("yellow"));
+
+			if (attrObjs.Count > 0) {
+				objName = attrObjs [0].name;
+			}
 		}
 
 		return objName;
@@ -435,11 +473,101 @@ public class Predicates : MonoBehaviour {
 	public String RED(object[] args) {
 		String objName = "";
 
-		List<Voxeme> attrObjs = objSelector.allVoxemes.FindAll (v => v.gameObject.GetComponent<AttributeSet> ().attributes.Contains ("red"));
+		if (args [0] is GameObject) {	// assume all inputs are of same type
+			List<GameObject> objs = args.Cast<GameObject>().ToList();
+			List<GameObject> attrObjs = objs.FindAll (o => o.GetComponent<AttributeSet> ().attributes.Contains ("red"));
+
+			if (attrObjs.Count > 0) {
+				objName = attrObjs [0].name;
+			}
+		}
+	
+		return objName;
+	}
+
+	// IN: Objects
+	// OUT: String
+	public String A(object[] args)
+	{
+		String objName = "";
+		System.Random random = new System.Random ();
+
+		if (args [0] is GameObject) {	// assume all inputs are of same type
+			int index = random.Next(args.Length);
+			objName = (args [index] as GameObject).name;
+		}
+
+		return objName;
+	}
+
+	// IN: Objects
+	// OUT: String
+	public List<String> TWO(object[] args)
+	{
+		List<String> objNames = new List<String>();
+		System.Random random = new System.Random ();
+
+		if (args [0] is GameObject) {	// assume all inputs are of same type
+			if (args.Length > 2) {
+				while (objNames.Count < 2) {
+					int index = random.Next (args.Length);
+					if (!objNames.Contains ((args [index] as GameObject).name)) {	// make sure all entries are distinct
+						objNames.Add ((args [index] as GameObject).name);
+					}
+				}
+			}
+		}
+
+		return objNames;
+	}
+
+	public String LEFTMOST(object[] args) {
+		String objName = "";
+
+		if (args [0] is GameObject) {	// assume all inputs are of same type
+			List<GameObject> objs = args.Cast<GameObject>().ToList().OrderBy(o => o.transform.position.x).ToList();
+
+			objName = objs [0].name;
+		}
+
+		return objName;
+	}
+
+	public String MIDDLE(object[] args) {
+		String objName = "";
+
+		if (args [0] is GameObject) {	// assume all inputs are of same type
+			List<GameObject> objs = args.Cast<GameObject>().ToList().OrderBy(o => o.transform.position.x).ToList();
+
+			objName = objs [(int)(objs.Count/2)].name;
+		}
+
+		return objName;
+	}
+
+	public String RIGHTMOST(object[] args) {
+		String objName = "";
+
+		if (args [0] is GameObject) {	// assume all inputs are of same type
+			List<GameObject> objs = args.Cast<GameObject>().ToList().OrderBy(o => o.transform.position.x).ToList();
+
+			objName = objs [objs.Count-1].name;
+		}
+
+		return objName;
+	}
+
+	// IN: Objects
+	// OUT: String
+	public String SELECTED(object[] args)
+	{
+		String objName = "";
+
+		List<Voxeme> attrObjs = objSelector.allVoxemes.FindAll (v => v.gameObject.GetComponent<AttributeSet> ().attributes.Contains ("selected"));
 		if (attrObjs.Count > 0) {
 			objName = attrObjs [0].gameObject.name;
 		}
-	
+
 		return objName;
 	}
 
@@ -451,27 +579,86 @@ public class Predicates : MonoBehaviour {
 	// OUT: none
 	public void PUT(object[] args)
 	{
+		string prep = rdfTriples.Count > 0 ? rdfTriples [0].Item2.Replace ("put", "") : "";
+		Debug.Log (prep);
+
 		// look for agent
 		GameObject agent = GameObject.FindGameObjectWithTag("Agent");
+
+		// add agent-dependent preconditions
 		if (agent != null) {
 			// add preconditions
 			if (!SatisfactionTest.IsSatisfied (string.Format ("reach({0})", (args [0] as GameObject).name))) {
 				eventManager.InsertEvent (string.Format ("reach({0})", (args [0] as GameObject).name), 0);
 				eventManager.InsertEvent (string.Format ("grasp({0})", (args [0] as GameObject).name), 1);
-				eventManager.InsertEvent (eventManager.evalOrig[string.Format("put({0},{1})", (args [0] as GameObject).name, Helper.VectorToParsable((Vector3)args [1]))], 2);
+				eventManager.InsertEvent (eventManager.evalOrig [string.Format ("put({0},{1})", (args [0] as GameObject).name, Helper.VectorToParsable ((Vector3)args [1]))], 2);
 				eventManager.RemoveEvent (3);
 				return;
 			}
 			else {
 				if (!SatisfactionTest.IsSatisfied (string.Format ("grasp({0})", (args [0] as GameObject).name))) {
 					eventManager.InsertEvent (string.Format ("grasp({0})", (args [0] as GameObject).name), 0);
-					eventManager.InsertEvent (eventManager.evalOrig[string.Format("put({0},{1})", (args [0] as GameObject).name, Helper.VectorToParsable((Vector3)args [1]))], 1);
+					eventManager.InsertEvent (eventManager.evalOrig [string.Format ("put({0},{1})", (args [0] as GameObject).name, Helper.VectorToParsable ((Vector3)args [1]))], 1);
 					eventManager.RemoveEvent (2);
 					return;
 				}
 			}
+		}
 
-			// add postconditions
+		// add agent-independent preconditions
+		//if (args [args.Length - 1] is bool) {
+		//	if ((bool)args [args.Length - 1] == false) {
+				if (prep == "_under") {
+					if (args [0] is GameObject) {
+						if ((args [0] as GameObject).GetComponent<Voxeme> () != null) {
+							GameObject supportingSurface = (args [0] as GameObject).GetComponent<Voxeme> ().supportingSurface;
+							if (supportingSurface != null) {
+								//Debug.Log (rdfTriples [0].Item3);
+								Bounds destBounds = Helper.GetObjectWorldSize (GameObject.Find (rdfTriples [0].Item3));
+								destBounds.SetMinMax (destBounds.min + new Vector3 (Constants.EPSILON, 0.0f, Constants.EPSILON),
+								destBounds.max - new Vector3 (Constants.EPSILON, Constants.EPSILON, Constants.EPSILON));
+								//Debug.Log (Helper.VectorToParsable (bounds.min));
+								//Debug.Log (Helper.VectorToParsable ((Vector3)args [1]));
+								Bounds themeBounds = Helper.GetObjectWorldSize ((args [0] as GameObject));
+								Vector3 min = (Vector3)args [1] - new Vector3 (0.0f, themeBounds.extents.y, 0.0f);
+								Vector3 max = (Vector3)args [1] + new Vector3 (0.0f, themeBounds.extents.y, 0.0f);
+								if ((min.y <= destBounds.min.y + Constants.EPSILON) && (max.y > destBounds.min.y + Constants.EPSILON)) {
+									if (Mathf.Abs (Helper.GetObjectWorldSize (GameObject.Find (rdfTriples [0].Item3)).min.y -	// if no space between dest obj and dest obj's supporting surface
+									   	Helper.GetObjectWorldSize (supportingSurface).max.y) < Constants.EPSILON) {
+										Vector3 liftPos = GameObject.Find (rdfTriples [0].Item3).transform.position;
+										liftPos += new Vector3 (0.0f, Helper.GetObjectWorldSize (args [0] as GameObject).size.y * 4, 0.0f);
+
+										eventManager.InsertEvent (string.Format ("lift({0},{1})", GameObject.Find (rdfTriples [0].Item3).name,
+											Helper.VectorToParsable (liftPos)), 0);
+
+										Vector3 adjustedPosition = ((Vector3)args [1]);
+										Debug.Log (adjustedPosition.y - (themeBounds.center.y - themeBounds.min.y));
+										Debug.Log (Helper.GetObjectWorldSize(supportingSurface).max.y);
+										if (adjustedPosition.y - (themeBounds.center.y - themeBounds.min.y) - ((args [0] as GameObject).transform.position.y - themeBounds.center.y) < 
+											Helper.GetObjectWorldSize(supportingSurface).max.y) {	// if bottom of theme obj at this position is under the supporting surface's max
+											adjustedPosition = new Vector3 (adjustedPosition.x,
+											adjustedPosition.y + (themeBounds.center.y - themeBounds.min.y) + ((args [0] as GameObject).transform.position.y - themeBounds.center.y),
+											adjustedPosition.z);
+										}
+
+										eventManager.InsertEvent (string.Format ("put({0},{1})", (args [0] as GameObject).name, Helper.VectorToParsable (adjustedPosition)), 1);
+										eventManager.RemoveEvent (eventManager.events.Count - 1);
+										eventManager.InsertEvent (string.Format ("put({0},on({1}))", rdfTriples [0].Item3, (args [0] as GameObject).name), 2);
+										return;
+									}
+								}
+							}
+						}
+					}
+
+					//eventManager.PrintEvents ();
+				}
+		//	}
+		//}
+
+
+		if (agent != null) {
+			// add agent-dependent postconditions
 			if (args [args.Length - 1] is bool) {
 				if ((bool)args [args.Length - 1] == true) {
 					eventManager.InsertEvent (string.Format ("ungrasp({0})", (args [0] as GameObject).name), 1);
@@ -490,8 +677,6 @@ public class Predicates : MonoBehaviour {
 		Vector3 targetRotation = Vector3.zero;
 
 		Helper.PrintRDFTriples (rdfTriples);
-
-		string prep = rdfTriples.Count > 0 ? rdfTriples [0].Item2.Replace ("put", "") : "";
 
 		if (prep == "_on") {	// fix for multiple RDF triples
 			if (args [0] is GameObject) {
@@ -519,8 +704,8 @@ public class Predicates : MonoBehaviour {
 
 					// compose computed on(a) into put(x,y) formula
 					// if the glove don't fit, you must acquit! (recompute)
-					Vector3 loc = ((Vector3)args [1]);	// coord of "on"
-					if (dest.GetComponent<Voxeme> ().voxml.Type.Concavity == "Concave") {
+					Vector3 loc = ((Vector3)args [1]);	// computed coord of "on"
+					if (dest.GetComponent<Voxeme> ().voxml.Type.Concavity == "Concave") {	// putting on a concave object
 						if (!Helper.FitsIn (themeBounds, destBounds)) {
 							loc = new Vector3 (dest.transform.position.x,
 								destBounds.max.y,
@@ -534,6 +719,17 @@ public class Predicates : MonoBehaviour {
 							targetPosition = new Vector3 (loc.x,
 								loc.y + (themeBounds.center.y - themeBounds.min.y) + yAdjust,
 								loc.z);
+
+							if ((theme.GetComponent<Voxeme> ().voxml.Type.Concavity == "Concave") &&	// this is a concave object
+								(Concavity.IsEnabled (theme)) && (Mathf.Abs(Vector3.Dot (theme.transform.up, Vector3.up)+1.0f) <= Constants.EPSILON)) { // TODO: Run this through habitat verification
+								// check if concavity is active
+								Debug.Log(string.Format("{0} upside down",theme.name));
+
+								targetPosition = new Vector3 (loc.x,
+									loc.y + (themeBounds.center.y - themeBounds.min.y) - yAdjust - (destBounds.max.y - destBounds.min.y),
+									loc.z);
+								//flip(cup1);put(ball,under(cup1))
+							}
 						} 
 						else {
 							targetPosition = loc;
@@ -577,7 +773,7 @@ public class Predicates : MonoBehaviour {
 
 					// compose computed in(a) into put(x,y) formula
 					Vector3 loc = ((Vector3)args [1]);	// coord of "in"
-					if ((dest.GetComponent<Voxeme> ().voxml.Type.Concavity == "Concave") &&
+					if ((dest.GetComponent<Voxeme> ().voxml.Type.Concavity == "Concave") &&	// TODO: Run this through habitat verification
 					    (Concavity.IsEnabled (dest)) && (Vector3.Dot (dest.transform.up, Vector3.up) > 0.5f)) {	// check if concavity is active
 						if (!Helper.FitsIn (themeBounds, destBounds)) {	// if the glove don't fit, you must acquit! (rotate)
 							// rotate to align longest major axis with container concavity axis
@@ -622,7 +818,6 @@ public class Predicates : MonoBehaviour {
 					else {
 						targetPosition = new Vector3 (float.NaN, float.NaN, float.NaN);
 					}
-						
 
 					Debug.Log (Helper.VectorToParsable (targetPosition));
 
@@ -643,7 +838,64 @@ public class Predicates : MonoBehaviour {
 					}
 				}
 			}
-		} 
+		}
+		else if (prep == "_under") {	// fix for multiple RDF triples
+			if (args [0] is GameObject) {
+				if (args [1] is Vector3) {
+
+					// constraints for "under"
+					// beneath dest obj (like other position relations)
+					// on dest obj's supporting surface
+					// no distance between dest and dest's support -> dest must be moved, displaced (precondition)
+					// dest is concave -> theme can be placed in
+
+					GameObject theme = args [0] as GameObject;	// get theme obj ("apple" in "put apple under plate")
+					GameObject dest = GameObject.Find (rdfTriples [0].Item3);	// get destination obj ("plate" in "put apple on plate")
+					GameObject supportingSurface = dest.GetComponent<Voxeme>().supportingSurface;
+
+					Bounds themeBounds = Helper.GetObjectWorldSize (theme);	// bounds of theme obj
+					Bounds destBounds = Helper.GetObjectWorldSize (dest);	// bounds of dest obj => alter to get interior enumerated by VoxML structure
+
+					//Debug.Log (Helper.VectorToParsable(bounds.center));
+					//Debug.Log (Helper.VectorToParsable(bounds.min));
+
+					float yAdjust = (theme.transform.position.y - themeBounds.center.y);
+					Debug.Log ("Y-size = " + (themeBounds.max.y - themeBounds.center.y));
+					Debug.Log ("put_under: " + (theme.transform.position.y - themeBounds.min.y).ToString ());
+
+					// compose computed under(a) into put(x,y) formula
+					Vector3 loc = ((Vector3)args [1]);	// coord of "under"
+
+					if (args [args.Length - 1] is bool) {
+						if ((bool)args [args.Length - 1] == false) {
+							targetPosition = new Vector3 (loc.x,
+								loc.y - (themeBounds.max.y - themeBounds.center.y) + yAdjust,
+								loc.z);
+						} 
+						else {
+							targetPosition = loc;
+						}
+
+						Debug.Log (Helper.VectorToParsable (targetPosition));
+
+						Voxeme voxComponent = theme.GetComponent<Voxeme> ();
+						if (voxComponent != null) {
+							if (!voxComponent.enabled) {
+								voxComponent.gameObject.transform.parent = null;
+								voxComponent.enabled = true;
+							}
+
+							voxComponent.targetPosition = targetPosition;
+
+							/*if (voxComponent.isGrasped) {
+								voxComponent.targetPosition = voxComponent.targetPosition +
+								(voxComponent.grasperCoord.position - voxComponent.gameObject.transform.position);
+							}*/
+						}
+					}
+				}
+			}
+		}
 		else if (prep == "_behind") {	// fix for multiple RDF triples
 			if (args [0] is GameObject) {
 				if (args [1] is Vector3) {
@@ -910,12 +1162,12 @@ public class Predicates : MonoBehaviour {
 
 		// plan path to destination
 		if (!Helper.VectorIsNaN (targetPosition)) { 
-			if (aStarSearch.plannedPath.Count == 0) {
+			if (aStarSearch.path.Count == 0) {
 				aStarSearch.start = (args [0] as GameObject).transform.position;
 				aStarSearch.goal = targetPosition;
-				aStarSearch.PlanPath (aStarSearch.start, aStarSearch.goal, out aStarSearch.plannedPath, (args [0] as GameObject));
+				aStarSearch.PlanPath (aStarSearch.start, aStarSearch.goal, out aStarSearch.path, (args [0] as GameObject));
 
-				foreach (Vector3 node in aStarSearch.plannedPath) {
+				foreach (Vector3 node in aStarSearch.path) {
 					(args [0] as GameObject).GetComponent<Voxeme> ().interTargetPositions.Enqueue (node);
 				}
 			}
@@ -983,14 +1235,24 @@ public class Predicates : MonoBehaviour {
 			if (!SatisfactionTest.IsSatisfied (string.Format ("reach({0})", (args [0] as GameObject).name))) {
 				eventManager.InsertEvent (string.Format ("reach({0})", (args [0] as GameObject).name), 0);
 				eventManager.InsertEvent (string.Format ("grasp({0})", (args [0] as GameObject).name), 1);
-				eventManager.InsertEvent (eventManager.evalOrig [string.Format ("lift({0})", (args [0] as GameObject).name)], 1);
+				if (args.Length > 2) {
+					eventManager.InsertEvent (eventManager.evalOrig [string.Format ("lift({0},{1})", (args [0] as GameObject).name, Helper.VectorToParsable ((Vector3)args [1]))], 1);
+				}
+				else {
+					eventManager.InsertEvent (eventManager.evalOrig [string.Format ("lift({0})", (args [0] as GameObject).name)], 1);
+				}
 				eventManager.RemoveEvent (3);
 				return;
 			}
 			else {
 				if (!SatisfactionTest.IsSatisfied (string.Format ("grasp({0})", (args [0] as GameObject).name))) {
 					eventManager.InsertEvent (string.Format ("grasp({0})", (args [0] as GameObject).name), 0);
-					eventManager.InsertEvent (eventManager.evalOrig [string.Format ("lift({0})", (args [0] as GameObject).name)], 1);
+					if (args.Length > 2) {
+						eventManager.InsertEvent (eventManager.evalOrig [string.Format ("lift({0},{1})", (args [0] as GameObject).name, Helper.VectorToParsable ((Vector3)args [1]))], 1);
+					}
+					else {
+						eventManager.InsertEvent (eventManager.evalOrig [string.Format ("lift({0})", (args [0] as GameObject).name)], 1);
+					}
 					eventManager.RemoveEvent (2);
 					return;
 				}
@@ -1011,14 +1273,27 @@ public class Predicates : MonoBehaviour {
 			}
 		}
 
+		// unrig contained-but-not-supported objects
+		foreach (DictionaryEntry pair in relationTracker.relations)
+		{
+			// support,contain cup1 ball
+			if ((pair.Value as string).Contains ("contain") && (!(pair.Value as string).Contains ("support"))) {
+				List<GameObject> objs = (pair.Key as List<GameObject>);
+				if (objs [0] == (args [0] as GameObject)) {
+					for (int i = 1; i < (pair.Key as List<GameObject>).Count; i++) {
+						RiggingHelper.UnRig (objs [1], objs [0]);
+						objs [1].GetComponent<Voxeme> ().targetPosition = objs [1].transform.position;
+						objs [1].GetComponent<Voxeme> ().targetRotation = objs [1].transform.eulerAngles;
+					}
+				}
+			}
+		}
+
 		Vector3 targetPosition = Vector3.zero;
 
 		if (args [0] is GameObject) {
 			GameObject obj = (args [0] as GameObject);
-			targetPosition = new Vector3 (obj.transform.position.x,obj.transform.position.y+UnityEngine.Random.value, obj.transform.position.z);
-			//Debug.Log (targetPosition);
-			//targetPosition = new Vector3 (obj.transform.position.x+1.0f, obj.transform.position.y, obj.transform.position.z);
-
+			Bounds bounds = Helper.GetObjectWorldSize (obj);
 			Voxeme voxComponent = obj.GetComponent<Voxeme> ();
 			if (voxComponent != null) {
 				if (!voxComponent.enabled) {
@@ -1026,14 +1301,25 @@ public class Predicates : MonoBehaviour {
 					voxComponent.enabled = true;
 				}
 
+				if (args [1] is Vector3) {
+					targetPosition = (Vector3)args [1];
+				}
+				else {
+					targetPosition = new Vector3 (obj.transform.position.x,
+						obj.transform.position.y+bounds.size.y+UnityEngine.Random.value,
+						obj.transform.position.z);
+				}
+
 				voxComponent.targetPosition = targetPosition;
 			}
 		}
+
 
 		// add to events manager
 		if (args[args.Length-1] is bool) {
 			if ((bool)args[args.Length-1] == false) {
 				eventManager.events[0] = "lift("+(args [0] as GameObject).name+","+Helper.VectorToParsable(targetPosition)+")";
+				Debug.Log (eventManager.events [0]);
 			}
 		}
 
@@ -1124,6 +1410,25 @@ public class Predicates : MonoBehaviour {
 			}
 		}
 
+		// plan path to destination
+		if (!Helper.VectorIsNaN (targetPosition)) { 
+			if (aStarSearch.path.Count == 0) {
+				Bounds surfaceBounds = Helper.GetObjectWorldSize ((args [0] as GameObject).GetComponent<Voxeme> ().supportingSurface);
+				Bounds objBounds = Helper.GetObjectWorldSize (args [0] as GameObject);
+				Bounds embeddingSpaceBounds = new Bounds ();
+				embeddingSpaceBounds.SetMinMax (new Vector3 (surfaceBounds.min.x+(objBounds.size.x/2), surfaceBounds.max.y, surfaceBounds.min.z+(objBounds.size.z/2)),
+					new Vector3 (surfaceBounds.max.x, objBounds.max.y, surfaceBounds.max.z));
+
+				aStarSearch.start = (args [0] as GameObject).transform.position;
+				aStarSearch.goal = targetPosition;
+				aStarSearch.PlanPath (aStarSearch.start, aStarSearch.goal, out aStarSearch.path, (args [0] as GameObject), embeddingSpaceBounds, "Y");
+
+				foreach (Vector3 node in aStarSearch.path) {
+					(args [0] as GameObject).GetComponent<Voxeme> ().interTargetPositions.Enqueue (node);
+				}
+			}
+		}
+
 		return;
 	}
 
@@ -1131,38 +1436,332 @@ public class Predicates : MonoBehaviour {
 	// OUT: none
 	public void ROLL(object[] args)
 	{
-		// override physics rigging
-		foreach (object arg in args) {
-			if (arg is GameObject) {
-				(arg as GameObject).GetComponent<Rigging> ().ActivatePhysics(false);
+		// look for agent
+		GameObject agent = GameObject.FindGameObjectWithTag("Agent");
+
+		// add agent-dependent preconditions
+		if (agent != null) {
+			if (!SatisfactionTest.IsSatisfied (string.Format ("reach({0})", (args [0] as GameObject).name))) {
+				eventManager.InsertEvent (string.Format ("reach({0})", (args [0] as GameObject).name), 0);
+				eventManager.InsertEvent (string.Format ("grasp({0})", (args [0] as GameObject).name), 1);
+				if (args.Length > 2) {
+					eventManager.InsertEvent (eventManager.evalOrig [string.Format ("roll({0},{1})", (args [0] as GameObject).name, Helper.VectorToParsable ((Vector3)args [1]))], 1);
+				} else {
+					eventManager.InsertEvent (eventManager.evalOrig [string.Format ("roll({0})", (args [0] as GameObject).name)], 1);
+				}
+				eventManager.RemoveEvent (3);
+				return;
+			}
+			else if (!SatisfactionTest.IsSatisfied (string.Format ("grasp({0})", (args [0] as GameObject).name))) {
+				eventManager.InsertEvent (string.Format ("grasp({0})", (args [0] as GameObject).name), 0);
+				if (args.Length > 2) {
+					eventManager.InsertEvent (eventManager.evalOrig [string.Format ("roll({0},{1})", (args [0] as GameObject).name, Helper.VectorToParsable ((Vector3)args [1]))], 1);
+				} else {
+					eventManager.InsertEvent (eventManager.evalOrig [string.Format ("roll({0})", (args [0] as GameObject).name)], 1);
+				}
+				eventManager.RemoveEvent (2);
+				return;
 			}
 		}
 
-		Vector3 targetPosition;
+		// check and see if rigidbody orientations and main body orientations are getting out of sync
+		// due to physics effects
 
-		Helper.PrintRDFTriples (rdfTriples);
-		
-		if (rdfTriples [0].Item2.Contains ("_to_top")) {	// fix for multiple RDF triples
-			if (args [0] is GameObject) {
-				if (args [1] is Vector3) {
-					GameObject obj = args [0] as GameObject;
-					Renderer[] renderers = obj.GetComponentsInChildren<Renderer> ();
-					Bounds bounds = new Bounds ();
-					
-					foreach (Renderer renderer in renderers) {
-						if (renderer.bounds.min.y - renderer.bounds.center.y < bounds.min.y - bounds.center.y) {
-							bounds = renderer.bounds;
-						}
+		// find the smallest displacement angle between an axis on the main body and an axis on this rigidbody
+		float displacementAngle = 360.0f;
+		Quaternion rigidbodyRotation = Quaternion.identity;
+		Rigidbody[] rigidbodies = (args [0] as GameObject).GetComponentsInChildren<Rigidbody> ();
+		foreach (Rigidbody rigidbody in rigidbodies) {
+			foreach (Vector3 mainBodyAxis in Constants.Axes.Values) {
+				foreach (Vector3 rigidbodyAxis in Constants.Axes.Values) {
+					if (Vector3.Angle ((args [0] as GameObject).transform.rotation * mainBodyAxis, rigidbody.rotation * rigidbodyAxis) < displacementAngle) {
+						displacementAngle = Vector3.Angle ((args [0] as GameObject).transform.rotation * mainBodyAxis, rigidbody.rotation * rigidbodyAxis);
+						rigidbodyRotation = rigidbody.rotation;
 					}
-					
-					Debug.Log ("move_to_top: " + (bounds.center.y - bounds.min.y).ToString ());
-					targetPosition = new Vector3 (((Vector3)args [1]).x,
-					                              ((Vector3)args [1]).y + (bounds.center.y - bounds.min.y),
-					                              ((Vector3)args [1]).z);
-					obj.GetComponent<Voxeme> ().targetPosition = targetPosition;
 				}
 			}
 		}
+
+		// if rigidbody is out of sync
+		if (displacementAngle > Mathf.Rad2Deg * Constants.EPSILON) {
+			Vector3 relativeDisplacement = (rigidbodyRotation * Quaternion.Inverse ((args [0] as GameObject).transform.rotation)).eulerAngles;
+			Debug.Log (string.Format ("Displacement: {0}", relativeDisplacement));
+
+			Quaternion resolve = Quaternion.identity;
+			Quaternion resolveInv = Quaternion.identity;
+			Voxeme voxComponent = (args [0] as GameObject).GetComponent<Voxeme> ();
+			if (voxComponent != null) {
+				foreach (Rigidbody rigidbody in rigidbodies) {
+					if ((voxComponent.displacement.ContainsKey (rigidbody.name)) && (voxComponent.rotationalDisplacement.ContainsKey (rigidbody.name))) {
+						// initial = initial rotational displacement
+						Quaternion initial = Quaternion.Euler (voxComponent.rotationalDisplacement [rigidbody.name]);
+						Debug.Log (initial.eulerAngles);
+						// current = current rotational displacement due to physics
+						Quaternion current = rigidbody.transform.localRotation;// * Quaternion.Inverse ((args [0] as GameObject).transform.rotation));
+						Debug.Log (current.eulerAngles);
+						// resolve = rotation to get from initial rotational displacement to current rotational displacement
+						resolve = current * Quaternion.Inverse (initial);
+						Debug.Log (resolve.eulerAngles);
+						//Debug.Log ((initial * resolve).eulerAngles);
+						Debug.Log ((resolve * initial).eulerAngles);
+						// resolveInv = rotation to get from final (current rigidbody) rotation back to initial (aligned with main obj) rotation
+						resolveInv = initial * Quaternion.Inverse (current);
+						//Debug.Log (resolveInv.eulerAngles);
+						//rigidbody.transform.rotation = obj.transform.rotation * initial;
+						rigidbody.transform.localRotation = initial;// * (args [0] as GameObject).transform.rotation;
+						Debug.Log (rigidbody.transform.rotation.eulerAngles);
+
+						//rigidbody.transform.localPosition = voxComponent.displacement [rigidbody.name];
+						//rigidbody.transform.position = (args [0] as GameObject).transform.position + voxComponent.displacement [rigidbody.name];
+					}
+				}
+
+				//Debug.Break ();
+
+				//Debug.Log (resolve.eulerAngles);
+				Debug.Log (Helper.VectorToParsable (rigidbodies [0].transform.position));
+				//Debug.Log (Helper.VectorToParsable (rigidbodies [0].transform.localPosition));
+				Debug.Log (Helper.VectorToParsable ((args [0] as GameObject).transform.position));
+				(args [0] as GameObject).transform.position = rigidbodies [0].transform.position;// - voxComponent.displacement [rigidbodies[0].name];
+				voxComponent.targetPosition = (args [0] as GameObject).transform.position;
+				Debug.Log (Helper.VectorToParsable ((args [0] as GameObject).transform.position));
+
+				Debug.Log (Helper.VectorToParsable (rigidbodies [0].transform.position));
+				//Debug.Log (Helper.VectorToParsable (voxComponent.displacement [rigidbodies[0].name]));
+
+				foreach (Rigidbody rigidbody in rigidbodies) {
+					if ((voxComponent.displacement.ContainsKey (rigidbody.name)) && (voxComponent.rotationalDisplacement.ContainsKey (rigidbody.name))) {
+						Debug.Log (rigidbody.name);
+						rigidbody.transform.localPosition = voxComponent.displacement [rigidbody.name];
+					}
+				}
+			
+				Debug.Log (Helper.VectorToParsable ((args [0] as GameObject).transform.position));
+				Debug.Log (Helper.VectorToParsable (rigidbodies [0].transform.localPosition));
+
+				Debug.Log ((args [0] as GameObject).transform.rotation.eulerAngles);
+				foreach (Rigidbody rigidbody in rigidbodies) {
+					Debug.Log (Helper.VectorToParsable (rigidbody.transform.localPosition));
+				}
+
+				(args [0] as GameObject).transform.rotation = resolve * (args [0] as GameObject).transform.rotation;
+				voxComponent.targetRotation = (args [0] as GameObject).transform.rotation.eulerAngles;
+				Debug.Log ((args [0] as GameObject).transform.rotation.eulerAngles);
+
+				//Debug.Break ();
+			}
+		}
+
+		// calc object properties
+		float diameter = Helper.GetObjectWorldSize ((args [0] as GameObject)).size.y;	// bounds sphere diameter = world size.y
+		float circumference = Mathf.PI * diameter;	// circumference = pi*diameter
+		float revs = 0;
+
+		// get the path
+		Vector3 offset = Vector3.zero;
+
+		while (offset.magnitude <= 0.5f * circumference) {
+			offset = new Vector3 (UnityEngine.Random.insideUnitSphere.x, 0.0f, UnityEngine.Random.insideUnitSphere.z);	// random by default
+			revs = offset.magnitude / circumference;	// # revolutions = path length/circumference
+		}
+
+		if (args [1] is Vector3) {
+			Debug.Log ((Vector3)args [1]);
+			Debug.Log ((args [0] as GameObject).transform.position);
+			offset = ((Vector3)args [1]) - (args [0] as GameObject).transform.position;
+			offset = new Vector3 (offset.x, 0.0f, offset.z);
+		}
+		Debug.Log (string.Format("Offset: {0}",offset));
+		Debug.Log (offset.magnitude);
+//		System.Random rand = new System.Random();
+//		if (rand.Next(0, 2) == 0)
+//			offset = new Vector3 (0.0f,0.0f,1.0f);
+//		else
+//			offset = new Vector3 (-1.0f,0.0f,0.0f);
+		//offset = new Vector3 (0.5f,0.0f,0.5f);
+
+		// compute axis of rotation
+		Vector3 planeNormal = Constants.yAxis;	// TODO: compute normal of surface
+		Vector3 worldRotAxis = Vector3.Cross (offset.normalized, planeNormal);
+
+		// rotate object such that an axis of rotation is perpendicular to the intended path and coplanar with the surface (TODO assuming surface normal of Y-axis for now)
+		// determine axis of symmetry from VoxML
+		Vector3 objRotAxis = Vector3.zero;
+		float angleToRot = 360.0f;
+		Debug.Log (worldRotAxis);
+
+//		Debug.Log (worldRotAxis);
+//
+//		if ((args [0] as GameObject).GetComponent<Voxeme> () != null) {
+//			if (!(args [0] as GameObject).GetComponent<Voxeme> ().enabled) {
+//				(args [0] as GameObject).GetComponent<Voxeme> ().gameObject.transform.parent = null;
+//				(args [0] as GameObject).GetComponent<Voxeme> ().enabled = true;
+//			}
+//
+//			foreach (string s in (args [0] as GameObject).GetComponent<Voxeme> ().opVox.Type.RotatSym) {
+//				if (Vector3.Angle ((args [0] as GameObject).transform.rotation * Constants.Axes [s], worldRotAxis) < angleToRot) {
+//					angleToRot = Vector3.Angle ((args [0] as GameObject).transform.rotation * Constants.Axes [s], worldRotAxis);
+//					objRotAxis = Constants.Axes [s];
+//				}
+//				Debug.Log ((args [0] as GameObject).transform.rotation * objRotAxis);
+//				//Debug.Log (angleToRot);
+//			}
+//		}
+
+		// add agent-independent preconditions
+		if (args [0] is GameObject) {
+			GameObject obj = (args [0] as GameObject);
+			Voxeme voxComponent = obj.GetComponent<Voxeme> ();
+			if (voxComponent != null) {
+				if (!voxComponent.enabled) {
+					voxComponent.gameObject.transform.parent = null;
+					voxComponent.enabled = true;
+				}
+
+				foreach (string s in voxComponent.opVox.Type.RotatSym) {
+					if (Constants.Axes.ContainsKey (s)) {
+						if (Vector3.Angle (obj.transform.rotation * Constants.Axes [s], worldRotAxis) < angleToRot) {
+							angleToRot = Vector3.Angle (obj.transform.rotation * Constants.Axes [s], worldRotAxis);
+							objRotAxis = Constants.Axes [s];
+							//objRotAxis = obj.transform.rotation * Constants.Axes [s];
+						}
+					}
+					else {
+						voxComponent.targetPosition = new Vector3 (float.NaN, float.NaN, float.NaN);
+						return;
+					}
+				}
+
+				//Debug.Break ();
+				Debug.Log (obj.transform.rotation * objRotAxis);
+				Debug.Log (angleToRot);
+
+				//Debug.Log (Quaternion.FromToRotation (objRotAxis, worldRotAxis).eulerAngles);
+
+				if (!SatisfactionTest.IsSatisfied (string.Format ("turn({0},{1},{2})", (args [0] as GameObject).name,
+					    Helper.VectorToParsable (objRotAxis), Helper.VectorToParsable (worldRotAxis)))) {
+					Debug.Log (string.Format ("turn({0},{1},{2})", (args [0] as GameObject).name,
+						Helper.VectorToParsable (obj.transform.rotation * objRotAxis), Helper.VectorToParsable (worldRotAxis)));
+					eventManager.InsertEvent (string.Format ("turn({0},{1},{2})", (args [0] as GameObject).name,
+						Helper.VectorToParsable (objRotAxis), Helper.VectorToParsable (worldRotAxis)), 0);
+					Debug.Log (string.Format ("roll({0},{1})", (args [0] as GameObject).name, Helper.VectorToParsable ((args [0] as GameObject).transform.position + offset)));
+					eventManager.InsertEvent (string.Format ("roll({0},{1})", (args [0] as GameObject).name, Helper.VectorToParsable ((args [0] as GameObject).transform.position + offset)), 1);
+					eventManager.RemoveEvent (eventManager.events.Count - 1);
+
+					// update subobject rigidbody rotations
+					// TODO: UpdateSubObjectRigidbodyRotations()
+//					Rigidbody[] rigidbodies = obj.gameObject.GetComponentsInChildren<Rigidbody> ();
+//					foreach (Rigidbody rigidbody in rigidbodies) {
+//						if (voxComponent.staticStateRotations.ContainsKey (rigidbody.name)) {
+//							Debug.Log(rigidbody.name);
+//							Debug.Log(rigidbody.rotation.eulerAngles);
+//							voxComponent.staticStateRotations [rigidbody.name] = rigidbody.rotation.eulerAngles;
+//						}
+//					}
+					return;
+				}
+				else {
+					Debug.Log ("Turn already satisfied");
+				}
+			}
+		}
+
+		if (agent != null) {
+			// add agent-dependent postconditions
+			if (args [args.Length - 1] is bool) {
+				if ((bool)args [args.Length - 1] == true) {
+					eventManager.InsertEvent (string.Format ("ungrasp({0})", (args [0] as GameObject).name), 1);
+				}
+			}
+		}
+
+		// override physics rigging
+		// TODO: for programs with implied surfaces in the VoxML encoding, don't deactivate physics?
+//		foreach (object arg in args) {
+//			if (arg is GameObject) {
+//				(arg as GameObject).GetComponent<Rigging> ().ActivatePhysics(false);
+//			}
+//		}
+
+		Vector3 targetPosition = Vector3.zero;
+		Quaternion targetRotation = Quaternion.identity;
+
+		Helper.PrintRDFTriples (rdfTriples);
+
+		string prep = rdfTriples.Count > 0 ? rdfTriples [0].Item2.Replace ("roll", "") : "";
+
+		if (args [0] is GameObject) {
+			GameObject obj = (args [0] as GameObject);
+			Voxeme voxComponent = obj.GetComponent<Voxeme> ();
+			if (voxComponent != null) {
+				if (!voxComponent.enabled) {
+					voxComponent.gameObject.transform.parent = null;
+					voxComponent.enabled = true;
+				}
+
+				targetRotation = obj.transform.rotation;
+
+				if (args [1] is Vector3) {
+					targetPosition  = (Vector3)args [1];
+				}
+				else {
+					targetPosition = obj.transform.position + offset;
+				}
+
+				// calculate how many revolutions object will make
+				float degrees = -180.0f * revs;
+				//Debug.Log (degrees);
+
+				//Vector3 transverseAxis = Quaternion.AngleAxis (90.0f, Vector3.up) * offset.normalized;	// the axis parallel to the surface
+
+				//Debug.Log (worldRotAxis);
+
+				while (degrees < -180.0f) {
+					targetRotation = Quaternion.AngleAxis (-180.0f, worldRotAxis) * targetRotation;
+					//Debug.Log (targetRotation.eulerAngles);
+					voxComponent.interTargetRotations.Enqueue (targetRotation.eulerAngles);
+					degrees += 180.0f;
+				}
+
+				targetRotation = Quaternion.AngleAxis (degrees, worldRotAxis) * targetRotation;
+				//Debug.Log (targetRotation.eulerAngles);
+				voxComponent.interTargetRotations.Enqueue (targetRotation.eulerAngles);
+				//	}
+				//}
+
+				// calculate turnSpeed (angular velocity)
+				// estimate where obj will be next time step
+				Vector3 normalizedOffset = offset.normalized;
+				Vector3 lookAheadPos = new Vector3 (obj.transform.position.x - normalizedOffset.x * Time.deltaTime * voxComponent.moveSpeed,
+					obj.transform.position.y - normalizedOffset.y * Time.deltaTime * voxComponent.moveSpeed,
+					obj.transform.position.z - normalizedOffset.z * Time.deltaTime * voxComponent.moveSpeed);
+				// appox distance to be traveled over next timestep
+				float distPerTimestep = (lookAheadPos - obj.transform.position).magnitude;
+				//Debug.Log(distPerTimestep);
+				// estimate approx timesteps to traverse path
+				float time = (offset.magnitude*Time.deltaTime/distPerTimestep);
+				//Debug.Log(time);
+				// velocity = dist/time
+				float vel = offset.magnitude/time;
+				//Debug.Log(vel);
+				// w = v/d
+				float angularVelocity = vel / Helper.GetObjectWorldSize (obj).size.y;
+				//Debug.Log(angularVelocity);
+
+				voxComponent.targetPosition = targetPosition;
+				voxComponent.targetRotation = targetRotation.eulerAngles;
+				voxComponent.turnSpeed = angularVelocity;
+			}
+		}
+
+		// add to events manager
+		if (args[args.Length-1] is bool) {
+			if ((bool)args[args.Length-1] == false) {
+				eventManager.events[0] = "roll("+(args [0] as GameObject).name+","+Helper.VectorToParsable(targetPosition)+")";
+				//Debug.Log (eventManager.events [0]);
+			}
+		}
+
 		return;
 	}
 
@@ -1213,6 +1812,178 @@ public class Predicates : MonoBehaviour {
 		}
 
 		return;
+	}
+
+	// IN: Objects
+	// OUT: none
+	public void TURN(object[] args)
+	{
+		// look for agent
+		GameObject agent = GameObject.FindGameObjectWithTag("Agent");
+		if (agent != null) {
+			// add preconditions
+			if (!SatisfactionTest.IsSatisfied (string.Format ("reach({0})", (args [0] as GameObject).name))) {
+				eventManager.InsertEvent (string.Format ("reach({0})", (args [0] as GameObject).name), 0);
+				eventManager.InsertEvent (string.Format ("grasp({0})", (args [0] as GameObject).name), 1);
+				if (args.Length > 2) {
+					eventManager.InsertEvent (eventManager.evalOrig [string.Format ("turn({0},{1})", (args [0] as GameObject).name, Helper.VectorToParsable ((Vector3)args [1]))], 1);
+				}
+				else {
+					eventManager.InsertEvent (eventManager.evalOrig [string.Format ("turn({0})", (args [0] as GameObject).name)], 1);
+				}
+				eventManager.RemoveEvent (3);
+				return;
+			}
+			else {
+				if (!SatisfactionTest.IsSatisfied (string.Format ("grasp({0})", (args [0] as GameObject).name))) {
+					eventManager.InsertEvent (string.Format ("grasp({0})", (args [0] as GameObject).name), 0);
+					if (args.Length > 2) {
+						eventManager.InsertEvent (eventManager.evalOrig [string.Format ("turn({0},{1})", (args [0] as GameObject).name, Helper.VectorToParsable ((Vector3)args [1]))], 1);
+					}
+					else {
+						eventManager.InsertEvent (eventManager.evalOrig [string.Format ("turn({0})", (args [0] as GameObject).name)], 1);
+					}
+					eventManager.RemoveEvent (2);
+					return;
+				}
+			}
+
+			// add postconditions
+			if (args [args.Length - 1] is bool) {
+				if ((bool)args [args.Length - 1] == true) {
+					eventManager.InsertEvent (string.Format ("ungrasp({0})", (args [0] as GameObject).name), 1);
+				}
+			}
+		}
+
+//		if (args [args.Length - 1] is bool) {
+//			if ((bool)args [args.Length - 1] == true) {
+//				// resolve subobject rigidbody rotations
+//				// TODO: ResolveSubObjectRigidbodyRotations()
+//				Debug.Log ((args [0] as GameObject).name);
+//				Debug.Log ((args [0] as GameObject).transform.rotation.eulerAngles);
+//				Rigidbody[] rigidbodies = (args [0] as GameObject).GetComponentsInChildren<Rigidbody> ();
+//				Quaternion resolveInv = Quaternion.identity;
+//				foreach (Rigidbody rigidbody in rigidbodies) {
+//					if ((args [0] as GameObject).GetComponent<Voxeme> ().staticStateRotations.ContainsKey (rigidbody.name)) {
+//						Debug.Log (rigidbody.name);
+//						Quaternion initial = Quaternion.Euler ((args [0] as GameObject).GetComponent<Voxeme> ().staticStateRotations [rigidbody.name]);
+//						Debug.Log (initial.eulerAngles);
+//						Quaternion final = rigidbody.rotation;
+//						Debug.Log (final.eulerAngles);
+//						// resolve = rotation to get from final resting orientation back to initial orientation before physics effects
+//						Quaternion resolve = final * Quaternion.Inverse (initial);
+//						Debug.Log (resolve.eulerAngles);
+//						resolveInv = initial * Quaternion.Inverse (final);
+//						rigidbody.MoveRotation (resolve * rigidbody.rotation);
+//					}
+//				}
+//
+//				(args [0] as GameObject).transform.rotation = resolveInv * (args [0] as GameObject).transform.rotation;
+//			}
+//		}
+
+		// override physics rigging
+		foreach (object arg in args) {
+			if (arg is GameObject) {
+				(arg as GameObject).GetComponent<Rigging> ().ActivatePhysics(false);
+			}
+		}
+
+		Vector3 targetRotation = Vector3.zero;
+
+		Helper.PrintRDFTriples (rdfTriples);
+
+		string prep = rdfTriples.Count > 0 ? rdfTriples [0].Item2.Replace ("turn", "") : "";
+
+		if (args [0] is GameObject) {
+			GameObject obj = (args [0] as GameObject);
+			Voxeme voxComponent = obj.GetComponent<Voxeme> ();
+			if (voxComponent != null) {
+				if (!voxComponent.enabled) {
+					voxComponent.gameObject.transform.parent = null;
+					voxComponent.enabled = true;
+				}
+
+				if (args [1] is Vector3 &&  args [2] is Vector3){
+					Debug.Log ((Vector3)args [1]);
+					Debug.Log (obj.transform.rotation * (Vector3)args [1]);
+					Debug.Log ((Vector3)args [2]);
+					targetRotation = Quaternion.FromToRotation((Vector3)args [1],(Vector3)args [2]).eulerAngles;
+					//targetRotation = Quaternion.LookRotation(obj.transform.rotation * (Vector3)args [1],(Vector3)args [2]).eulerAngles;
+				}
+				else {
+					targetRotation = (obj.transform.rotation * UnityEngine.Random.rotation).eulerAngles;
+				}
+
+				voxComponent.targetRotation = targetRotation;
+				Debug.Log (Helper.VectorToParsable (voxComponent.targetRotation));
+			}
+		}
+
+		// add to events manager
+		if (args[args.Length-1] is bool) {
+			if ((bool)args[args.Length-1] == false) {
+				if (args [1] is Vector3 && args [2] is Vector3) {
+					eventManager.events [0] = "turn(" + (args [0] as GameObject).name + "," + Helper.VectorToParsable ((Vector3)args [1]) + "," + Helper.VectorToParsable ((Vector3)args [2]) + ")";
+				}
+				else {
+					eventManager.events [0] = "turn(" + (args [0] as GameObject).name + "," +
+						Helper.VectorToParsable ((args [0] as GameObject).transform.rotation * Constants.yAxis) + "," +
+						Helper.VectorToParsable ((args [0] as GameObject).transform.rotation * Quaternion.Euler(targetRotation) * Constants.yAxis) + ")";
+				}
+				Debug.Log (eventManager.events [0]);
+			}
+		}
+
+		return;
+	}
+
+	// IN: Objects
+	// OUT: none
+	public void SPIN(object[] args)
+	{
+	}
+
+	// IN: Objects
+	// OUT: none
+	public void STACK(object[] args)
+	{
+	}
+
+	// IN: Objects
+	// OUT: none
+	public void LEAN(object[] args)
+	{
+	}
+
+	// IN: Objects
+	// OUT: none
+	public void SWITCH(object[] args)
+	{
+		if ((args [0] is GameObject) && (args [1] is GameObject)) {
+			Debug.Log ((args [0] is GameObject));
+			Debug.Log ((args [1] is GameObject));
+			Vector3[] startPos = new Vector3[] { (args [0] as GameObject).transform.position,(args [1] as GameObject).transform.position };
+
+			if (startPos [0].x < startPos [1].x) {	// if args[0] is left of args[1]
+				eventManager.InsertEvent (string.Format ("slide({0},{1})", (args [0] as GameObject).name,
+					Helper.VectorToParsable (startPos [1] + (Vector3.right*.8f))), 0);
+				eventManager.InsertEvent (string.Format ("slide({0},{1})", (args [1] as GameObject).name,
+					Helper.VectorToParsable (startPos [0])), 1);
+				eventManager.InsertEvent (string.Format ("slide({0},{1})", (args [0] as GameObject).name,
+					Helper.VectorToParsable (startPos [1])), 2);
+			}
+			else if (startPos [0].x > startPos [1].x) {	// if args[0] is right of args[1]
+				eventManager.InsertEvent (string.Format ("slide({0},{1})", (args [0] as GameObject).name,
+					Helper.VectorToParsable (startPos [1] + (Vector3.left*.8f))), 0);
+				eventManager.InsertEvent (string.Format ("slide({0},{1})", (args [1] as GameObject).name,
+					Helper.VectorToParsable (startPos [0])), 1);
+				eventManager.InsertEvent (string.Format ("slide({0},{1})", (args [0] as GameObject).name,
+					Helper.VectorToParsable (startPos [1])), 2);
+			}
+			eventManager.RemoveEvent (3);
+		}
 	}
 
 	// IN: Objects
@@ -1662,5 +2433,107 @@ public class Predicates : MonoBehaviour {
 				}
 			}
 		}
+	}
+
+	// IN: Objects
+	// OUT: none
+	public void HOLD(object[] args)
+	{
+		// look for agent
+		GameObject agent = GameObject.FindGameObjectWithTag("Agent");
+		if (agent != null) {
+			// add preconditions
+			if (!SatisfactionTest.IsSatisfied (string.Format ("reach({0})", (args [0] as GameObject).name))) {
+				eventManager.InsertEvent (string.Format ("reach({0})", (args [0] as GameObject).name), 0);
+				eventManager.InsertEvent (string.Format ("grasp({0})", (args [0] as GameObject).name), 1);
+				eventManager.InsertEvent (eventManager.evalOrig [string.Format ("hold({0})", (args [0] as GameObject).name)], 1);
+				eventManager.RemoveEvent (3);
+				return;
+			}
+			else {
+				if (!SatisfactionTest.IsSatisfied (string.Format ("grasp({0})", (args [0] as GameObject).name))) {
+					eventManager.InsertEvent (string.Format ("grasp({0})", (args [0] as GameObject).name), 0);
+					eventManager.InsertEvent (eventManager.evalOrig [string.Format ("hold({0})", (args [0] as GameObject).name)], 1);
+					eventManager.RemoveEvent (2);
+					return;
+				}
+			}
+		}
+	}
+
+	// IN: Objects
+	// OUT: none
+	public void TOUCH(object[] args)
+	{
+		GameObject agent = GameObject.FindGameObjectWithTag ("Agent");
+		if (agent != null) {
+			Animator anim = agent.GetComponentInChildren<Animator> ();
+			GameObject leftGrasper = anim.GetBoneTransform (HumanBodyBones.LeftHand).transform.gameObject;
+			GameObject rightGrasper = anim.GetBoneTransform (HumanBodyBones.RightHand).transform.gameObject;
+			GameObject grasper;
+			GraspScript graspController = agent.GetComponent<GraspScript> ();
+			Transform leftGrasperCoord = graspController.leftGrasperCoord;
+			Transform rightGrasperCoord = graspController.rightGrasperCoord;
+			Transform leftFingerCoord = graspController.leftFingerCoord;
+			Transform rightFingerCoord = graspController.rightFingerCoord;
+
+			if (args [args.Length - 1] is bool) {
+				if ((bool)args [args.Length - 1] == true) {
+					foreach (object arg in args) {
+						if (arg is GameObject) {
+							// find bounds corner closest to grasper
+							Bounds bounds = Helper.GetObjectWorldSize((arg as GameObject));
+
+							// which hand is closer?
+							Vector3 leftClosestPoint = bounds.ClosestPoint(leftGrasper.transform.position);
+							Vector3 rightClosestPoint = bounds.ClosestPoint(rightGrasper.transform.position);
+							float leftToGoalDist = (leftGrasper.transform.position-leftClosestPoint).magnitude;
+							float rightToGoalDist = (rightGrasper.transform.position-rightClosestPoint).magnitude;
+
+							if (leftToGoalDist < rightToGoalDist) {
+								grasper = leftGrasper;
+							}
+							else {
+								grasper = rightGrasper;
+							}
+
+							IKControl ikControl = agent.GetComponent<IKControl> ();
+							if (ikControl != null) {
+								Vector3 target;
+								if (grasper == leftGrasper) {
+									target = leftClosestPoint;
+									Vector3 dir = leftFingerCoord.position - leftGrasper.transform.position;
+									dir = leftGrasper.transform.rotation * dir;
+									ikControl.leftHandObj.transform.position = dir + target;//-leftFingerCoord.localPosition;//-(leftGrasper.transform.rotation*leftFingerCoord.localPosition);
+								}
+								else {
+									target = rightClosestPoint;
+									ikControl.rightHandObj.transform.position = target;//-rightFingerCoord.position;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// IN: Objects
+	// OUT: bool
+	public bool IF(object[] args)
+	{
+		bool r = false;
+		//TestRelation();
+
+		return r;
+	}
+
+	// IN: Objects
+	// OUT: bool
+	public bool ADD(object[] args)
+	{
+		bool r = false;
+
+		return r;
 	}
 }

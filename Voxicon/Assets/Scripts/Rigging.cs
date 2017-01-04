@@ -64,7 +64,8 @@ public class Rigging : MonoBehaviour {
 					// don't reactivate physics on rigged children
 					// if this object is concave
 					// and other physics special cases
-					if ((!(collider.transform.IsChildOf (gameObject.transform) && gameObject.GetComponent<Voxeme> ().voxml.Type.Concavity == "Concave")) ||
+					if ((!(collider.transform.IsChildOf (gameObject.transform) && collider.gameObject.GetComponent<Voxeme> () != null &&
+						gameObject.GetComponent<Voxeme> ().voxml.Type.Concavity == "Concave")) ||
 						(gameObject.GetComponent<Voxeme> ().isGrasped)){
 						//if (!(collider.transform.IsChildOf(gameObject.transform) && gameObject.GetComponent<Voxeme>().voxml.Type.Concavity == "Concave") &&
 						//	!RCC8.ProperPart(Helper.GetObjectWorldSize(collider.gameObject),Helper.GetObjectWorldSize(gameObject))) {
@@ -85,7 +86,8 @@ public class Rigging : MonoBehaviour {
 					// don't reactivate physics on rigged children
 					// if this object is concave
 					// and other physics special cases
-					if ((!(rigidbody.transform.IsChildOf (gameObject.transform) && gameObject.GetComponent<Voxeme> ().voxml.Type.Concavity == "Concave")) ||
+					if ((!(rigidbody.transform.IsChildOf (gameObject.transform) && rigidbody.gameObject.GetComponent<Voxeme> () != null && 
+						gameObject.GetComponent<Voxeme> ().voxml.Type.Concavity == "Concave")) ||
 						(gameObject.GetComponent<Voxeme> ().isGrasped)){						//if (!(rigidbody.transform.IsChildOf(gameObject.transform) && gameObject.GetComponent<Voxeme>().voxml.Type.Concavity == "Concave") &&
 						//	!RCC8.ProperPart(Helper.GetObjectWorldSize(rigidbody.gameObject),Helper.GetObjectWorldSize(gameObject))) {
 						//if (!((rigidbody.transform.IsChildOf(gameObject.transform) &&

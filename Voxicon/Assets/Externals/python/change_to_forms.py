@@ -24,6 +24,10 @@ def parse_sent(sent):
                "ball",
                "plate",
                "cup",
+               "cup1",
+               "cup2",
+               "cup3",
+               "cups",
                "disc",
                "spoon",
                "book",
@@ -60,19 +64,26 @@ def parse_sent(sent):
                  "near",
                  "left of",
                  "right of",
-                 "center of"]
+                 "center of",
+                 "under"]
                  
     attributes = ["brown",
                   "blue",
                   "black",
                   "green",
                   "yellow",
-                  "red"]
+                  "red",
+                  "leftmost",
+                  "middle",
+                  "rightmost"]
                   
-    determiners = ["a",
-                   "the"]
+    determiners = ["a", "two"]
+                   
+    exclude = ["the"]
       
-    s = filter(lambda a: a not in determiners, sent.split())
+    s = filter(lambda a: a not in exclude, sent.split())
+    
+    #s = sent.split()
     
     form = s[0] + '('
     
@@ -101,9 +112,14 @@ def parse_sent(sent):
         elif s[i] in attributes:
             form = form + s[i] + '(' + s[i+1] + ')'
             s[i+1] = ""
+        elif s[i] in determiners:
+            form = form + s[i] + '(' + s[i+1] + ')'
+            s[i+1] = ""
         elif s[i] in objects:
             form = form + s[i]
-    
+        #else:
+        #form = form + s[i]
+
     #if s[i] == 'edge':
     #       form = form + 'edge'
     #

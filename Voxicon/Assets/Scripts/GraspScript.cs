@@ -5,8 +5,10 @@ public class GraspScript : MonoBehaviour {
 	private Animator anim;
 	public int grasper;
 	public Transform leftGrasperCoord,rightGrasperCoord;
+	public Transform leftFingerCoord,rightFingerCoord;
 	public bool isGrasping = false;
 	public Vector3 graspTrackerOffset;// = new Vector3(0.0f,0.0f,0.0f);
+	public Vector3 fingertipOffset;
 	public Vector3 leftDefaultPosition,rightDefaultPosition;
 
 

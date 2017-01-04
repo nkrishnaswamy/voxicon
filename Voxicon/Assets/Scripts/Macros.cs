@@ -52,7 +52,10 @@ public class Macros : MonoBehaviour {
 			}
 		}
 
-		commandMacros.Add ("stack(blocks)", "put(block1,on(block3));put(block2,on(block1));bind(block1,block2,block3,as(\"stack\"))");
+		commandMacros.Add ("flip(cups)", "flip(cup1);flip(cup2);flip(cup3)");
+		commandMacros.Add ("switch(two(cups))", "switch(two(cup))");
+		commandMacros.Add ("shuffle(cups)", "switch(two(cup));switch(two(cup));switch(two(cup));switch(two(cup));switch(two(cup))");
+		commandMacros.Add ("stack(blocks)", "put(brown(block),on(red(block)));put(black(block),on(brown(block)));bind(red(block),black(block),brown(block),as(\"stack\"))");
 		commandMacros.Add ("stack(apple,plate,mug)", "put(apple,on(plate));put(plate,on(mug))");
 		commandMacros.Add ("build(staircase)", "put(green(block),left(black(block)));put(red(block),right(black(block)));put(yellow(block),on(red(block)));put(blue(block),on(black(block)));put(brown(block),on(yellow(block)))");
 		commandMacros.Add ("build(pyramid)", "put(block1,left(block3));put(block2,right(block3));put(block4,behind(block3));put(block5,in_front(block3));put(block6,on(block3))");

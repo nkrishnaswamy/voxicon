@@ -16,14 +16,22 @@ public class Voxeme : MonoBehaviour {
 
 	public OperationalVox opVox = new OperationalVox ();
 
+	// rotation information for each subobject's rigidbody
+	// (physics-resultant changes between the completion of one event and the start of the next must be brought into line)
+	//public Dictionary<string,Vector3> startEventRotations = new Dictionary<string, Vector3> ();
+	//public Dictionary<string,Vector3> endEventRotations = new Dictionary<string, Vector3> ();
+	public Dictionary<string,Vector3> displacement = new Dictionary<string, Vector3> ();
+	public Dictionary<string,Vector3> rotationalDisplacement = new Dictionary<string, Vector3> ();
+
 	Rigging rigging;
 
 	public Queue<Vector3> interTargetPositions = new Queue<Vector3> ();
 	public Vector3 targetPosition;
+	public Queue<Vector3> interTargetRotations = new Queue<Vector3> ();
 	public Vector3 targetRotation;
 	public Vector3 targetScale;
 	public float moveSpeed = 1.0f;
-	public float turnSpeed = 2.5f;
+	public float turnSpeed = 5.0f;
 
 	public float minYBound;
 
@@ -63,7 +71,7 @@ public class Voxeme : MonoBehaviour {
 					if (transform.position != targetPosition) {
 						Vector3 offset = MoveToward (targetPosition);
 
-						if (offset.sqrMagnitude <= 0.01f) {
+						if (offset.sqrMagnitude <= Constants.EPSILON) {
 							transform.position = targetPosition;
 						}
 					}
@@ -73,65 +81,82 @@ public class Voxeme : MonoBehaviour {
 					if (graspTracker.transform.position != targetPosition+graspController.graspTrackerOffset) {
 						Vector3 offset = MoveToward (targetPosition+graspController.graspTrackerOffset);
 
-						if (offset.sqrMagnitude <= 0.01f) {
-							graspTracker.transform.position = targetPosition+graspController.graspTrackerOffset;
+						if (offset.sqrMagnitude <= Constants.EPSILON) {
+							graspTracker.transform.position = targetPosition;//+graspController.graspTrackerOffset;
 						}
 					}
 				}
 			}
 			else {	// cannot execute motion
 				OutputHelper.PrintOutput(OutputController.Role.Affector,"I'm sorry, I can't do that.");
+				GameObject.Find ("BehaviorController").GetComponent<EventManager> ().SendMessage("AbortEvent");
 				targetPosition = transform.position;
 			}
 		}
 		else {
 			Vector3 interimTarget = interTargetPositions.Peek ();
 			if (!isGrasped) {
-				if (transform.position != interimTarget) {
+				//if (transform.position != interimTarget) {
 					Vector3 offset = MoveToward (interimTarget);
 
-					if (offset.sqrMagnitude <= 0.001f) {
+					if (offset.sqrMagnitude <= Constants.EPSILON) {
 						transform.position = interimTarget;
 						interTargetPositions.Dequeue ();
 					}
-				}
+				//}
 			}
 			else {
-				if (graspTracker.transform.position != interimTarget) {
-					Vector3 offset = MoveToward (interimTarget);
+				GraspScript graspController = grasperCoord.root.gameObject.GetComponent<GraspScript> ();
+				//if (graspTracker.transform.position != interimTarget+graspController.graspTrackerOffset) {
+				Vector3 offset = MoveToward (interimTarget+graspController.graspTrackerOffset);
 
-					if (offset.sqrMagnitude <= 0.01f) {
-						graspTracker.transform.position = interimTarget;
+					if (offset.sqrMagnitude <= Constants.EPSILON) {
+						graspTracker.transform.position = interimTarget;//+graspController.graspTrackerOffset;
 						interTargetPositions.Dequeue ();
 					}
+				//}
+			}
+		}
+			
+		if (interTargetRotations.Count == 0) {	// no queued sequence
+			if (!Helper.VectorIsNaN (targetRotation)) {	// has valid target
+				if (!isGrasped) {
+					if (transform.rotation != Quaternion.Euler (targetRotation)) {
+						float offset = RotateToward (targetRotation);
+
+						if ((Mathf.Deg2Rad * offset) < 0.01f) {
+							transform.rotation = Quaternion.Euler (targetRotation);
+						}
+					}
+				}
+				else {	// grasp tracking
 				}
 			}
-		}
-
-		if (rigging != null) {
-			if (rigging.usePhysicsRig) {
-				return;
+			else {	// cannot execute motion
+				OutputHelper.PrintOutput(OutputController.Role.Affector,"I'm sorry, I can't do that.");
+				GameObject.Find ("BehaviorController").GetComponent<EventManager> ().SendMessage("AbortEvent");
+				targetRotation = transform.eulerAngles;
 			}
 		}
-
-		if (!Helper.VectorIsNaN (targetRotation)) {	// has valid target
+		else {
+			Vector3 interimTarget = interTargetRotations.Peek ();
 			if (!isGrasped) {
-				if (transform.rotation != Quaternion.Euler (targetRotation)) {
-					if ((Mathf.Deg2Rad * Quaternion.Angle (transform.rotation, Quaternion.Euler (targetRotation))) > 0.01f) {
-						//transform.eulerAngles = Vector3.MoveTowards (transform.eulerAngles, targetRotation, Time.deltaTime * turnSpeed);
-						//transform.eulerAngles = Vector3.Slerp (transform.eulerAngles, targetRotation, Time.deltaTime * turnSpeed);
-						transform.rotation = Quaternion.Slerp (transform.rotation, 
-							Quaternion.Euler (targetRotation), Time.deltaTime * turnSpeed);
-					} else {
-						//transform.eulerAngles = targetRotation;
-						transform.rotation = Quaternion.Euler (targetRotation);
+				if (transform.rotation != Quaternion.Euler (interimTarget)) {
+					//Debug.Log (transform.rotation == Quaternion.Euler (targetRotation));
+					float offset = RotateToward (interimTarget);
+					//Debug.Log (offset);
+					//Debug.Log (Quaternion.Angle(transform.rotation,Quaternion.Euler (interimTarget)));
+					//if ((Mathf.Deg2Rad * Quaternion.Angle (transform.rotation, Quaternion.Euler (interimTarget))) < 0.01f) {
+					if ((Mathf.Deg2Rad * offset) < 0.01f) {
+						transform.rotation = Quaternion.Euler (interimTarget);
+						//Debug.Log (interimTarget);
+						interTargetRotations.Dequeue ();
+						//Debug.Log (interTargetRotations.Peek ());
 					}
 				}
 			}
-		}
-		else {	// cannot execute motion
-			OutputHelper.PrintOutput(OutputController.Role.Affector,"I'm sorry, I can't do that.");
-			targetPosition = transform.position;
+			else {	// grasp tracking
+			}
 		}
 
 		if ((transform.localScale != targetScale) && (!isGrasped)) {
@@ -154,10 +179,17 @@ public class Voxeme : MonoBehaviour {
 		hits = hitList.OrderBy (h => h.distance).ToArray ();
 		foreach (RaycastHit hit in hits) {
 			if (hit.collider.gameObject.GetComponent<BoxCollider> () != null) {
-				if (hit.collider.gameObject.GetComponent<BoxCollider> ().enabled) {
+				if ((hit.collider.gameObject.GetComponent<BoxCollider> ().enabled) &&
+					(!hit.collider.gameObject.transform.IsChildOf(gameObject.transform))){
 					supportingSurface = hit.collider.gameObject;
 					break;
 				}
+			}
+		}
+
+		if (rigging != null) {
+			if (rigging.usePhysicsRig) {
+				return;
 			}
 		}
 
@@ -265,6 +297,133 @@ public class Voxeme : MonoBehaviour {
 		}
 	}
 
+	float RotateToward(Vector3 target) {
+		float offset = 0.0f;
+		if (!isGrasped) {
+			//Quaternion offset = Quaternion.FromToRotation (transform.eulerAngles, targetRotation);
+			//Vector3 normalizedOffset = Vector3.Normalize (offset);
+
+			float angle = Quaternion.Angle (transform.rotation, Quaternion.Euler (target));
+			float timeToComplete = angle / turnSpeed;
+			float donePercentage = Mathf.Min (1.0f, Time.deltaTime / timeToComplete);
+			Quaternion rot = Quaternion.Slerp (transform.rotation, Quaternion.Euler (target), donePercentage * 100.0f);
+			//Quaternion resolve = Quaternion.identity;
+
+			if (rigging.usePhysicsRig) {
+				float displacementAngle = 360.0f;
+				Rigidbody[] rigidbodies = gameObject.GetComponentsInChildren<Rigidbody> ();
+				foreach (Rigidbody rigidbody in rigidbodies) {
+					rigidbody.MoveRotation (rot);
+
+					// check and see if rigidbody orientations and main body orientations are getting out of sync
+					// due to physics effects
+
+					// find the smallest displacement angle between an axis on the main body and an axis on this rigidbody
+//					foreach (Vector3 mainBodyAxis in Constants.Axes.Values) {
+//						foreach (Vector3 rigidbodyAxis in Constants.Axes.Values) {
+//							if (Vector3.Angle (transform.rotation * mainBodyAxis, rigidbody.rotation * rigidbodyAxis) < displacementAngle) {
+//								displacementAngle = Vector3.Angle (transform.rotation * mainBodyAxis, rigidbody.rotation * rigidbodyAxis);
+//							}
+//						}
+//					}
+//
+//					Debug.Log (displacementAngle);
+//
+//					if (displacementAngle > Constants.EPSILON) {
+//						//Debug.Break ();
+//					}
+
+					// compute displacement between rigidbody's orientation at the start of event and now
+					// rotate the main body by that displacement
+					// rotate the rigidbody back to start
+//					if (startEventRotations.ContainsKey (rigidbody.name)) {
+//						Debug.Log (rigidbody.name);
+//						// initial = rotation to get to where we were at start of this event
+//						Quaternion initial = Quaternion.Euler (gameObject.GetComponent<Voxeme> ().startEventRotations [rigidbody.name]);
+//						Debug.Log (initial.eulerAngles);
+//						// final = rotation to get to where we are now due to any physics effects
+//						Quaternion final = rigidbody.rotation;
+//						Debug.Log (final.eulerAngles);
+//						// resolve = rotation to get from initial orientation to final orientation after physics effects
+//						// (i.e. movement from initial state to final state)
+//						resolve = final * Quaternion.Inverse (initial);
+//						Debug.Log (resolve.eulerAngles);
+//						//Debug.Log ((initial * resolve).eulerAngles);
+//						Debug.Log ((resolve * initial).eulerAngles);
+//						// resolveInv = rotation to get from final (current rigidbody) rotation back to initial (aligned with main obj) rotation
+//						//resolveInv = initial * Quaternion.Inverse (final);
+//						//Debug.Log (resolveInv.eulerAngles);
+//						rigidbody.transform.rotation = initial;
+//					}
+				}
+			}
+
+			transform.rotation = rot;
+			//transform.rotation = resolve * rot;
+			//(args [0] as GameObject).transform.rotation = resolve * (args [0] as GameObject).transform.rotation;
+			//Debug.Log ((args [0] as GameObject).transform.rotation.eulerAngles);
+
+			//GameObject.Find ("ReachObject").transform.position = transform.position;
+
+			offset = Quaternion.Angle (rot, Quaternion.Euler (target));
+			//Debug.Log (offset);
+		}
+		else {
+			//float offset = Quaternion.FromToRotation (transform.eulerAngles, targetRotation);//graspTracker.transform.position - target;
+			//Vector3 normalizedOffset = Vector3.Normalize (offset);
+
+			/*if (rigging.usePhysicsRig) {
+					Rigidbody[] rigidbodies = gameObject.GetComponentsInChildren<Rigidbody> ();
+					foreach (Rigidbody rigidbody in rigidbodies) {
+						rigidbody.MovePosition (new Vector3 (transform.position.x - normalizedOffset.x * Time.deltaTime * moveSpeed,
+							transform.position.y - normalizedOffset.y * Time.deltaTime * moveSpeed,
+							transform.position.z - normalizedOffset.z * Time.deltaTime * moveSpeed));
+					}
+				}*/
+
+			/*graspTracker.transform.position = new Vector3 (graspTracker.transform.position.x - normalizedOffset.x * Time.deltaTime * moveSpeed,
+				graspTracker.transform.position.y - normalizedOffset.y * Time.deltaTime * moveSpeed,
+				graspTracker.transform.position.z - normalizedOffset.z * Time.deltaTime * moveSpeed);*/
+
+		}
+
+		// resolve subobject rigidbody rotations
+		// TODO: ResolveSubObjectRigidbodyRotations()
+//		Debug.Log (gameObject.name);
+//		Debug.Log (gameObject.transform.rotation.eulerAngles);
+//		Rigidbody[] rigidbodies = gameObject.GetComponentsInChildren<Rigidbody> ();
+//		Quaternion resolve = Quaternion.identity;
+//		Quaternion resolveInv = Quaternion.identity;
+//		Quaternion mainBodyResolve = Quaternion.identity;
+//		foreach (Rigidbody rigidbody in rigidbodies) {
+//			if (endEventRotations.ContainsKey (rigidbody.name)) {
+//				Debug.Log (rigidbody.name);
+//				// initial = rotation to get to where we were at satisfaction of previous event
+//				Quaternion initial = Quaternion.Euler (gameObject.GetComponent<Voxeme> ().endEventRotations [rigidbody.name]);
+//				Debug.Log (initial.eulerAngles);
+//				// final = rotation to get to where we are now due to any physics effects
+//				Quaternion final = rigidbody.rotation;
+//				Debug.Log (final.eulerAngles);
+//				// resolve = rotation to get from initial orientation to final orientation after physics effects
+//				// (i.e. movement from initial state to final state)
+//				resolve = final * Quaternion.Inverse (initial);
+//				Debug.Log (resolve.eulerAngles);
+//				//Debug.Log ((initial * resolve).eulerAngles);
+//				Debug.Log ((resolve * initial).eulerAngles);
+//				// resolveInv = rotation to get from final (current rigidbody) rotation back to initial (aligned with main obj) rotation
+//				//resolveInv = initial * Quaternion.Inverse (final);
+//				//Debug.Log (resolveInv.eulerAngles);
+//				rigidbody.transform.rotation = initial;
+//			}
+//		}
+
+//		(args [0] as GameObject).transform.rotation = resolve * (args [0] as GameObject).transform.rotation;
+//		Debug.Log ((args [0] as GameObject).transform.rotation.eulerAngles);
+//		Debug.Break ();
+
+		return offset;
+	}
+
 	void OnCollisionEnter(Collision other) {
 		if (other.gameObject.tag == "MainCamera") {
 			return;
@@ -311,6 +470,16 @@ public class Voxeme : MonoBehaviour {
 			opVox.Type.Components.Add (new Triple<string,GameObject,int> (gameObject.name, gameObject, i));
 		}
 
+		// set symmetry info
+		string[] rotsym = voxml.Type.RotatSym.Split (',');
+		foreach (string sym in rotsym) {
+			opVox.Type.RotatSym.Add (sym);
+		}
+
+		string[] reflsym = voxml.Type.ReflSym.Split (',');
+		foreach (string sym in reflsym) {
+			opVox.Type.ReflSym.Add (sym);
+		}
 
 		// set habitat info
 		foreach (VoxHabitatIntr ih in voxml.Habitat.Intrinsic) {
@@ -425,6 +594,16 @@ public class Voxeme : MonoBehaviour {
 					"\t",
 					"Index: " + component.Item3));
 			}
+			file.WriteLine("SYMMETRY");
+			file.Write("ROT\t");
+			foreach (string s in opVox.Type.RotatSym) {
+				file.Write(String.Format("{0}\t",s));
+			}
+			file.Write("REFL\t");
+			foreach (string s in opVox.Type.ReflSym) {
+				file.Write(String.Format("{0}\t",s));
+			}
+			file.WriteLine("\n");
 			file.WriteLine("HABITATS");
 			file.WriteLine("INTRINSIC");
 			foreach (KeyValuePair<int,List<string>> kv in opVox.Habitat.IntrinsicHabitats) {

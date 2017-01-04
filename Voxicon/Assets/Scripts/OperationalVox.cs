@@ -44,8 +44,8 @@ public class OperationalVox {
 		public List<Triple<string, GameObject, int>> Components = new List<Triple<string, GameObject, int>>();
 
 		public string Concavity = "";
-		public string RotatSym = "";
-		public string ReflSym = "";
+		public List<string> RotatSym = new List<string>();
+		public List<string> ReflSym = new List<string>();
 
 		public List<OpTypeArg> Args = new List<OpTypeArg>();
 
@@ -72,6 +72,10 @@ public class OperationalVox {
 	public class OpAfford_Str {
 		// int: habitat index (0 for unindexed H)
 		// List<Pair<string, Pair<string, string>>>>: List of optional condition formulas, with [EVENT]RESULT pairs (RESULT may be empty)
+		// List Item1: condition on habitat
+		// List Item2: Event/Result pair
+		// List Item2 Item1: Event
+		// List Item2 Item2: Result
 		public Dictionary<int, List<Pair<string, Pair<string, string>>>> Affordances = new Dictionary<int, List<Pair<string, Pair<string, string>>>>();
 	}
 

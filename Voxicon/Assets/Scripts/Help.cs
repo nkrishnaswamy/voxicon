@@ -17,10 +17,25 @@ public class Help : ModalWindow {
 		"Click and drag to rotate camera.  Use arrow keys to move camera.  " +
 		"Use S/W to raise/lower agent arm when visible.";
 
+	public int fontSize = 12;
+
+	GUIStyle buttonStyle = new GUIStyle ("Button");
+
+	float fontSizeModifier;	
+	public float FontSizeModifier {
+		get { return fontSizeModifier; }
+		set { fontSizeModifier = value; }
+	}
+
 	// Use this for initialization
 	void Start () {
 		windowTitle = "Help";
 		persistent = true;
+
+		buttonStyle = new GUIStyle ("Button");
+
+		fontSizeModifier = (int)(fontSize / defaultFontSize);
+		buttonStyle.fontSize = fontSize;
 	}
 	
 	// Update is called once per frame
@@ -28,7 +43,8 @@ public class Help : ModalWindow {
 	}	
 
 	protected override void OnGUI () {
-		if (GUI.Button (new Rect (Screen.width-50, Screen.height-30, 38, 22), "Help"))
+		if (GUI.Button (new Rect (Screen.width-(15 + (int)(110*fontSizeModifier/3)),
+			Screen.height-(10 + (int)(20*fontSizeModifier)), 38*fontSizeModifier, 20*fontSizeModifier), "Help", buttonStyle))
 			render = true;
 
 		base.OnGUI ();
