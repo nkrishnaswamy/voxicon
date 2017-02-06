@@ -126,3 +126,7 @@ sysinfo.txt
 *.pyc
 # ignore large external library
 Assets/MORPH3D*
+# ignore rider plugin
+Assets/Plugins/Editor*
+# ignore NuGet packages (e.g. Nunit)
+packages*
