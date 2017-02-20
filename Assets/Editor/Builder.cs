@@ -6,7 +6,7 @@ using System.IO;
 [CustomEditor(typeof(Builder))]
 public class Builder : Editor {
 
-	public string buildName = "VoxSim_Build7";
+	public string buildName = "VoxSimTrials";
 	List<string> scenes = new List<string>(){"Assets/Scenes/VoxSimMenu.unity"};
 
 	public override void OnInspectorGUI () 

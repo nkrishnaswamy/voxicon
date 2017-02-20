@@ -43,22 +43,27 @@ public class Macros : MonoBehaviour {
 					}
 
 					if (lids.Count > 0) {
-						commandMacros.Add ("close(mug)", string.Format ("put({0},on(mug))", lids [0].name));
+						//commandMacros.Add ("close(mug)", string.Format ("put({0},on(mug))", lids [0].name));
 					}
 					else {
-						commandMacros.Add ("close(mug)", "flip(mug)");
+						//commandMacros.Add ("close(mug)", "flip(mug)");
 					}
 				}
 			}
 		}
 
 		commandMacros.Add ("flip(cups)", "flip(cup1);flip(cup2);flip(cup3)");
+		commandMacros.Add ("flip(the(cups))", "flip(cup1);flip(cup2);flip(cup3)");
 		commandMacros.Add ("switch(two(cups))", "switch(two(cup))");
 		commandMacros.Add ("shuffle(cups)", "switch(two(cup));switch(two(cup));switch(two(cup));switch(two(cup));switch(two(cup))");
+		commandMacros.Add ("shuffle(the(cups))", "switch(two(cup));switch(two(cup));switch(two(cup));switch(two(cup));switch(two(cup))");
 		commandMacros.Add ("stack(blocks)", "put(brown(block),on(red(block)));put(black(block),on(brown(block)));bind(red(block),black(block),brown(block),as(\"stack\"))");
-		commandMacros.Add ("stack(apple,plate,mug)", "put(apple,on(plate));put(plate,on(mug))");
+		commandMacros.Add ("stack(the(blocks))", "put(brown(block),on(red(block)));put(black(block),on(brown(block)));bind(red(block),black(block),brown(block),as(\"stack\"))");
+		//commandMacros.Add ("stack(apple,plate,mug)", "put(apple,on(plate));put(plate,on(mug))");
 		commandMacros.Add ("build(staircase)", "put(green(block),left(black(block)));put(red(block),right(black(block)));put(yellow(block),on(red(block)));put(blue(block),on(black(block)));put(brown(block),on(yellow(block)))");
+		commandMacros.Add ("build(a(staircase))", "put(green(block),left(black(block)));put(red(block),right(black(block)));put(yellow(block),on(red(block)));put(blue(block),on(black(block)));put(brown(block),on(yellow(block)))");
 		commandMacros.Add ("build(pyramid)", "put(block1,left(block3));put(block2,right(block3));put(block4,behind(block3));put(block5,in_front(block3));put(block6,on(block3))");
+		commandMacros.Add ("build(a(pyramid))", "put(block1,left(block3));put(block2,right(block3));put(block4,behind(block3));put(block5,in_front(block3));put(block6,on(block3))");
 	}
 
 	public void ClearMacros () {

@@ -25,16 +25,29 @@ namespace Global {
 	/// Region class
 	/// </summary>
 	public class Region {
-		Vector3 _min,_max;
+		Vector3 _min,_max,_center;
 
 		public Vector3 min {
 			get { return _min; }
-			set { _min = value; }
+			set { _min = value;
+					_center = (min + max) / 2.0f;
+				}
 		}
 
 		public Vector3 max {
 			get { return _max; }
-			set { _max = value; }
+			set { _max = value; 
+					_center = (min + max) / 2.0f;
+				}
+		}
+
+		public Vector3 center {
+			get { return _center; }
+		}
+
+		public Region() {
+			min = Vector3.zero;
+			max = Vector3.zero;
 		}
 
 		public bool Contains(Vector3 point) {
@@ -227,6 +240,12 @@ namespace Global {
 			formula = cv.Replace (formula, "");
 			String[] components = formula.Replace ('(', '/').Replace (')', '/').Replace (',','/').Split ('/');
 
+//			//Debug.Log (components.Length);
+//			foreach (String s in components) {
+//				Debug.Log (s);
+//			}
+			//Debug.Break ();
+
 			if (components.Length <= 3) {
 				triple.Item1 = "NULL";
 			}
@@ -243,7 +262,14 @@ namespace Global {
 						}
 					}
 					else {
-						triple.Item2 = triple.Item2 + s + "_";
+						if (v.IsMatch (s)) {
+							if (triple.Item3 == "") {
+								triple.Item3 = s;
+							}
+						}
+						else {
+							triple.Item2 = triple.Item2 + s + "_";
+						}
 					}
 				}
 			}
@@ -331,16 +357,16 @@ namespace Global {
 			return outside;
 		}
 
-		public static Vector3 RayIntersectionPoint(Vector3 rayStart, GameObject obj) {
-			Collider[] colliders = obj.GetComponentsInChildren<Collider> ();
+		public static Vector3 RayIntersectionPoint(Vector3 rayStart, Vector3 direction) {
+			//Collider[] colliders = obj.GetComponentsInChildren<Collider> ();
 			List<RaycastHit> hits = new List<RaycastHit> ();
 
-			foreach (Collider c in colliders) {
-				RaycastHit hitInfo = new RaycastHit ();
-				Physics.Raycast (rayStart, (c.transform.position - rayStart), out hitInfo);
-				hits.Add (hitInfo);
-			}
-
+			//foreach (Collider c in colliders) {
+			RaycastHit hitInfo = new RaycastHit ();
+			Physics.Raycast (rayStart, direction.normalized, out hitInfo);
+			hits.Add (hitInfo);
+			//}
+				
 			RaycastHit closestHit = hits [0];
 
 			foreach (RaycastHit hit in hits) {
@@ -369,22 +395,51 @@ namespace Global {
 
 		// OBJECT METHODS
 		public static Bounds GetObjectSize(GameObject obj) {
-			Renderer[] renderers = obj.GetComponentsInChildren<Renderer>();
+			MeshFilter[] meshes = obj.GetComponentsInChildren<MeshFilter>();
 
-			Bounds combinedBounds = new Bounds (obj.transform.position, Vector3.zero);
+			Bounds combinedBounds = new Bounds (Vector3.zero, Vector3.zero);
 			
-			foreach (Renderer renderer in renderers) {
-				Bounds temp = renderer.gameObject.GetComponent<MeshFilter> ().mesh.bounds;
-				Vector3 min = new Vector3 (temp.min.x * renderer.gameObject.transform.localScale.x,
-					              temp.min.y * renderer.gameObject.transform.localScale.y,
-					              temp.min.z * renderer.gameObject.transform.localScale.z);
-				Vector3 max = new Vector3 (temp.max.x * renderer.gameObject.transform.localScale.x,
-					temp.max.y * renderer.gameObject.transform.localScale.y,
-					temp.max.z * renderer.gameObject.transform.localScale.z);
-				temp.SetMinMax (min, max);
+			foreach (MeshFilter mesh in meshes) {
+				Bounds temp = new Bounds (Vector3.zero,mesh.mesh.bounds.size);
+				//Debug.Log(mesh.gameObject.name);
+				//Debug.Log(temp);
+				Vector3 min = new Vector3 (temp.min.x * mesh.gameObject.transform.lossyScale.x,
+					temp.min.y * mesh.gameObject.transform.lossyScale.y,
+					temp.min.z * mesh.gameObject.transform.lossyScale.z);
+				Vector3 max = new Vector3 (temp.max.x * mesh.gameObject.transform.lossyScale.x,
+					temp.max.y * mesh.gameObject.transform.lossyScale.y,
+					temp.max.z * mesh.gameObject.transform.lossyScale.z);
+				//Debug.Log (Helper.VectorToParsable(min));
+				//Debug.Log (Helper.VectorToParsable(max));
+				//Debug.Log(mesh.gameObject.transform.root.GetChild(0).localScale);
+				//Debug.Log(mesh.gameObject.name);
+				//Debug.Log(mesh.gameObject.transform.localEulerAngles);
+				//temp.center = obj.transform.position;
+				//temp.SetMinMax (min,max);
+				temp.SetMinMax (RotatePointAroundPivot(min,Vector3.zero,mesh.gameObject.transform.localEulerAngles),
+					RotatePointAroundPivot(max,Vector3.zero,mesh.gameObject.transform.localEulerAngles));
+				//Debug.Log (temp);
+				//Debug.Log (combinedBounds);
+				//Debug.Log (temp);
 				combinedBounds.Encapsulate(temp);
+				//Debug.Log (combinedBounds);
 			}
-			
+
+			/*combinedBounds = new Bounds (obj.transform.position, Vector3.zero);
+			Bounds bounds = GetObjectWorldSize (obj);
+
+			Debug.Log (obj.transform.eulerAngles);
+			Quaternion invRot = Quaternion.Inverse (obj.transform.rotation);
+			Debug.Log (invRot.eulerAngles);
+			Debug.Log (Helper.VectorToParsable(bounds.min));
+			Debug.Log (Helper.VectorToParsable(bounds.max));
+			Vector3 bmin = RotatePointAroundPivot (bounds.min, obj.transform.position, invRot.eulerAngles);
+			Vector3 bmax = RotatePointAroundPivot (bounds.max, obj.transform.position, invRot.eulerAngles);
+			Debug.Log (Helper.VectorToParsable(bmin));
+			Debug.Log (Helper.VectorToParsable(bmax));
+
+			combinedBounds.Encapsulate(bmin);
+			combinedBounds.Encapsulate(bmax);*/
 			return combinedBounds;
 		}
 
@@ -472,10 +527,15 @@ namespace Global {
 
 		public static Vector3 GetObjectMajorAxis (GameObject obj) {
 			Bounds bounds = GetObjectSize (obj);
+			Debug.Log (bounds);
 
 			List<float> dims = new List<float>(new float[]{bounds.size.x, bounds.size.y, bounds.size.z});
 
 			int longest = dims.IndexOf(dims.Max());
+			//Debug.Log (bounds.size.x);
+			//Debug.Log (bounds.size.y);
+			//Debug.Log (bounds.size.z);
+			Debug.Log (longest);
 
 			Vector3 axis = Vector3.zero;
 			if (longest == 0) {			// x
@@ -491,17 +551,171 @@ namespace Global {
 			return axis;
 		}
 
+		public static Vector3 GetObjectMinorAxis (GameObject obj) {
+			Bounds bounds = GetObjectSize (obj);
+			Debug.Log (bounds);
+
+			List<float> dims = new List<float>(new float[]{bounds.size.x, bounds.size.y, bounds.size.z});
+
+			int shortest = dims.IndexOf(dims.Min());
+			Debug.Log (bounds.size.x);
+			Debug.Log (bounds.size.y);
+			Debug.Log (bounds.size.z);
+			Debug.Log (shortest);
+
+			Vector3 axis = Vector3.zero;
+			if (shortest == 0) {		// x
+				axis = Vector3.right;
+			}
+			else if (shortest == 1) {	// y
+				axis = Vector3.up;
+			}
+			else if (shortest == 2) {	// z
+				axis = Vector3.forward;
+			}
+
+			return axis;
+		}
+
+		public static Vector3 ClosestExteriorPoint (GameObject obj, Vector3 pos) {
+			Vector3 point = Vector3.zero;
+			Bounds bounds = GetObjectWorldSize (obj);
+
+			if (bounds.ClosestPoint (pos) == pos) {	// if point inside bounding box
+				List<Vector3> boundsPoints = new List<Vector3> (new Vector3[] {
+					bounds.min,
+					new Vector3 (bounds.min.x, bounds.min.y, bounds.max.z),
+					new Vector3 (bounds.min.x, bounds.max.y, bounds.min.z),
+					new Vector3 (bounds.min.x, bounds.max.y, bounds.max.z),
+					new Vector3 (bounds.max.x, bounds.min.y, bounds.min.z),
+					new Vector3 (bounds.max.x, bounds.min.y, bounds.max.z),
+					new Vector3 (bounds.max.x, bounds.max.y, bounds.min.z),
+					bounds.max });
+
+				float dist = float.MaxValue;
+				foreach (Vector3 boundsPoint in boundsPoints) {
+					float testDist = Vector3.Distance (pos, boundsPoint);
+					if (testDist < dist) {
+						dist = testDist;
+						point = boundsPoint;
+					}
+				}
+			}
+			else {
+				point = pos;
+			}
+
+			return point;
+		}
+
+//		public static Vector3 GetAxisOfSeparation (GameObject obj1, GameObject obj2) {
+//			Vector3 axis = Vector3.zero;
+//
+//
+//		}
+
 		// if obj1 fits inside obj2
-		public static bool FitsIn(Bounds obj1, Bounds obj2) {
+		public static bool FitsIn(Bounds obj1, Bounds obj2, bool threeDimensional = false) {
 			bool fits = true;
 
 			if ((obj1.size.x >= obj2.size.x) ||	// check for object bounds exceeding along all axes but the axis of major orientaton
 				//(obj1.size.y > obj2.size.y) ||
 			    (obj1.size.z >= obj2.size.z)) {
 				fits = false;
+
+				if (threeDimensional) {
+					fits &= (obj1.size.y < obj2.size.y);
+				}
 			}
 
 			return fits;
+		}
+
+		// if obj1 covers obj2
+		public static bool Covers(Bounds obj1, Bounds obj2, Vector3 dir) {
+			bool covers = true;
+
+			if (Helper.Parallel(dir, Constants.xAxis)) {
+				if ((obj1.size.y+Constants.EPSILON < obj2.size.y) ||	// check for object bounds exceeding along all axes but dir
+					(obj1.size.z+Constants.EPSILON < obj2.size.z)) {
+					covers = false;
+				}
+			}
+			else if (Helper.Parallel(dir, Constants.yAxis)) {
+				if ((obj1.size.x+Constants.EPSILON < obj2.size.x) ||	// check for object bounds exceeding along all axes but dir
+					(obj1.size.z+Constants.EPSILON < obj2.size.z)) {
+					covers = false;
+				}
+			}
+			else if (Helper.Parallel(dir, Constants.zAxis)) {
+				if ((obj1.size.x+Constants.EPSILON < obj2.size.x) ||	// check for object bounds exceeding along all axes but dir
+					(obj1.size.y+Constants.EPSILON < obj2.size.y)) {
+					covers = false;
+				}
+			}
+
+			return covers;
+		}
+
+		// obj2 is somewhere in obj1's supportingSurface hierarchy
+		public static bool IsSupportedBy(GameObject obj1, GameObject obj2) {
+			bool supported = false;
+			GameObject obj = obj1;
+
+			while (obj.GetComponent<Voxeme> ().supportingSurface != null) {
+				//Debug.Log (obj);
+				if (obj.GetComponent<Voxeme> ().supportingSurface.gameObject.transform.root.gameObject == obj2) {
+					supported = true;
+					break;
+				}
+				obj = obj.GetComponent<Voxeme> ().supportingSurface.gameObject.transform.root.gameObject;
+				//Debug.Log (obj);
+			}
+
+			return supported;
+		}
+
+		public static Region FindClearRegion(GameObject surface, GameObject testObj) {
+			Region region = new Region ();
+
+			Bounds surfaceBounds = GetObjectWorldSize (surface);
+			Bounds testBounds = GetObjectWorldSize (testObj);
+
+			region.min = new Vector3 (surfaceBounds.min.x, surfaceBounds.max.y, surfaceBounds.min.z);
+			region.max = new Vector3 (surfaceBounds.max.x, surfaceBounds.max.y, surfaceBounds.max.z);
+
+			ObjectSelector objSelector = GameObject.Find ("BlocksWorld").GetComponent<ObjectSelector> ();
+
+			Vector3 testPoint = new Vector3 (UnityEngine.Random.Range (region.min.x, region.max.x),
+				                    UnityEngine.Random.Range (region.min.y, region.max.y),
+				                    UnityEngine.Random.Range (region.min.z, region.max.z));
+			bool clearRegionFound = false;
+			while (!clearRegionFound) {
+				testBounds.center = testPoint;
+				bool regionClear = true;
+				foreach (Voxeme voxeme in objSelector.allVoxemes) {
+					if (voxeme.gameObject != surface) {
+						if (testBounds.Intersects(Helper.GetObjectWorldSize(voxeme.gameObject))) {
+							regionClear = false;
+							break;
+						}
+					}
+				}
+
+				if (regionClear) {
+					clearRegionFound = true;
+					break;
+				}
+
+				testPoint = new Vector3 (UnityEngine.Random.Range (region.min.x, region.max.x),
+					UnityEngine.Random.Range (region.min.y, region.max.y),
+					UnityEngine.Random.Range (region.min.z, region.max.z));
+			}
+
+			region.min = testPoint - testBounds.extents;
+			region.max = testPoint + testBounds.extents;
+					
+			return region;
 		}
 
 		// two vectors are within epsilon
@@ -514,13 +728,37 @@ namespace Global {
 			return (Quaternion.Angle(q1,q2) < Constants.EPSILON);
 		}
 
+		public static bool IsTopmostVoxemeInHierarchy(GameObject obj) {
+			Voxeme voxeme = obj.GetComponent<Voxeme> ();
+			bool r = false;
+
+			if (voxeme != null) {
+				r = (voxeme.gameObject.transform.parent == null);
+			}
+
+			return r;
+		}
+
 		public static GameObject GetMostImmediateParentVoxeme(GameObject obj) {
-			GameObject voxObject = obj;
+			/*GameObject voxObject = obj;
 
 			while (voxObject.transform.parent != null) {
 				voxObject = voxObject.transform.parent.gameObject;
 				if (voxObject.GetComponent<Rigging> () != null) {
 					if (voxObject.GetComponent<Rigging> ().enabled) {
+						break;
+					}
+				}
+			}*/
+
+			GameObject voxObject = obj;
+			GameObject testObject = obj;
+
+			while (testObject.transform.parent != null) {
+				testObject = testObject.transform.parent.gameObject;
+				if (testObject.GetComponent<Rigging> () != null) {
+					if (testObject.GetComponent<Rigging> ().enabled) {
+						voxObject = testObject;
 						break;
 					}
 				}
@@ -541,6 +779,251 @@ namespace Global {
 			}
 
 			return objs;
+		}
+	}
+
+
+	/// <summary>
+	/// Physics helper.
+	/// </summary>
+	public static class PhysicsHelper {
+		public static void ResolveAllPhysicsDiscepancies(bool macroEventSatisfied) {
+			ObjectSelector objSelector = GameObject.Find ("BlocksWorld").GetComponent<ObjectSelector> ();
+			foreach (Voxeme voxeme in objSelector.allVoxemes) {
+				ResolvePhysicsDiscepancies (voxeme.gameObject, macroEventSatisfied);
+			}
+		}
+
+		public static void ResolvePhysicsDiscepancies(GameObject obj, bool macroEventSatisfied) {
+			// check and see if rigidbody orientations and main body orientations are getting out of sync
+			// due to physics effects
+			ResolvePhysicsPositionDiscepancies(obj, macroEventSatisfied);
+			ResolvePhysicsRotationDiscepancies(obj, macroEventSatisfied);
+//			ResolvePhysicsPositionDiscepancies(obj);
+		}
+
+		public static void ResolvePhysicsRotationDiscepancies(GameObject obj, bool macroEventSatisfied) {
+			Voxeme voxComponent = obj.GetComponent<Voxeme> ();
+
+			// find the smallest displacement angle between an axis on the main body and an axis on this rigidbody
+			float displacementAngle = 360.0f;
+			Quaternion rigidbodyRotation = Quaternion.identity;
+			Rigidbody[] rigidbodies = obj.GetComponentsInChildren<Rigidbody> ();
+			foreach (Rigidbody rigidbody in rigidbodies) {
+				foreach (Vector3 mainBodyAxis in Constants.Axes.Values) {
+					foreach (Vector3 rigidbodyAxis in Constants.Axes.Values) {
+						if (Vector3.Angle (obj.transform.rotation * mainBodyAxis, rigidbody.rotation * rigidbodyAxis) < displacementAngle) {
+							displacementAngle = Vector3.Angle (obj.transform.rotation * mainBodyAxis, rigidbody.rotation * rigidbodyAxis);
+							rigidbodyRotation = rigidbody.rotation;
+						}
+					}
+				}
+			}
+
+			if (displacementAngle == 360.0f) {
+				displacementAngle = 0.0f;
+			}
+
+			if (displacementAngle > Mathf.Rad2Deg * Constants.EPSILON) {
+				//Debug.Break ();
+				//Debug.Log (obj.name);
+				//Debug.Log (displacementAngle);
+				Quaternion resolve = Quaternion.identity;
+				Quaternion resolveInv = Quaternion.identity;
+				if (voxComponent != null) {
+					if (rigidbodies.Length > 0) {
+//						foreach (Rigidbody rigidbody in rigidbodies) {
+//							if (voxComponent.rotationalDisplacement.ContainsKey (rigidbody.gameObject)) {
+//								Debug.Log (rigidbody.name);
+//								// initial = initial rotational displacement
+//								Quaternion initial = Quaternion.Euler (voxComponent.rotationalDisplacement [rigidbody.gameObject]);
+//								Debug.Log (initial.eulerAngles);
+//								// current = current rotational displacement due to physics
+//								Quaternion current = rigidbody.transform.localRotation;// * Quaternion.Inverse ((args [0] as GameObject).transform.rotation));
+//								Debug.Log (current.eulerAngles);
+//								// resolve = rotation to get from initial rotational displacement to current rotational displacement
+//								resolve = current * Quaternion.Inverse (initial);
+//								Debug.Log (resolve.eulerAngles);
+//								Debug.Log ((initial * resolve).eulerAngles);
+//								Debug.Log ((resolve * initial).eulerAngles);
+//								// resolveInv = rotation to get from final (current rigidbody) rotation back to initial (aligned with main obj) rotation
+//								resolveInv = initial * Quaternion.Inverse (current);
+//								//Debug.Log (resolveInv.eulerAngles);
+//								//rigidbody.transform.rotation = obj.transform.rotation * initial;
+//								//rigidbody.transform.localRotation = initial;// * (args [0] as GameObject).transform.rotation;
+//								//Debug.Log (rigidbody.transform.rotation.eulerAngles);
+//
+//								//rigidbody.transform.localPosition = voxComponent.displacement [rigidbody.name];
+//								//rigidbody.transform.position = (args [0] as GameObject).transform.position + voxComponent.displacement [rigidbody.name];
+//							}
+//						}
+
+						//Debug.Break ();
+
+						//Debug.Log (obj.transform.rotation.eulerAngles);
+						//foreach (Rigidbody rigidbody in rigidbodies) {
+						//Debug.Log (Helper.VectorToParsable (rigidbody.transform.localPosition));
+						//}
+
+//						obj.transform.rotation = obj.transform.rotation *
+//							(rigidbodies [0].transform.localRotation * 
+//								Quaternion.Inverse (Quaternion.Euler (voxComponent.rotationalDisplacement [rigidbodies [0].gameObject])));
+							//(rigidbodies [0].transform.localRotation *
+//							obj.transform.rotation * Quaternion.Inverse (Quaternion.Euler (voxComponent.rotationalDisplacement [rigidbodies [0].gameObject])));
+						obj.transform.rotation = rigidbodies [0].transform.rotation *
+							Quaternion.Inverse (Quaternion.Euler (voxComponent.rotationalDisplacement [rigidbodies [0].gameObject]));
+						voxComponent.targetRotation = obj.transform.rotation.eulerAngles;
+						//Debug.Log (obj.transform.rotation.eulerAngles);
+
+						foreach (Rigidbody rigidbody in rigidbodies) {
+							if (voxComponent.rotationalDisplacement.ContainsKey (rigidbody.gameObject)) {
+								//Debug.Log (rigidbody.name);
+								rigidbody.transform.localEulerAngles = voxComponent.rotationalDisplacement [rigidbody.gameObject];
+							}
+						}
+
+//						rigidbodyRotation = Quaternion.identity;
+//						rigidbodies = obj.GetComponentsInChildren<Rigidbody> ();
+//						foreach (Rigidbody rigidbody in rigidbodies) {
+//							foreach (Vector3 mainBodyAxis in Constants.Axes.Values) {
+//								foreach (Vector3 rigidbodyAxis in Constants.Axes.Values) {
+//									if (Vector3.Angle (obj.transform.rotation * mainBodyAxis, rigidbody.rotation * rigidbodyAxis) < displacementAngle) {
+//										displacementAngle = Vector3.Angle (obj.transform.rotation * mainBodyAxis, rigidbody.rotation * rigidbodyAxis);
+//										rigidbodyRotation = rigidbody.rotation;
+//									}
+//								}
+//							}
+//						}
+					}
+				}
+			}
+
+			// TODO: Abstract away
+			foreach (Voxeme child in voxComponent.children) {
+				if (child.isActiveAndEnabled) {
+					if (child.gameObject != voxComponent.gameObject) {
+//						ResolvePhysicsPositionDiscepancies (child.gameObject);
+//						ResolvePhysicsRotationDiscepancies (child.gameObject);
+
+						if (macroEventSatisfied) {
+							child.transform.localRotation = voxComponent.parentToChildRotationOffset [child.gameObject];
+							//voxComponent.parentToChildRotationOffset [child.gameObject] = child.transform.localRotation;
+							child.transform.rotation = voxComponent.gameObject.transform.rotation * child.transform.localRotation;
+						}
+						else {
+							voxComponent.parentToChildRotationOffset [child.gameObject] = child.transform.localRotation;
+							child.targetRotation = child.transform.rotation.eulerAngles;
+						}
+						child.transform.localPosition = Helper.RotatePointAroundPivot (voxComponent.parentToChildPositionOffset [child.gameObject],
+							Vector3.zero, voxComponent.gameObject.transform.eulerAngles);
+						//child.transform.localPosition = Helper.RotatePointAroundPivot (child.transform.localEulerAngles,
+						//	Vector3.zero, voxComponent.gameObject.transform.eulerAngles);
+						child.transform.position = voxComponent.gameObject.transform.position + child.transform.localPosition;
+						child.targetPosition = child.transform.position;
+					}
+				}
+			}
+		}
+
+		public static void ResolvePhysicsPositionDiscepancies(GameObject obj, bool macroEventSatisfied) {
+			Voxeme voxComponent = obj.GetComponent<Voxeme> ();
+			//Debug.Break ();
+			// find the displacement between the main body and this rigidbody
+			float displacement = float.MaxValue;
+			Rigidbody[] rigidbodies = obj.GetComponentsInChildren<Rigidbody> ();
+			//Debug.Log (obj.name);
+			foreach (Rigidbody rigidbody in rigidbodies) {
+				//if (voxComponent.displacement.ContainsKey (rigidbody.gameObject)) {
+				//	if (rigidbody.transform.localPosition.magnitude > voxComponent.displacement [rigidbody.gameObject].magnitude+Constants.EPSILON) {
+				if (rigidbody.transform.localPosition.magnitude < displacement) {
+//					Debug.Log (rigidbody.name);
+//					Debug.Log (Helper.VectorToParsable (obj.transform.position));
+//					Debug.Log (Helper.VectorToParsable (rigidbody.transform.position));
+					displacement = rigidbody.transform.localPosition.magnitude;
+				}
+				//	}
+				//}
+			}
+
+			if (displacement == float.MaxValue) {
+				displacement = 0.0f;
+			}
+
+			if (displacement > Constants.EPSILON) {
+				//Debug.Log (obj.name);
+				//Debug.Log (displacement);
+				if (voxComponent != null) {
+					if (rigidbodies.Length > 0) {
+//						Debug.Log (rigidbodies [0].name);
+//						Debug.Log (rigidbodies [0].transform.position);
+//						Debug.Log (Helper.VectorToParsable(voxComponent.displacement [rigidbodies[0].gameObject]));
+						obj.transform.position = rigidbodies [0].transform.position - (obj.transform.rotation * voxComponent.displacement [rigidbodies[0].gameObject]);
+						//Debug.Log (obj.name);
+						//Debug.Log (obj.transform.position);
+						//obj.transform.position = rigidbodies [0].transform.localPosition - voxComponent.displacement [rigidbodies[0].gameObject] +
+						//	obj.transform.position;
+						voxComponent.targetPosition = obj.transform.position;
+						//						Debug.Log (Helper.VectorToParsable (rigidbodies [0].transform.position));
+						//						Debug.Log (Helper.VectorToParsable (rigidbodies [0].transform.localPosition));
+						//						Debug.Log (Helper.VectorToParsable (obj.transform.position));
+
+						//Debug.Log (Helper.VectorToParsable (rigidbodies [0].transform.position));
+						//Debug.Log (Helper.VectorToParsable (voxComponent.displacement [rigidbodies[0].name]));
+
+						foreach (Rigidbody rigidbody in rigidbodies) {
+							if (voxComponent.displacement.ContainsKey (rigidbody.gameObject)) {
+								//								Debug.Log (rigidbody.name);
+								rigidbody.transform.localPosition = voxComponent.displacement [rigidbody.gameObject];
+							}
+						}
+					}
+				}
+			}
+
+			// TODO: Abstract away
+			foreach (Voxeme child in voxComponent.children) {
+				if (child.isActiveAndEnabled) {
+					if (child.gameObject != voxComponent.gameObject) {
+//						ResolvePhysicsPositionDiscepancies (child.gameObject);
+//						ResolvePhysicsRotationDiscepancies (child.gameObject);
+						//Debug.Log ("Moving child: " + gameObject.name);
+						child.transform.localPosition = voxComponent.parentToChildPositionOffset [child.gameObject];
+						child.targetPosition = child.transform.position;
+					}
+				}
+			}
+		}
+
+		public static float GetConcavityMinimum(GameObject obj) {
+			Bounds bounds = Helper.GetObjectSize (obj);
+
+			Vector3 concavityMin = bounds.min;
+			foreach (Renderer renderer in obj.GetComponentsInChildren<Renderer>()) {
+//				Debug.Log (renderer.gameObject.name + " " + Helper.GetObjectWorldSize (renderer.gameObject).min.y);
+				if (Helper.GetObjectSize (renderer.gameObject).min.y > concavityMin.y) {
+					concavityMin = Helper.GetObjectSize (renderer.gameObject).min;
+				}
+			}
+
+			concavityMin = Helper.RotatePointAroundPivot (concavityMin, bounds.center, obj.transform.eulerAngles) + obj.transform.position;
+
+//			Debug.Log (obj.transform.eulerAngles);
+//			Debug.Log (concavityMin.y);
+			return concavityMin.y;
+
+			/*
+			Bounds bounds = Helper.GetObjectWorldSize (obj);
+
+			float concavityMinY = bounds.min.y;
+			foreach (Renderer renderer in obj.GetComponentsInChildren<Renderer>()) {
+				//Debug.Log (renderer.gameObject.name + " " + Helper.GetObjectWorldSize (renderer.gameObject).min.y);
+				if (Helper.GetObjectWorldSize (renderer.gameObject).min.y > concavityMinY) {
+					concavityMinY = Helper.GetObjectWorldSize (renderer.gameObject).min.y;
+				}
+			}
+
+			return concavityMinY;
+			 */
 		}
 	}
 

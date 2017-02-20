@@ -11,14 +11,18 @@ public class GhostFreeRoamCamera : MonoBehaviour
 	public bool allowMovement = true;
 	public bool allowRotation = true;
 	
-	public KeyCode forwardButton = KeyCode.W;
-	public KeyCode backwardButton = KeyCode.S;
+	public KeyCode upButton = KeyCode.W;
+	public KeyCode downButton = KeyCode.S;
 	public KeyCode rightButton = KeyCode.D;
 	public KeyCode leftButton = KeyCode.A;
+	public KeyCode homeButton = KeyCode.H;
 	
 	public float cursorSensitivity = 0.025f;
 	public bool cursorToggleAllowed = true;
 	public KeyCode cursorToggleButton = KeyCode.Escape;
+
+	private Vector3 cameraPosOrigin;
+	private Quaternion cameraRotOrigin;
 
 	public float panSpeed = 0.1f;
 	private Vector3 mouseOrigin;	// Position of cursor when mouse dragging starts
@@ -105,6 +109,11 @@ public class GhostFreeRoamCamera : MonoBehaviour
 
 		if (allowMovement)
 		{
+			if (Input.GetKey (homeButton)) {
+				transform.position = cameraPosOrigin;
+				transform.rotation = cameraRotOrigin;
+			}
+
 			bool lastMoving = moving;
 			deltaPosition = Vector3.zero;
 
@@ -113,8 +122,8 @@ public class GhostFreeRoamCamera : MonoBehaviour
 			
 			moving = false;
 			
-			CheckMove(forwardButton, transform.forward);
-			CheckMove(backwardButton, -transform.forward);
+			CheckMove(upButton, transform.up);
+			CheckMove(downButton, -transform.up);
 			CheckMove(rightButton, transform.right);
 			CheckMove(leftButton, -transform.right);
 
@@ -182,6 +191,8 @@ public class GhostFreeRoamCamera : MonoBehaviour
 	}
 
 	private void Start() {	
+		cameraPosOrigin = transform.position;
+		cameraRotOrigin = transform.rotation;
 		rb = GetComponent<Rigidbody> ();
 
 		// ignore collisions with everything but the boundaries

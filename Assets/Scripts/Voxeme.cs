@@ -20,8 +20,8 @@ public class Voxeme : MonoBehaviour {
 	// (physics-resultant changes between the completion of one event and the start of the next must be brought into line)
 	//public Dictionary<string,Vector3> startEventRotations = new Dictionary<string, Vector3> ();
 	//public Dictionary<string,Vector3> endEventRotations = new Dictionary<string, Vector3> ();
-	public Dictionary<string,Vector3> displacement = new Dictionary<string, Vector3> ();
-	public Dictionary<string,Vector3> rotationalDisplacement = new Dictionary<string, Vector3> ();
+	public Dictionary<GameObject,Vector3> displacement = new Dictionary<GameObject, Vector3> ();
+	public Dictionary<GameObject,Vector3> rotationalDisplacement = new Dictionary<GameObject, Vector3> ();
 
 	Rigging rigging;
 
@@ -34,12 +34,34 @@ public class Voxeme : MonoBehaviour {
 	public float turnSpeed = 5.0f;
 
 	public float minYBound;
+	//	public float minYBound {
+	//		get { return _minYBound; }
+	//		set {
+	//				if (value != _minYBound) {
+	//					Debug.Break ();
+	//				}
+	//				_minYBound = value;
+	//			}
+	//	}
 
 	public GameObject supportingSurface = null;
+//	public GameObject supportingSurface {
+//		get { return _supportingSurface; }
+//		set {
+//				if (value != _supportingSurface) {
+//					Debug.Break ();
+//				}
+//				_supportingSurface = value;
+//			}
+//	}
 
 	public bool isGrasped = false;
 	public Transform graspTracker = null;
 	public Transform grasperCoord = null;
+
+	public Voxeme[] children;
+	public Dictionary<GameObject,Vector3> parentToChildPositionOffset;
+	public Dictionary<GameObject,Quaternion> parentToChildRotationOffset;
 
 	// Use this for initialization
 	void Start () {
@@ -54,13 +76,29 @@ public class Voxeme : MonoBehaviour {
 
 		// get movement blocking
 		minYBound = Helper.GetObjectWorldSize(gameObject).min.y;
+		Debug.Log (minYBound);
 
 		// get rigging components
 		rigging = gameObject.GetComponent<Rigging> ();
+		rigging.rigidbodies = gameObject.GetComponentsInChildren<Rigidbody> ();
 
 		targetPosition = transform.position;
 		targetRotation = transform.eulerAngles;
 		targetScale = transform.localScale;
+
+		parentToChildPositionOffset = new Dictionary<GameObject, Vector3>();
+		parentToChildRotationOffset = new Dictionary<GameObject, Quaternion>();
+		children = GetComponentsInChildren<Voxeme> ();
+		foreach (Voxeme child in children) {
+			if (child.isActiveAndEnabled) {
+				if (child.gameObject != gameObject) {
+					//Debug.Log (child.transform);
+					parentToChildPositionOffset [child.gameObject] = child.transform.localPosition;
+					parentToChildRotationOffset [child.gameObject] = child.transform.localRotation;
+					//Debug.Log (parentToChildPositionOffset [child.gameObject]);
+				}
+			}
+		}
 	}
 		
 	// Update is called once per frame
@@ -73,6 +111,21 @@ public class Voxeme : MonoBehaviour {
 
 						if (offset.sqrMagnitude <= Constants.EPSILON) {
 							transform.position = targetPosition;
+
+							foreach (Voxeme child in children) {
+								if (child.isActiveAndEnabled) {
+									if (child.gameObject != gameObject) {
+										child.transform.localPosition = parentToChildPositionOffset [child.gameObject];
+										child.targetPosition = child.transform.position;
+									}
+								}
+							}
+
+//							foreach (Rigidbody rigidbody in rigging.rigidbodies) {
+//								if (rotationalDisplacement.ContainsKey (rigidbody.gameObject)) {
+//									rigidbody.transform.localEulerAngles = rotationalDisplacement [rigidbody.gameObject];
+//								}
+//							}
 						}
 					}
 				}
@@ -101,6 +154,15 @@ public class Voxeme : MonoBehaviour {
 
 					if (offset.sqrMagnitude <= Constants.EPSILON) {
 						transform.position = interimTarget;
+
+						foreach (Voxeme child in children) {
+							if (child.isActiveAndEnabled) {
+								if (child.gameObject != gameObject) {
+									child.transform.localPosition = parentToChildPositionOffset [child.gameObject];
+									child.targetPosition = child.transform.position;
+								}
+							}
+						}
 						interTargetPositions.Dequeue ();
 					}
 				//}
@@ -122,10 +184,18 @@ public class Voxeme : MonoBehaviour {
 			if (!Helper.VectorIsNaN (targetRotation)) {	// has valid target
 				if (!isGrasped) {
 					if (transform.rotation != Quaternion.Euler (targetRotation)) {
+						//Debug.Log (transform.eulerAngles);
+						//Debug.Break ();
 						float offset = RotateToward (targetRotation);
 
 						if ((Mathf.Deg2Rad * offset) < 0.01f) {
 							transform.rotation = Quaternion.Euler (targetRotation);
+
+//							foreach (Rigidbody rigidbody in rigging.rigidbodies) {
+//								if (rotationalDisplacement.ContainsKey (rigidbody.gameObject)) {
+//									rigidbody.transform.localEulerAngles = rotationalDisplacement [rigidbody.gameObject];
+//								}
+//							}
 						}
 					}
 				}
@@ -149,6 +219,7 @@ public class Voxeme : MonoBehaviour {
 					//if ((Mathf.Deg2Rad * Quaternion.Angle (transform.rotation, Quaternion.Euler (interimTarget))) < 0.01f) {
 					if ((Mathf.Deg2Rad * offset) < 0.01f) {
 						transform.rotation = Quaternion.Euler (interimTarget);
+
 						//Debug.Log (interimTarget);
 						interTargetRotations.Dequeue ();
 						//Debug.Log (interTargetRotations.Peek ());
@@ -179,10 +250,58 @@ public class Voxeme : MonoBehaviour {
 		hits = hitList.OrderBy (h => h.distance).ToArray ();
 		foreach (RaycastHit hit in hits) {
 			if (hit.collider.gameObject.GetComponent<BoxCollider> () != null) {
-				if ((hit.collider.gameObject.GetComponent<BoxCollider> ().enabled) &&
-					(!hit.collider.gameObject.transform.IsChildOf(gameObject.transform))){
-					supportingSurface = hit.collider.gameObject;
-					break;
+				if ((!hit.collider.gameObject.GetComponent<BoxCollider> ().isTrigger) &&
+				    (!hit.collider.gameObject.transform.IsChildOf (gameObject.transform))) {
+					if (!Helper.FitsIn (Helper.GetObjectWorldSize (hit.collider.gameObject),
+						    Helper.GetObjectWorldSize (gameObject), true)) {
+						supportingSurface = hit.collider.gameObject;
+
+						if (!isGrasped) {
+							bool themeIsConcave = (Helper.GetMostImmediateParentVoxeme (gameObject).GetComponent<Voxeme> ().voxml.Type.Concavity.Contains ("Concave"));
+							bool themeIsUpright = (Vector3.Dot (gameObject.transform.root.transform.up, Vector3.up) > 0.5f);
+							bool themeIsUpsideDown = (Vector3.Dot (gameObject.transform.root.transform.up, Vector3.up) < -0.5f);
+
+							bool supportIsConcave = (Helper.GetMostImmediateParentVoxeme (supportingSurface).GetComponent<Voxeme> ().voxml.Type.Concavity.Contains ("Concave"));
+							bool supportIsUpright = (Vector3.Dot (supportingSurface.transform.root.transform.up, Vector3.up) > 0.5f);
+							bool supportIsUpsideDown = (Vector3.Dot (supportingSurface.transform.root.transform.up, Vector3.up) < -0.5f);
+
+							// if theme is concave, the concavity isn't enabled, and the object is on top of an object that fits inside of it
+							// e.g. cup on top of ball
+							if ((themeIsConcave) && (Concavity.IsEnabled (Helper.GetMostImmediateParentVoxeme (gameObject))) &&
+							   (Helper.FitsIn (Helper.GetObjectWorldSize (supportingSurface.transform.root.gameObject), Helper.GetObjectWorldSize (gameObject)))) {
+								minYBound = Helper.GetObjectWorldSize (supportingSurface).min.y;
+								//flip the plate.  flip the cup.  put the plate under the cup
+								//flip the cup.  put the ball under the cup
+							}
+							else {	// otherwise
+								if (supportIsConcave) {	// if the object under this object is concave
+									if (Concavity.IsEnabled (Helper.GetMostImmediateParentVoxeme (supportingSurface))) {	// if the object under this object has its concavity enabled
+										minYBound = PhysicsHelper.GetConcavityMinimum (supportingSurface.transform.root.gameObject);
+										Debug.Log (gameObject.name);
+										Debug.Log (supportingSurface.name);
+										Debug.Log (minYBound);
+										//Debug.Break ();
+									}
+									else {	// if the object under this object is not upright
+										Debug.Break ();
+										minYBound = Helper.GetObjectWorldSize (supportingSurface).max.y;
+//								Debug.Log (minYBound);
+										//Debug.Log (minYBound);
+									}
+								}
+								else {	// if the object under this object is not concave
+									minYBound = Helper.GetObjectWorldSize (supportingSurface).max.y;
+//							Debug.Log (minYBound);
+									//Debug.Break ();
+								}
+								//**
+								//Bug list:
+								// put the plate under the cup jitter
+							}
+
+							break;
+						}
+					}
 				}
 			}
 		}
@@ -196,29 +315,31 @@ public class Voxeme : MonoBehaviour {
 		if (supportingSurface != null) {
 			//Debug.Log (supportingSurface.name);
 			// add check for SupportingSurface component
-			Renderer[] renderers = supportingSurface.GetComponentsInChildren<Renderer> ();
-			Bounds surfaceBounds = new Bounds ();
-			foreach (Renderer renderer in renderers) {
-				if (renderer.bounds.max.y > surfaceBounds.max.y) {
-					surfaceBounds = renderer.bounds;
-				}
-			}
+			Bounds surfaceBounds = Helper.GetObjectWorldSize(supportingSurface);
+			Bounds objectBounds = Helper.GetObjectWorldSize (gameObject);
+//			Renderer[] renderers = supportingSurface.GetComponentsInChildren<Renderer> ();
+//			Bounds surfaceBounds = new Bounds ();
+//			foreach (Renderer renderer in renderers) {
+//				if (renderer.bounds.max.y > surfaceBounds.max.y) {
+//					surfaceBounds = renderer.bounds;
+//				}
+//			}
 
-			Vector3 currentMin = gameObject.transform.position;
-			renderers = gameObject.GetComponentsInChildren<Renderer> ();
-			Bounds objectBounds = new Bounds ();
-			foreach (Renderer renderer in renderers) {
-				if (renderer.bounds.max.y > objectBounds.max.y) {
-					objectBounds = renderer.bounds;
-				}
+//			Vector3 currentMin = gameObject.transform.position;
+//			renderers = gameObject.GetComponentsInChildren<Renderer> ();
+//			Bounds objectBounds = new Bounds ();
+//			foreach (Renderer renderer in renderers) {
+//				if (renderer.bounds.max.y > objectBounds.max.y) {
+//					objectBounds = renderer.bounds;
+//				}
+//
+//				if (renderer.bounds.min.y < currentMin.y) {
+//					currentMin = renderer.bounds.min;
+//				}
+//			}
 
-				if (renderer.bounds.min.y < currentMin.y) {
-					currentMin = renderer.bounds.min;
-				}
-			}
-
-			if (targetPosition.y >= minYBound) {
-				if (transform.position.y < transform.position.y + (minYBound - objectBounds.min.y)) {
+			if (Helper.IsTopmostVoxemeInHierarchy (gameObject)) {
+				if (objectBounds.min.y < minYBound) {
 					transform.position = new Vector3 (transform.position.x,
 						transform.position.y + (minYBound - objectBounds.min.y),
 						transform.position.z);
@@ -254,6 +375,13 @@ public class Voxeme : MonoBehaviour {
 
 	}
 
+	void LateUpdate () {
+		//if (resolveDiscrepancies) {
+			//Debug.Log ("Voxeme.LateUpdate(): " + Time.time);
+			//PhysicsHelper.ResolvePhysicsDiscepancies (gameObject);
+		//}
+	}
+
 	Vector3 MoveToward(Vector3 target) {
 		if (!isGrasped) {
 			Vector3 offset = transform.position - target;
@@ -271,6 +399,17 @@ public class Voxeme : MonoBehaviour {
 			transform.position = new Vector3 (transform.position.x - normalizedOffset.x * Time.deltaTime * moveSpeed,
 				transform.position.y - normalizedOffset.y * Time.deltaTime * moveSpeed,
 				transform.position.z - normalizedOffset.z * Time.deltaTime * moveSpeed);
+
+			
+			foreach (Voxeme child in children) {
+				if (child.isActiveAndEnabled) {
+					if (child.gameObject != gameObject) {
+						//Debug.Log ("Moving child: " + gameObject.name);
+						child.transform.localPosition = parentToChildPositionOffset [child.gameObject];
+						child.targetPosition = child.transform.position;
+					}
+				}
+			}
 
 			//GameObject.Find ("ReachObject").transform.position = transform.position;
 
@@ -314,61 +453,32 @@ public class Voxeme : MonoBehaviour {
 				Rigidbody[] rigidbodies = gameObject.GetComponentsInChildren<Rigidbody> ();
 				foreach (Rigidbody rigidbody in rigidbodies) {
 					rigidbody.MoveRotation (rot);
-
-					// check and see if rigidbody orientations and main body orientations are getting out of sync
-					// due to physics effects
-
-					// find the smallest displacement angle between an axis on the main body and an axis on this rigidbody
-//					foreach (Vector3 mainBodyAxis in Constants.Axes.Values) {
-//						foreach (Vector3 rigidbodyAxis in Constants.Axes.Values) {
-//							if (Vector3.Angle (transform.rotation * mainBodyAxis, rigidbody.rotation * rigidbodyAxis) < displacementAngle) {
-//								displacementAngle = Vector3.Angle (transform.rotation * mainBodyAxis, rigidbody.rotation * rigidbodyAxis);
-//							}
-//						}
-//					}
-//
-//					Debug.Log (displacementAngle);
-//
-//					if (displacementAngle > Constants.EPSILON) {
-//						//Debug.Break ();
-//					}
-
-					// compute displacement between rigidbody's orientation at the start of event and now
-					// rotate the main body by that displacement
-					// rotate the rigidbody back to start
-//					if (startEventRotations.ContainsKey (rigidbody.name)) {
-//						Debug.Log (rigidbody.name);
-//						// initial = rotation to get to where we were at start of this event
-//						Quaternion initial = Quaternion.Euler (gameObject.GetComponent<Voxeme> ().startEventRotations [rigidbody.name]);
-//						Debug.Log (initial.eulerAngles);
-//						// final = rotation to get to where we are now due to any physics effects
-//						Quaternion final = rigidbody.rotation;
-//						Debug.Log (final.eulerAngles);
-//						// resolve = rotation to get from initial orientation to final orientation after physics effects
-//						// (i.e. movement from initial state to final state)
-//						resolve = final * Quaternion.Inverse (initial);
-//						Debug.Log (resolve.eulerAngles);
-//						//Debug.Log ((initial * resolve).eulerAngles);
-//						Debug.Log ((resolve * initial).eulerAngles);
-//						// resolveInv = rotation to get from final (current rigidbody) rotation back to initial (aligned with main obj) rotation
-//						//resolveInv = initial * Quaternion.Inverse (final);
-//						//Debug.Log (resolveInv.eulerAngles);
-//						rigidbody.transform.rotation = initial;
-//					}
 				}
 			}
 
 			transform.rotation = rot;
-			//transform.rotation = resolve * rot;
-			//(args [0] as GameObject).transform.rotation = resolve * (args [0] as GameObject).transform.rotation;
-			//Debug.Log ((args [0] as GameObject).transform.rotation.eulerAngles);
-
 			//GameObject.Find ("ReachObject").transform.position = transform.position;
+
+			foreach (Voxeme child in children) {
+				if (child.isActiveAndEnabled) {
+					if (child.gameObject != gameObject) {
+						child.transform.localRotation = parentToChildRotationOffset [child.gameObject];
+						child.transform.rotation = gameObject.transform.rotation * child.transform.localRotation;
+						child.targetRotation = child.transform.rotation.eulerAngles;
+						child.transform.localPosition = Helper.RotatePointAroundPivot (parentToChildPositionOffset [child.gameObject],
+							Vector3.zero, gameObject.transform.eulerAngles);
+						child.transform.position = gameObject.transform.position + child.transform.localPosition;
+						child.targetPosition = child.transform.position;
+						//Debug.Log (child.name);
+						//Debug.Break ();
+						//Debug.Log (Helper.VectorToParsable(child.transform.localPosition));
+					}
+				}
+			}
 
 			offset = Quaternion.Angle (rot, Quaternion.Euler (target));
 			//Debug.Log (offset);
-		}
-		else {
+		} else {
 			//float offset = Quaternion.FromToRotation (transform.eulerAngles, targetRotation);//graspTracker.transform.position - target;
 			//Vector3 normalizedOffset = Vector3.Normalize (offset);
 
@@ -386,40 +496,6 @@ public class Voxeme : MonoBehaviour {
 				graspTracker.transform.position.z - normalizedOffset.z * Time.deltaTime * moveSpeed);*/
 
 		}
-
-		// resolve subobject rigidbody rotations
-		// TODO: ResolveSubObjectRigidbodyRotations()
-//		Debug.Log (gameObject.name);
-//		Debug.Log (gameObject.transform.rotation.eulerAngles);
-//		Rigidbody[] rigidbodies = gameObject.GetComponentsInChildren<Rigidbody> ();
-//		Quaternion resolve = Quaternion.identity;
-//		Quaternion resolveInv = Quaternion.identity;
-//		Quaternion mainBodyResolve = Quaternion.identity;
-//		foreach (Rigidbody rigidbody in rigidbodies) {
-//			if (endEventRotations.ContainsKey (rigidbody.name)) {
-//				Debug.Log (rigidbody.name);
-//				// initial = rotation to get to where we were at satisfaction of previous event
-//				Quaternion initial = Quaternion.Euler (gameObject.GetComponent<Voxeme> ().endEventRotations [rigidbody.name]);
-//				Debug.Log (initial.eulerAngles);
-//				// final = rotation to get to where we are now due to any physics effects
-//				Quaternion final = rigidbody.rotation;
-//				Debug.Log (final.eulerAngles);
-//				// resolve = rotation to get from initial orientation to final orientation after physics effects
-//				// (i.e. movement from initial state to final state)
-//				resolve = final * Quaternion.Inverse (initial);
-//				Debug.Log (resolve.eulerAngles);
-//				//Debug.Log ((initial * resolve).eulerAngles);
-//				Debug.Log ((resolve * initial).eulerAngles);
-//				// resolveInv = rotation to get from final (current rigidbody) rotation back to initial (aligned with main obj) rotation
-//				//resolveInv = initial * Quaternion.Inverse (final);
-//				//Debug.Log (resolveInv.eulerAngles);
-//				rigidbody.transform.rotation = initial;
-//			}
-//		}
-
-//		(args [0] as GameObject).transform.rotation = resolve * (args [0] as GameObject).transform.rotation;
-//		Debug.Log ((args [0] as GameObject).transform.rotation.eulerAngles);
-//		Debug.Break ();
 
 		return offset;
 	}
@@ -442,19 +518,52 @@ public class Voxeme : MonoBehaviour {
 
 		// find component objects
 		foreach (VoxTypeComponent c in voxml.Type.Components) {
-			string[] s = c.Value.Split('[');
-			Transform obj = null;
-			int index = -1;
-			obj = gameObject.transform.FindChild(gameObject.name+"*/"+s[0]);
-			if (s.Length > 1) {
-				index = Helper.StringToInt (s[1].Remove (s[1].IndexOf (']')));
+			Regex operators = new Regex (@"[\*\+]");
+			string oper = String.Empty;
+			//Debug.Log (c.Value);
+			if (operators.Match (c.Value).Length > 0) {
+				oper = operators.Match (c.Value).Groups [0].ToString ();
+				//Debug.Log (oper);
 			}
 
-			if (obj != null) {
-				//Debug.Log (s[0]);
-				//Debug.Log (obj);
-				//Debug.Log (index);
-				opVox.Type.Components.Add (new Triple<string,GameObject,int> (s[0], obj.gameObject, index));
+			string[] s;
+			if (oper != string.Empty) {
+				s = c.Value.Remove (c.Value.IndexOf (oper)).Split ('[');
+			}
+			else {
+				s = c.Value.Split ('[');
+			}
+
+			if (oper == String.Empty) {
+				Transform obj = null;
+				int index = -1;
+				obj = gameObject.transform.FindChild (gameObject.name + "*/" + s [0]);
+				if (s.Length > 1) {
+					index = Helper.StringToInt (s [1].Remove (s [1].IndexOf (']')));
+				}
+
+				if (obj != null) {
+					//Debug.Log (s[0]);
+					//Debug.Log (obj);
+					//Debug.Log (index);
+					opVox.Type.Components.Add (new Triple<string,GameObject,int> (s [0], obj.gameObject, index));
+				}
+			}
+			else if (oper == "+" || oper == "*") {
+				Transform subVox = gameObject.transform.FindChild (gameObject.name + "*/");
+				if (subVox != null) {
+					foreach (Transform child in subVox) {
+						if (child.name == s [0]) {
+							//Debug.Log (child.name);
+							int index = -1;
+							if (s.Length > 1) {
+								index = Helper.StringToInt (s [1].Remove (s [1].IndexOf (']')));
+							}
+						
+							opVox.Type.Components.Add (new Triple<string,GameObject,int> (s [0], child.gameObject, index));
+						}
+					}
+				}
 			}
 		}
 
@@ -469,6 +578,27 @@ public class Voxeme : MonoBehaviour {
 			opVox.Type.Head = new Triple<string,GameObject,int> (gameObject.name, gameObject, i);
 			opVox.Type.Components.Add (new Triple<string,GameObject,int> (gameObject.name, gameObject, i));
 		}
+
+		// set concavity info
+		string[] concavity = voxml.Type.Concavity.Split('[');
+		// if reentrancy index given
+		if (concavity.Length > 1) {
+			int index = Helper.StringToInt (concavity [1].Remove (concavity [1].IndexOf (']')));
+			if (opVox.Type.Components.FindIndex (c => c.Item3 == index) != -1) {
+				GameObject obj = opVox.Type.Components.Find (c => c.Item3 == index).Item2;
+				opVox.Type.Concavity = new Triple<string,GameObject,int> (concavity [0], obj, index);
+			}
+			// if none, add entire game object as concavity segment
+			else {
+				opVox.Type.Concavity = new Triple<string,GameObject,int> (concavity [0], gameObject, opVox.Type.Head.Item3);
+			}
+		}
+		else {
+			opVox.Type.Concavity = new Triple<string,GameObject,int> (concavity [0], gameObject, opVox.Type.Head.Item3);
+		}
+//		foreach (string sym in rotsym) {
+//			opVox.Type.RotatSym.Add (sym);
+//		}
 
 		// set symmetry info
 		string[] rotsym = voxml.Type.RotatSym.Split (',');
@@ -594,6 +724,13 @@ public class Voxeme : MonoBehaviour {
 					"\t",
 					"Index: " + component.Item3));
 			}
+			file.WriteLine("CONCAVITY");
+			file.Write (String.Format("{0,-20}{1,-20}{2,-20}{3,-20}{4,-20}\n",
+				"Name: " + opVox.Type.Concavity.Item1,
+				"\t",
+				"GameObject name: " + opVox.Type.Concavity.Item2.name,
+				"\t",
+				"Index: " + opVox.Type.Concavity.Item3));
 			file.WriteLine("SYMMETRY");
 			file.Write("ROT\t");
 			foreach (string s in opVox.Type.RotatSym) {

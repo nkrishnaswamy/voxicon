@@ -6,12 +6,24 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Global;
 
+public class InputEventArgs : EventArgs {
+
+	public string InputString {get; set; }
+
+	public InputEventArgs(string str)
+	{
+		this.InputString = str;
+	}
+}
+
 public class InputController : FontManager {
 	public String inputLabel;
 	public String inputString;
 	public int fontSize = 12;
 	public int inputHeight = 50;
 	public Rect inputRect;
+
+	public bool allowToggleAgent = true;
 
 	String[] commands;
 	EventManager eventManager;
@@ -30,6 +42,16 @@ public class InputController : FontManager {
 	GUIStyle buttonStyle = new GUIStyle ("Button");
 
 	float fontSizeModifier;
+
+	public event EventHandler InputReceived;
+
+	public void OnInputReceived(object sender, EventArgs e)
+	{
+		if (InputReceived != null)
+		{
+			InputReceived(this, e);
+		}
+	}
 
 	void Start() {
 		GameObject bc = GameObject.Find ("BehaviorController");
@@ -98,20 +120,21 @@ public class InputController : FontManager {
 //		}
 
 		if (GameObject.FindGameObjectWithTag ("Agent") != null) {
-			disableEnable = (objSelector.disabledObjects.FirstOrDefault (t => t.tag == "Agent") == null) ? "Disable Agent" : "Enable Agent";
-			if (GUI.Button (new Rect (10, Screen.height - ((10 + (int)(20 * exitToMenu.FontSizeModifier)) + (10 + (int)(40 * fontSizeModifier))),
-				   100 * fontSizeModifier, 20 * fontSizeModifier), disableEnable, buttonStyle)) {
-				GameObject agent = GameObject.FindGameObjectWithTag ("Agent");
-				if (agent != null) {
-					if (agent.activeInHierarchy) {
-						eventManager.preds.DISABLE (new object[]{ agent });
+			if (allowToggleAgent) {
+				disableEnable = (objSelector.disabledObjects.FirstOrDefault (t => t.tag == "Agent") == null) ? "Disable Agent" : "Enable Agent";
+				if (GUI.Button (new Rect (10, Screen.height - ((10 + (int)(20 * exitToMenu.FontSizeModifier)) + (10 + (int)(40 * fontSizeModifier))),
+					   100 * fontSizeModifier, 20 * fontSizeModifier), disableEnable, buttonStyle)) {
+					GameObject agent = GameObject.FindGameObjectWithTag ("Agent");
+					if (agent != null) {
+						if (agent.activeInHierarchy) {
+							eventManager.preds.DISABLE (new object[]{ agent });
+						}
+					} else {
+						agent = objSelector.disabledObjects.First (t => t.tag == "Agent");
+						eventManager.preds.ENABLE (new object[]{ agent });
 					}
+					return;
 				}
-				else {
-					agent = objSelector.disabledObjects.First (t => t.tag == "Agent");
-					eventManager.preds.ENABLE (new object[]{ agent });
-				}
-				return;
 			}
 		}
 	}
@@ -121,6 +144,9 @@ public class InputController : FontManager {
 		string functionalCommand = "";
 
 		if (inputString != "") {
+			InputEventArgs eventArgs = new InputEventArgs (inputString);
+			OnInputReceived (this, eventArgs);
+
 			if (inputString == "reset") {
 				StartCoroutine(SceneHelper.LoadScene (UnityEngine.SceneManagement.SceneManager.GetActiveScene ().name));
 				return;

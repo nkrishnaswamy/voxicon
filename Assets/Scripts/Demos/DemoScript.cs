@@ -8,6 +8,16 @@ using System.IO;
 
 using Global;
 
+public class LogEventArgs : EventArgs {
+
+	public string LogString {get; set; }
+
+	public LogEventArgs(string str)
+	{
+		this.LogString = str;
+	}
+}
+
 public class DemoScript : MonoBehaviour {
 
 	[HideInInspector]
@@ -16,11 +26,25 @@ public class DemoScript : MonoBehaviour {
 	[HideInInspector]
 	public float logTimer;
 
+	protected EventManager eventManager;
+
+	protected InputController inputController;
+
 	protected bool log;
 	StreamWriter logFile;
 
 	public Dictionary<string, Vector3> defaultState = new Dictionary<string, Vector3>();
 
+	public event EventHandler LogEvent;
+
+	public void OnLogEvent(object sender, EventArgs e)
+	{
+		if (LogEvent != null)
+		{
+			LogEvent(this, e);
+		}
+	}
+		
 	// Use this for initialization
 	public void Start () {
 		log = (PlayerPrefs.GetInt ("Make Logs") == 1);
@@ -35,6 +59,8 @@ public class DemoScript : MonoBehaviour {
 				}
 			}
 		}
+
+		LogEvent += LogEventReceived;
 	}
 
 	// Update is called once per frame
@@ -42,29 +68,39 @@ public class DemoScript : MonoBehaviour {
 		logTimer += Time.deltaTime;
 	}
 
-	protected void OpenLog(String name) {
+	protected void OpenLog(String name, OutputModality.Modality modality) {
 		if (!log) {
 			return;
 		}
 
+		if (!Directory.Exists ("Logs")) {
+			Directory.CreateDirectory ("Logs");
+		}
+
+
+		if (!Directory.Exists (string.Format("Logs/{0}",name))) {
+			Directory.CreateDirectory (string.Format("Logs/{0}",name));
+		}
+
 		string dateTime = DateTime.Now.ToString ("yyyy-MM-dd-HHmmss");
-		logFile = new StreamWriter (name + @"-" + dateTime + @".txt");
+		logFile = new StreamWriter (string.Format ("Logs/{0}/{1}-{2}.txt", name, name, dateTime));
+
+		logFile.WriteLine (string.Format ("Structure: {0}", name));
+		string modalityString = string.Empty;
+		modalityString += ((int)(modality & OutputModality.Modality.Gestural) == (int)OutputModality.Modality.Gestural) ? "Gestural" : string.Empty;
+		modalityString += " ";
+		modalityString += ((int)(modality & OutputModality.Modality.Linguistic) == (int)OutputModality.Modality.Linguistic) ? "Linguistic" : string.Empty;
+		modalityString = String.Join(", ", modalityString.Split ());
+		logFile.WriteLine (string.Format ("Modality: {0}", modalityString));
 	}
 
-	protected void Log (string content, bool satisfied) {
+	protected void Log (string content) {
 		if (!log) {
 			return;
 		}
 
 		if (!moveLogged) {
-			logFile.WriteLine(string.Format("{0}\tMove: {1}",logTimer.ToString(),content));
-			if (satisfied) {
-				logFile.WriteLine(string.Format("{0}\t{1}",logTimer.ToString(),"Response: Agreement"));
-			}
-			else {
-				logFile.WriteLine(string.Format("{0}\t{1}",logTimer.ToString(),"Response: Disagreement"));
-			}
-			moveLogged = true;
+			logFile.WriteLine(string.Format("{0}\t{1}",logTimer.ToString(),content));
 		}
 	}
 
@@ -74,6 +110,10 @@ public class DemoScript : MonoBehaviour {
 		}
 
 		logFile.Close ();
+	}
+
+	void LogEventReceived(object sender, EventArgs e) {
+		Log (((LogEventArgs)e).LogString);
 	}
 }
 
