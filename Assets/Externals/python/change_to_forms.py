@@ -76,6 +76,10 @@ def parse_sent(sent):
                   "green",
                   "yellow",
                   "red",
+                  "orange",
+                  "pink",
+                  "white",
+                  "gray",
                   "leftmost",
                   "middle",
                   "rightmost"]

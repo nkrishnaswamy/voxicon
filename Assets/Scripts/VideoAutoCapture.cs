@@ -16,6 +16,8 @@ public class VideoAutoCapture : MonoBehaviour {
 	public double eventCompleteWaitTime = 1000.0f;
 	Timer eventCompleteWaitTimer;
 
+	bool capture;
+
 	bool capturing = false;
 	bool writingFile = false;
 	bool stopCaptureFlag = false;
@@ -35,6 +37,8 @@ public class VideoAutoCapture : MonoBehaviour {
 		recorder = gameObject.GetComponent<FlashbackRecorder> ();
 		inputController = GameObject.Find ("IOController").GetComponent<InputController> ();
 		eventManager = GameObject.Find ("BehaviorController").GetComponent<EventManager> ();
+
+		capture = (PlayerPrefs.GetInt ("Capture Video") == 1);
 
 		inputController.InputReceived += StartCapture;
 		eventManager.QueueEmpty += EventComplete;
@@ -63,6 +67,10 @@ public class VideoAutoCapture : MonoBehaviour {
 	}
 
 	void StartCapture(object sender, EventArgs e) {
+		if (!capture) {
+			return;
+		}
+
 		Debug.Log (((InputEventArgs)e).InputString);
 		eventManager.InsertEvent ("wait()", 0);
 		eventTimeoutTimer.Enabled = true;

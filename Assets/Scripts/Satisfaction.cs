@@ -356,10 +356,6 @@ namespace Satisfaction {
 			return true;
 		}
 
-		public static void ForceSatisfaction(object sender, EventArgs e) {
-			IsSatisfied ("wait");
-		}
-
 		public static void ReasonFromAffordances(String program, Voxeme obj) {
 			Regex reentrancyForm = new Regex (@"\[[0-9]+\]");
 			Regex themeFirst = new Regex (@".*(\[[0-9]+\], .*x.*)");	// check the order of the arguments
@@ -556,6 +552,10 @@ namespace Satisfaction {
 										//Debug.Log (string.Format ("Is {0} {1} {2}?", obj.gameObject.name, relation, test.gameObject.name));
 										if (TestRelation (obj.gameObject, relation, test.gameObject)) {
 											relationTracker.AddNewRelation (new List<GameObject>{ obj.gameObject, test.gameObject }, relation);
+										}
+
+										if (TestRelation (test.gameObject, relation, obj.gameObject)) {
+											relationTracker.AddNewRelation (new List<GameObject>{ test.gameObject, obj.gameObject }, relation);
 										}
 									}
 								}

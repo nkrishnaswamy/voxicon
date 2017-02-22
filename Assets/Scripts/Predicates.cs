@@ -560,6 +560,66 @@ public class Predicates : MonoBehaviour {
 		return objName;
 	}
 
+	public String ORANGE(object[] args) {
+		String objName = "";
+
+		if (args [0] is GameObject) {	// assume all inputs are of same type
+			List<GameObject> objs = args.Cast<GameObject>().ToList();
+			List<GameObject> attrObjs = objs.FindAll (o => o.GetComponent<AttributeSet> ().attributes.Contains ("orange"));
+
+			if (attrObjs.Count > 0) {
+				objName = attrObjs [0].name;
+			}
+		}
+
+		return objName;
+	}
+
+	public String PINK(object[] args) {
+		String objName = "";
+
+		if (args [0] is GameObject) {	// assume all inputs are of same type
+			List<GameObject> objs = args.Cast<GameObject>().ToList();
+			List<GameObject> attrObjs = objs.FindAll (o => o.GetComponent<AttributeSet> ().attributes.Contains ("pink"));
+
+			if (attrObjs.Count > 0) {
+				objName = attrObjs [0].name;
+			}
+		}
+
+		return objName;
+	}
+
+	public String WHITE(object[] args) {
+		String objName = "";
+
+		if (args [0] is GameObject) {	// assume all inputs are of same type
+			List<GameObject> objs = args.Cast<GameObject>().ToList();
+			List<GameObject> attrObjs = objs.FindAll (o => o.GetComponent<AttributeSet> ().attributes.Contains ("white"));
+
+			if (attrObjs.Count > 0) {
+				objName = attrObjs [0].name;
+			}
+		}
+
+		return objName;
+	}
+
+	public String GRAY(object[] args) {
+		String objName = "";
+
+		if (args [0] is GameObject) {	// assume all inputs are of same type
+			List<GameObject> objs = args.Cast<GameObject>().ToList();
+			List<GameObject> attrObjs = objs.FindAll (o => o.GetComponent<AttributeSet> ().attributes.Contains ("gray"));
+
+			if (attrObjs.Count > 0) {
+				objName = attrObjs [0].name;
+			}
+		}
+
+		return objName;
+	}
+
 	// IN: Objects
 	// OUT: String
 	public String THE(object[] args)

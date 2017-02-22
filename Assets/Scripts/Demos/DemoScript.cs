@@ -94,6 +94,19 @@ public class DemoScript : MonoBehaviour {
 		logFile.WriteLine (string.Format ("Modality: {0}", modalityString));
 	}
 
+	protected string MakeLogString(params string[] strings) {
+		string outStr = string.Empty;
+		foreach (string str in strings) {
+			outStr += str;
+		}
+
+		return outStr;
+	}
+
+	protected string FormatLogUtterance(string utterance) {
+		return string.Format ("\"{0}\"", utterance);
+	}
+
 	protected void Log (string content) {
 		if (!log) {
 			return;
@@ -114,6 +127,10 @@ public class DemoScript : MonoBehaviour {
 
 	void LogEventReceived(object sender, EventArgs e) {
 		Log (((LogEventArgs)e).LogString);
+	}
+
+	protected void EventsForceCleared(object sender, EventArgs e) {
+		OnLogEvent(this, new LogEventArgs("Wizard: Force clear event queue"));
 	}
 }
 

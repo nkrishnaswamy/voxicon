@@ -18,14 +18,12 @@ public class Builder : Editor {
 			       new System.IO.StreamWriter(@"Assets/Resources/ScenesList.txt"))
 			{
 				string scenesDirPath = Application.dataPath + "/Scenes/";
-				string [] fileEntries = Directory.GetFiles(Application.dataPath+"/Scenes/");
+				string [] fileEntries = Directory.GetFiles(Application.dataPath+"/Scenes/","*.unity");
 				foreach (string s in fileEntries) {
-					if (!s.EndsWith(".meta")) {
-						string sceneName = s.Remove(0,Application.dataPath.Length-"Assets".Length);
-						if (!scenes.Contains(sceneName)) {
-							scenes.Add(sceneName);
-							file.WriteLine(sceneName.Split ('/')[2].Replace (".unity",""));
-						}
+					string sceneName = s.Remove(0,Application.dataPath.Length-"Assets".Length);
+					if (!scenes.Contains(sceneName)) {
+						scenes.Add(sceneName);
+						file.WriteLine(sceneName.Split ('/')[2].Replace (".unity",""));
 					}
 				}
 			}

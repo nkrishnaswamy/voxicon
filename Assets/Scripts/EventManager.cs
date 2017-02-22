@@ -73,6 +73,16 @@ public class EventManager : MonoBehaviour {
 		}
 	}
 
+	public event EventHandler ForceClear;
+
+	public void OnForceClear(object sender, EventArgs e)
+	{
+		if (ForceClear != null)
+		{
+			ForceClear(this, e);
+		}
+	}
+
 	// Use this for initialization
 	void Start () {
 		preds = gameObject.GetComponent<Predicates> ();
@@ -119,13 +129,16 @@ public class EventManager : MonoBehaviour {
 			}
 		}
 		else {
-			OnQueueEmpty (this, null);
 		}
 	}
 
 	public void RemoveEvent(int index) {
 		Debug.Log (string.Format("Removing event {0}",events[index]));
 		events.RemoveAt (index);
+
+		if (events.Count == 0) {
+			OnQueueEmpty (this, null);
+		}
 	}
 
 	public void InsertEvent(String commandString, int before) {
@@ -273,6 +286,7 @@ public class EventManager : MonoBehaviour {
 
 	public void ClearEvents() {
 		events.Clear ();
+		OnForceClear (this, null);
 	}
 
 	String GetNextIncompleteEvent() {

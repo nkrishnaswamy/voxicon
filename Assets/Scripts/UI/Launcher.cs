@@ -13,6 +13,7 @@ public class Launcher : FontManager {
 	string inPort;
 	string sriUrl;
 	bool makeLogs;
+	bool captureVideo;
 
 	int bgLeft = Screen.width/6;
 	int bgTop = Screen.height/12;
@@ -48,13 +49,11 @@ public class Launcher : FontManager {
 		
 #if UNITY_EDITOR
 		string scenesDirPath = Application.dataPath + "/Scenes/";
-		string [] fileEntries = Directory.GetFiles(Application.dataPath+"/Scenes/");
+		string [] fileEntries = Directory.GetFiles(Application.dataPath+"/Scenes/","*.unity");
 		foreach (string s in fileEntries) {
-			if (!s.EndsWith(".meta")) {
-				string sceneName = s.Remove(0,scenesDirPath.Length).Replace(".unity","");
-				if (!sceneName.Equals(UnityEngine.SceneManagement.SceneManager.GetActiveScene ().name)) {
-					availableScenes.Add(sceneName);
-				}
+			string sceneName = s.Remove(0,scenesDirPath.Length).Replace(".unity","");
+			if (!sceneName.Equals(UnityEngine.SceneManagement.SceneManager.GetActiveScene ().name)) {
+				availableScenes.Add(sceneName);
 			}
 		}
 #endif 
@@ -106,6 +105,15 @@ public class Launcher : FontManager {
 		GUI.Label (new Rect (bgLeft + 10, bgTop + 95, 90*fontSizeModifier, 25*fontSizeModifier), "Make Logs");
 		makeLogs = GUI.Toggle (new Rect (bgLeft+100, bgTop+95, 150, 25*fontSizeModifier), makeLogs, string.Empty);
 
+		GUI.Label (new Rect (bgLeft + 10, bgTop + 125, 90*fontSizeModifier, 25*fontSizeModifier), "Capture Video");
+		captureVideo = GUI.Toggle (new Rect (bgLeft+100, bgTop+125, 150, 25*fontSizeModifier), captureVideo, string.Empty);
+
+		if (captureVideo) {
+			string warningText = "Enabling this option may affect performance";
+			GUI.TextArea (new Rect (bgLeft + 10, bgTop + 145, GUI.skin.label.CalcSize (new GUIContent (warningText)).x+10, 20),
+				warningText);
+		}
+
 		GUILayout.BeginArea(new Rect(13*Screen.width/24, bgTop + 35, 3*Screen.width/12, 3*Screen.height/6), GUI.skin.window);
 		scrollPosition = GUILayout.BeginScrollView(scrollPosition, false, false); 
 		GUILayout.BeginVertical(GUI.skin.box);
@@ -145,12 +153,14 @@ public class Launcher : FontManager {
 		inPort = PlayerPrefs.GetString("Listener Port");
 		sriUrl = PlayerPrefs.GetString("SRI URL");
 		makeLogs = (PlayerPrefs.GetInt("Make Logs") == 1);
+		captureVideo = (PlayerPrefs.GetInt("Capture Video") == 1);
 	}
 	
 	void SavePrefs() {
 		PlayerPrefs.SetString("Listener Port", inPort);
 		PlayerPrefs.SetString("SRI URL", sriUrl);
 		PlayerPrefs.SetInt("Make Logs", System.Convert.ToInt32(makeLogs));
+		PlayerPrefs.SetInt("Capture Video", System.Convert.ToInt32(captureVideo));
 	}
 }
 

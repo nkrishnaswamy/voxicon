@@ -7,28 +7,46 @@ using System.Timers;
 
 using Global;
 
-public class G_reqScript : DemoScript {
+public class MITRETrial3Script : DemoScript {
 
 	enum ScriptStep {
 		Step0,
+
 		Step1A,
 		Step1B,
 		Step1C,
+
 		Step2A,
 		Step2B,
 		Step2C,
-		Step2D,
+
 		Step3A,
 		Step3B,
 		Step3C,
-		Step3D,
+
 		Step4A,
 		Step4B,
 		Step4C,
+		Step4D,
+
 		Step5A,
 		Step5B,
 		Step5C,
-		Step6
+		Step5D,
+
+		Step6A,
+		Step6B,
+		Step6C,
+
+		Step7A,
+		Step7B,
+		Step7C,
+
+		Step8A,
+		Step8B,
+		Step8C,
+
+		Step9
 	}
 
 	enum WilsonState {
@@ -42,7 +60,7 @@ public class G_reqScript : DemoScript {
 		HeadShake = (1 << 7)
 	}
 
-	String demoName = "unnamed";
+	String demoName = "MITRE3";
 
 	GameObject Wilson;
 	GameObject Diana;
@@ -112,6 +130,7 @@ public class G_reqScript : DemoScript {
 		rightAtTarget = false;
 		inputController.InputReceived += HumanInputReceived;
 		eventManager.QueueEmpty += HumanMoveComplete;
+		eventManager.ForceClear += EventsForceCleared;
 		leftTarget.AtTarget += LeftAtTarget;
 		rightTarget.AtTarget += RightAtTarget;
 
@@ -140,8 +159,7 @@ public class G_reqScript : DemoScript {
 				LookForward ();
 				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
-					OutputHelper.PrintOutput (OutputController.Role.Planner, "Please help me build something!");
-					OnLogEvent (this, new LogEventArgs("Wilson: S = \"Please help me build something!\""));
+					PrintAndLogLinguisticOutput("Please help me build something!");
 				}
 			}
 		}
@@ -149,36 +167,39 @@ public class G_reqScript : DemoScript {
 		if (currentStep == ScriptStep.Step1A) {
 			currentState = relationTracker.relStrings.Cast<object>().ToList();
 			goBack = false;
+			string objName = "block8";
 			if ((int)(wilsonState & WilsonState.Point) == 0) {
 				waitTimer.Enabled = true;
 				wilsonState |= WilsonState.Point;
-				PointAt (GameObject.Find ("block5"));
-				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "block5")));
+				PointAt (GameObject.Find (objName));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, objName)));
 				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
-					OutputHelper.PrintOutput (OutputController.Role.Planner, "Take that block");
-					OnLogEvent (this, new LogEventArgs("Wilson: S = \"Take that block\""));
+					PrintAndLogLinguisticOutput("Take that block");
 				}
 			}
 		}
 
 		if (currentStep == ScriptStep.Step1B) {
+			string objName = "block2";
 			if ((int)(wilsonState & WilsonState.Point) == 0) {
 				waitTimer.Enabled = true;
 				wilsonState |= WilsonState.Point;
-				PointAt (GameObject.Find ("block3"));
-				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "block3")));
+				PointAt (GameObject.Find (objName));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, objName)));
 				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
-					OutputHelper.PrintOutput (OutputController.Role.Planner, "And put it behind that block");
-					OnLogEvent (this, new LogEventArgs("Wilson: S = \"And put it behind that block\""));
+					PrintAndLogLinguisticOutput("And put it behind that block");
 				}
 			}
 		}
 
 		if (currentStep == ScriptStep.Step1C) {
+			string obj1Name = "block8";
+			string obj2Name = "block2";
 			if ((int)(wilsonState & WilsonState.Claw) == 0) {
 				wilsonState |= (WilsonState.Claw | WilsonState.LookForward);
-				Claw (GameObject.Find ("block5").transform.position, GameObject.Find ("block3").transform.position-(Vector3.forward*0.5f));				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "behind(block3, Persp = Wilson)")));
-				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "behind(block3, Persp = Wilson)")));
+				Claw (GameObject.Find (obj1Name).transform.position, GameObject.Find (obj2Name).transform.position-(Vector3.forward*0.5f));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, 
+					string.Format("behind({0}, Persp = Wilson)",obj2Name))));
 				LookForward ();
 				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 			} 
@@ -186,11 +207,11 @@ public class G_reqScript : DemoScript {
 				bool satisfied = false;
 				foreach (List<GameObject> key in relationTracker.relations.Keys) {
 					if (key.SequenceEqual (new List<GameObject> (new GameObject[] {
-						GameObject.Find ("block5"),
-						GameObject.Find ("block3")
+						GameObject.Find (obj1Name),
+						GameObject.Find (obj2Name)
 					}))) {
 						string[] relations = relationTracker.relations [key].ToString ().Split (',');
-						if (relations.Contains ("in_front")) {
+						if (relations.Contains ("in_front") && relations.Contains ("touching")) {
 							satisfied = true;
 							break;
 						}
@@ -198,38 +219,7 @@ public class G_reqScript : DemoScript {
 				}
 
 				if (humanMoveComplete) {
-					List<object> diff = Helper.DiffLists (currentState, relationTracker.relStrings.Cast<object>().ToList());
-					OnLogEvent (this, new LogEventArgs("Result: " + string.Join (";",diff.Cast<string>().ToArray())));
-					if (satisfied) {
-						OnLogEvent (this, new LogEventArgs("Response: Agreement"));
-						if ((int)(wilsonState & (WilsonState.ThumbsUp | WilsonState.HeadNod)) == 0) {
-							waitTimer.Enabled = true;
-							wilsonState |= (WilsonState.ThumbsUp | WilsonState.HeadNod);
-							ThumbsUp ();
-							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
-							HeadNod ();
-							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
-							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
-								OutputHelper.PrintOutput (OutputController.Role.Planner, "Great!");
-								OnLogEvent (this, new LogEventArgs("Wilson: S = \"Great!\""));
-							}
-						}
-					} 
-					else {
-						OnLogEvent (this, new LogEventArgs("Response: Disagreement"));
-						if ((int)(wilsonState & WilsonState.HeadShake) == 0) {
-							waitTimer.Enabled = true;
-							wilsonState |= WilsonState.HeadShake;
-							HeadShake ();
-							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
-							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
-								OutputHelper.PrintOutput (OutputController.Role.Planner, "That's not quite what I had in mind.");
-								OnLogEvent (this, new LogEventArgs("Wilson: S = \"That's not quite what I had in mind.\""));
-								goBack = true;
-							}
-						}
-					}
-					moveLogged = true;
+					CheckAgreement (satisfied);
 				}
 			}
 		}
@@ -237,65 +227,50 @@ public class G_reqScript : DemoScript {
 		if (currentStep == ScriptStep.Step2A) {
 			currentState = relationTracker.relStrings.Cast<object>().ToList();
 			goBack = false;
+			string objName = "block7";
 			if ((int)(wilsonState & WilsonState.Point) == 0) {
 				waitTimer.Enabled = true;
 				wilsonState |= WilsonState.Point;
-				PointAt (GameObject.Find ("block1"));
-				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "block1")));
+				PointAt (GameObject.Find (objName));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, objName)));
 				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
-					OutputHelper.PrintOutput (OutputController.Role.Planner, "Take that block");
-					OnLogEvent (this, new LogEventArgs("Wilson: S = \"Take that block\""));
+					PrintAndLogLinguisticOutput("Take that block");
 				}
 			}
 		}
 
 		if (currentStep == ScriptStep.Step2B) {
+			string objName = "block8";
 			if ((int)(wilsonState & WilsonState.Point) == 0) {
 				waitTimer.Enabled = true;
 				wilsonState |= WilsonState.Point;
-				PointAt (GameObject.Find ("block3"));
-				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "block3")));
+				PointAt (GameObject.Find (objName));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, objName)));
 				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
-					OutputHelper.PrintOutput (OutputController.Role.Planner, "And that block");
-					OnLogEvent (this, new LogEventArgs("Wilson: S = \"And that block\""));
+					PrintAndLogLinguisticOutput("And put it on that block");
 				}
 			}
 		}
 
 		if (currentStep == ScriptStep.Step2C) {
-			if ((int)(wilsonState & WilsonState.LookForward) == 0) {
-				wilsonState |= WilsonState.LookForward;
+			string obj1Name = "block7";
+			string obj2Name = "block8";
+			if ((int)(wilsonState & WilsonState.Claw) == 0) {
+				wilsonState |= (WilsonState.Claw | WilsonState.LookForward);
+				Claw (GameObject.Find (obj1Name).transform.position, GameObject.Find (obj2Name).transform.position);
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, obj2Name)));
 				LookForward ();
 				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 			} 
-
-			leftTarget.targetPosition = new Vector3 (1.0f, 2.5f, 0.0f);
-			rightTarget.targetPosition = new Vector3 (-1.0f, 2.5f, 0.0f);
-
-			if (leftAtTarget && rightAtTarget) {
-				currentStep = (ScriptStep)((int)currentStep + 1);
-			}
-		}
-
-		if (currentStep == ScriptStep.Step2D) {
-			if ((int)(wilsonState & WilsonState.PushTogether) == 0) {
-				wilsonState |= WilsonState.PushTogether;
-				PushTogether ();
-				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
-				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
-					OutputHelper.PrintOutput (OutputController.Role.Planner, "And put them together");
-					OnLogEvent (this, new LogEventArgs("Wilson: S = \"And put them together\""));
-				}
-			}
 			else {
 				bool satisfied = false;
 				foreach (List<GameObject> key in relationTracker.relations.Keys) {
 					if (key.SequenceEqual (new List<GameObject> (new GameObject[] {
-						GameObject.Find ("block1"),
-						GameObject.Find ("block3")
+						GameObject.Find (obj2Name),
+						GameObject.Find (obj1Name)
 					}))) {
 						string[] relations = relationTracker.relations [key].ToString ().Split (',');
-						if (relations.Contains ("right") && relations.Contains ("touching")) {
+						if (relations.Contains ("support")) {
 							satisfied = true;
 							break;
 						}
@@ -303,38 +278,7 @@ public class G_reqScript : DemoScript {
 				}
 
 				if (humanMoveComplete) {
-					List<object> diff = Helper.DiffLists (currentState, relationTracker.relStrings.Cast<object>().ToList());
-					OnLogEvent (this, new LogEventArgs("Result: " + string.Join (";",diff.Cast<string>().ToArray())));
-					if (satisfied) {
-						OnLogEvent (this, new LogEventArgs("Response: Agreement"));
-						if ((int)(wilsonState & (WilsonState.ThumbsUp | WilsonState.HeadNod)) == 0) {
-							waitTimer.Enabled = true;
-							wilsonState |= (WilsonState.ThumbsUp | WilsonState.HeadNod);
-							ThumbsUp ();
-							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
-							HeadNod ();
-							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
-							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
-								OutputHelper.PrintOutput (OutputController.Role.Planner, "Great!");
-								OnLogEvent (this, new LogEventArgs("Wilson: S = \"Great!\""));
-							}
-						}
-					} 
-					else {
-						OnLogEvent (this, new LogEventArgs("Response: Disagreement"));
-						if ((int)(wilsonState & WilsonState.HeadShake) == 0) {
-							waitTimer.Enabled = true;
-							wilsonState |= WilsonState.HeadShake;
-							HeadShake ();
-							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
-							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
-								OutputHelper.PrintOutput (OutputController.Role.Planner, "That's not quite what I had in mind.");
-								OnLogEvent (this, new LogEventArgs("Wilson: S = \"That's not quite what I had in mind.\""));
-								goBack = true;
-							}
-						}
-					}
-					moveLogged = true;
+					CheckAgreement (satisfied);
 				}
 			}
 		}
@@ -342,32 +286,92 @@ public class G_reqScript : DemoScript {
 		if (currentStep == ScriptStep.Step3A) {
 			currentState = relationTracker.relStrings.Cast<object>().ToList();
 			goBack = false;
+			string objName = "block3";
 			if ((int)(wilsonState & WilsonState.Point) == 0) {
 				waitTimer.Enabled = true;
 				wilsonState |= WilsonState.Point;
-				PointAt (GameObject.Find ("block4"));
-				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "block4")));
+				PointAt (GameObject.Find (objName));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, objName)));
 				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
-					OutputHelper.PrintOutput (OutputController.Role.Planner, "Take that block");
-					OnLogEvent (this, new LogEventArgs("Wilson: S = \"Take that block\""));
+					PrintAndLogLinguisticOutput("Take that block");
 				}
 			}
 		}
 
 		if (currentStep == ScriptStep.Step3B) {
+			string objName = "block2";
 			if ((int)(wilsonState & WilsonState.Point) == 0) {
 				waitTimer.Enabled = true;
 				wilsonState |= WilsonState.Point;
-				PointAt (GameObject.Find ("block5"));
-				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "block5")));
+				PointAt (GameObject.Find (objName));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, objName)));
 				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
-					OutputHelper.PrintOutput (OutputController.Role.Planner, "And that block");
-					OnLogEvent (this, new LogEventArgs("Wilson: S = \"And that block\""));
+					PrintAndLogLinguisticOutput("And put it in front of that block");
 				}
 			}
 		}
 
 		if (currentStep == ScriptStep.Step3C) {
+			string obj1Name = "block3";
+			string obj2Name = "block2";
+			if ((int)(wilsonState & WilsonState.Claw) == 0) {
+				wilsonState |= (WilsonState.Claw | WilsonState.LookForward);
+				Claw (GameObject.Find (obj1Name).transform.position, GameObject.Find (obj2Name).transform.position+(Vector3.forward*0.5f));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, 
+					string.Format("in_front({0}, Persp = Wilson)",obj2Name))));
+				LookForward ();
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
+			} 
+			else {
+				bool satisfied = false;
+				foreach (List<GameObject> key in relationTracker.relations.Keys) {
+					if (key.SequenceEqual (new List<GameObject> (new GameObject[] {
+						GameObject.Find (obj1Name),
+						GameObject.Find (obj2Name)
+					}))) {
+						string[] relations = relationTracker.relations [key].ToString ().Split (',');
+						if (relations.Contains ("behind") && relations.Contains ("touching")) {
+							satisfied = true;
+							break;
+						}
+					}
+				}
+
+				if (humanMoveComplete) {
+					CheckAgreement (satisfied);
+				}
+			}
+		}
+
+		if (currentStep == ScriptStep.Step4A) {
+			currentState = relationTracker.relStrings.Cast<object>().ToList();
+			goBack = false;
+			string objName = "block5";
+			if ((int)(wilsonState & WilsonState.Point) == 0) {
+				waitTimer.Enabled = true;
+				wilsonState |= WilsonState.Point;
+				PointAt (GameObject.Find (objName));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, objName)));
+				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+					PrintAndLogLinguisticOutput("Take that block");
+				}
+			}
+		}
+
+		if (currentStep == ScriptStep.Step4B) {
+			string objName = "block3";
+			if ((int)(wilsonState & WilsonState.Point) == 0) {
+				waitTimer.Enabled = true;
+				wilsonState |= WilsonState.Point;
+				PointAt (GameObject.Find (objName));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, objName)));
+				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+					PrintAndLogLinguisticOutput("And that block");
+				}
+			}
+		}
+
+		if (currentStep == ScriptStep.Step4C) {
 			if ((int)(wilsonState & WilsonState.LookForward) == 0) {
 				wilsonState |= WilsonState.LookForward;
 				LookForward ();
@@ -382,22 +386,23 @@ public class G_reqScript : DemoScript {
 			}
 		}
 
-		if (currentStep == ScriptStep.Step3D) {
+		if (currentStep == ScriptStep.Step4D) {
+			string obj1Name = "block5";
+			string obj2Name = "block3";
 			if ((int)(wilsonState & WilsonState.PushTogether) == 0) {
 				wilsonState |= WilsonState.PushTogether;
 				PushTogether ();
 				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
-					OutputHelper.PrintOutput (OutputController.Role.Planner, "And put them together");
-					OnLogEvent (this, new LogEventArgs("Wilson: S = \"And put them together\""));
+					PrintAndLogLinguisticOutput("And put them together");
 				}
 			}
 			else {
 				bool satisfied = false;
 				foreach (List<GameObject> key in relationTracker.relations.Keys) {
 					if (key.SequenceEqual (new List<GameObject> (new GameObject[] {
-						GameObject.Find ("block4"),
-						GameObject.Find ("block5")
+						GameObject.Find (obj1Name),
+						GameObject.Find (obj2Name)
 					}))) {
 						string[] relations = relationTracker.relations [key].ToString ().Split (',');
 						if (relations.Contains ("left") && relations.Contains ("touching")) {
@@ -408,127 +413,7 @@ public class G_reqScript : DemoScript {
 				}
 
 				if (humanMoveComplete) {
-					List<object> diff = Helper.DiffLists (currentState, relationTracker.relStrings.Cast<object>().ToList());
-					OnLogEvent (this, new LogEventArgs("Result: " + string.Join (";",diff.Cast<string>().ToArray())));
-					if (satisfied) {
-						OnLogEvent (this, new LogEventArgs("Response: Agreement"));
-						if ((int)(wilsonState & (WilsonState.ThumbsUp | WilsonState.HeadNod)) == 0) {
-							waitTimer.Enabled = true;
-							wilsonState |= (WilsonState.ThumbsUp | WilsonState.HeadNod);
-							ThumbsUp ();
-							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
-							HeadNod ();
-							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
-							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
-								OutputHelper.PrintOutput (OutputController.Role.Planner, "Great!");
-								OnLogEvent (this, new LogEventArgs("Wilson: S = \"Great!\""));
-							}
-						}
-					} 
-					else {
-						OnLogEvent (this, new LogEventArgs("Response: Disagreement"));
-						if ((int)(wilsonState & WilsonState.HeadShake) == 0) {
-							waitTimer.Enabled = true;
-							wilsonState |= WilsonState.HeadShake;
-							HeadShake ();
-							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
-							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
-								OutputHelper.PrintOutput (OutputController.Role.Planner, "That's not quite what I had in mind.");
-								OnLogEvent (this, new LogEventArgs("Wilson: S = \"That's not quite what I had in mind.\""));
-								goBack = true;
-							}
-						}
-					}
-					moveLogged = true;
-				}
-			}
-		}
-
-		if (currentStep == ScriptStep.Step4A) {
-			currentState = relationTracker.relStrings.Cast<object>().ToList();
-			goBack = false;
-			if ((int)(wilsonState & WilsonState.Point) == 0) {
-				waitTimer.Enabled = true;
-				wilsonState |= WilsonState.Point;
-				PointAt (GameObject.Find ("block2"));
-				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "block2")));
-				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
-					OutputHelper.PrintOutput (OutputController.Role.Planner, "Take that block");
-					OnLogEvent (this, new LogEventArgs("Wilson: S = \"Take that block\""));
-				}
-			}
-		}
-
-		if (currentStep == ScriptStep.Step4B) {
-			if ((int)(wilsonState & WilsonState.Point) == 0) {
-				waitTimer.Enabled = true;
-				wilsonState |= WilsonState.Point;
-				PointAt (GameObject.Find ("block4"));
-				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "block4")));
-				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
-					OutputHelper.PrintOutput (OutputController.Role.Planner, "And put it on that block");
-					OnLogEvent (this, new LogEventArgs("Wilson: S = \"And put it on that block\""));
-
-				}
-			}
-		}
-
-		if (currentStep == ScriptStep.Step4C) {
-			if ((int)(wilsonState & WilsonState.Claw) == 0) {
-				wilsonState |= (WilsonState.Claw | WilsonState.LookForward);
-				Claw (GameObject.Find ("block2").transform.position,GameObject.Find ("block4").transform.position);
-				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "block4")));
-				LookForward ();
-				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
-			}
-			else {
-				bool satisfied = false;
-				foreach (List<GameObject> key in relationTracker.relations.Keys) {
-					if (key.SequenceEqual (new List<GameObject> (new GameObject[] {
-						GameObject.Find ("block4"),
-						GameObject.Find ("block2")
-					}))) {
-						string[] relations = relationTracker.relations [key].ToString ().Split (',');
-						if (relations.Contains ("support")) {
-							satisfied = true;
-							break;
-						}
-					}
-				}
-
-				if (humanMoveComplete) {
-					List<object> diff = Helper.DiffLists (currentState, relationTracker.relStrings.Cast<object>().ToList());
-					OnLogEvent (this, new LogEventArgs("Result: " + string.Join (";",diff.Cast<string>().ToArray())));
-					if (satisfied) {
-						OnLogEvent (this, new LogEventArgs("Response: Agreement"));
-						if ((int)(wilsonState & (WilsonState.ThumbsUp | WilsonState.HeadNod)) == 0) {
-							waitTimer.Enabled = true;
-							wilsonState |= (WilsonState.ThumbsUp | WilsonState.HeadNod);
-							ThumbsUp ();
-							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
-							HeadNod ();
-							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
-							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
-								OutputHelper.PrintOutput (OutputController.Role.Planner, "Great!");
-								OnLogEvent (this, new LogEventArgs("Wilson: S = \"Great!\""));
-							}
-						}
-					} 
-					else {
-						OnLogEvent (this, new LogEventArgs("Response: Disagreement"));
-						if ((int)(wilsonState & WilsonState.HeadShake) == 0) {
-							waitTimer.Enabled = true;
-							wilsonState |= WilsonState.HeadShake;
-							HeadShake ();
-							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
-							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
-								OutputHelper.PrintOutput (OutputController.Role.Planner, "That's not quite what I had in mind.");
-								OnLogEvent (this, new LogEventArgs("Wilson: S = \"That's not quite what I had in mind.\""));
-								goBack = true;
-							}
-						}
-					}
-					moveLogged = true;
+					CheckAgreement (satisfied);
 				}
 			}
 		}
@@ -536,45 +421,182 @@ public class G_reqScript : DemoScript {
 		if (currentStep == ScriptStep.Step5A) {
 			currentState = relationTracker.relStrings.Cast<object>().ToList();
 			goBack = false;
+			string objName = "block1";
 			if ((int)(wilsonState & WilsonState.Point) == 0) {
 				waitTimer.Enabled = true;
 				wilsonState |= WilsonState.Point;
-				PointAt (GameObject.Find ("block6"));
-				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "block6")));
+				PointAt (GameObject.Find (objName));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, objName)));
 				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
-					OutputHelper.PrintOutput (OutputController.Role.Planner, "Take that block");
-					OnLogEvent (this, new LogEventArgs("Wilson: S = \"Take that block\""));
+					PrintAndLogLinguisticOutput("Take that block");
 				}
 			}
 		}
 
 		if (currentStep == ScriptStep.Step5B) {
+			string objName = "block3";
 			if ((int)(wilsonState & WilsonState.Point) == 0) {
 				waitTimer.Enabled = true;
 				wilsonState |= WilsonState.Point;
-				PointAt (GameObject.Find ("block1"));
-				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "block1")));
+				PointAt (GameObject.Find (objName));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, objName)));
 				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
-					OutputHelper.PrintOutput (OutputController.Role.Planner, "And put it on that block");
-					OnLogEvent (this, new LogEventArgs("Wilson: S = \"And put it on that block\""));
+					PrintAndLogLinguisticOutput("And that block");
 				}
 			}
 		}
 
 		if (currentStep == ScriptStep.Step5C) {
-			if ((int)(wilsonState & WilsonState.Claw) == 0) {
-				wilsonState |= (WilsonState.Claw | WilsonState.LookForward);
-				Claw (GameObject.Find ("block6").transform.position,GameObject.Find ("block1").transform.position);
-				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "block1")));
+			if ((int)(wilsonState & WilsonState.LookForward) == 0) {
+				wilsonState |= WilsonState.LookForward;
 				LookForward ();
 				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
+			} 
+
+			leftTarget.targetPosition = new Vector3 (1.0f, 2.5f, 0.0f);
+			rightTarget.targetPosition = new Vector3 (-1.0f, 2.5f, 0.0f);
+
+			if (leftAtTarget && rightAtTarget) {
+				currentStep = (ScriptStep)((int)currentStep + 1);
+			}
+		}
+
+		if (currentStep == ScriptStep.Step5D) {
+			string obj1Name = "block1";
+			string obj2Name = "block3";
+			if ((int)(wilsonState & WilsonState.PushTogether) == 0) {
+				wilsonState |= WilsonState.PushTogether;
+				PushTogether ();
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
+				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+					PrintAndLogLinguisticOutput("And put them together");
+				}
 			}
 			else {
 				bool satisfied = false;
 				foreach (List<GameObject> key in relationTracker.relations.Keys) {
 					if (key.SequenceEqual (new List<GameObject> (new GameObject[] {
-						GameObject.Find ("block1"),
-						GameObject.Find ("block6")
+						GameObject.Find (obj1Name),
+						GameObject.Find (obj2Name)
+					}))) {
+						string[] relations = relationTracker.relations [key].ToString ().Split (',');
+						if (relations.Contains ("right") && relations.Contains ("touching")) {
+							satisfied = true;
+							break;
+						}
+					}
+				}
+
+				if (humanMoveComplete) {
+					CheckAgreement (satisfied);
+				}
+			}
+		}
+
+		if (currentStep == ScriptStep.Step6A) {
+			currentState = relationTracker.relStrings.Cast<object>().ToList();
+			goBack = false;
+			string objName = "block4";
+			if ((int)(wilsonState & WilsonState.Point) == 0) {
+				waitTimer.Enabled = true;
+				wilsonState |= WilsonState.Point;
+				PointAt (GameObject.Find (objName));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, objName)));
+				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+					PrintAndLogLinguisticOutput("Take that block");
+				}
+			}
+		}
+
+		if (currentStep == ScriptStep.Step6B) {
+			string objName = "block3";
+			if ((int)(wilsonState & WilsonState.Point) == 0) {
+				waitTimer.Enabled = true;
+				wilsonState |= WilsonState.Point;
+				PointAt (GameObject.Find (objName));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, objName)));
+				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+					PrintAndLogLinguisticOutput("And put it in front of that block");
+				}
+			}
+		}
+
+		if (currentStep == ScriptStep.Step6C) {
+			string obj1Name = "block4";
+			string obj2Name = "block3";
+			if ((int)(wilsonState & WilsonState.Claw) == 0) {
+				wilsonState |= (WilsonState.Claw | WilsonState.LookForward);
+				Claw (GameObject.Find (obj1Name).transform.position, GameObject.Find (obj2Name).transform.position+(Vector3.forward*0.5f));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, 
+					string.Format("in_front({0}, Persp = Wilson)",obj2Name))));
+				LookForward ();
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
+			} 
+			else {
+				bool satisfied = false;
+				foreach (List<GameObject> key in relationTracker.relations.Keys) {
+					if (key.SequenceEqual (new List<GameObject> (new GameObject[] {
+						GameObject.Find (obj1Name),
+						GameObject.Find (obj2Name)
+					}))) {
+						string[] relations = relationTracker.relations [key].ToString ().Split (',');
+						if (relations.Contains ("behind") && relations.Contains ("touching")) {
+							satisfied = true;
+							break;
+						}
+					}
+				}
+
+				if (humanMoveComplete) {
+					CheckAgreement (satisfied);
+				}
+			}
+		}
+
+		if (currentStep == ScriptStep.Step7A) {
+			currentState = relationTracker.relStrings.Cast<object>().ToList();
+			goBack = false;
+			string objName = "block9";
+			if ((int)(wilsonState & WilsonState.Point) == 0) {
+				waitTimer.Enabled = true;
+				wilsonState |= WilsonState.Point;
+				PointAt (GameObject.Find (objName));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, objName)));
+				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+					PrintAndLogLinguisticOutput("Take that block");
+				}
+			}
+		}
+
+		if (currentStep == ScriptStep.Step7B) {
+			string objName = "block5";
+			if ((int)(wilsonState & WilsonState.Point) == 0) {
+				waitTimer.Enabled = true;
+				wilsonState |= WilsonState.Point;
+				PointAt (GameObject.Find (objName));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, objName)));
+				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+					PrintAndLogLinguisticOutput("And put it on that block");
+				}
+			}
+		}
+
+		if (currentStep == ScriptStep.Step7C) {
+			string obj1Name = "block9";
+			string obj2Name = "block5";
+			if ((int)(wilsonState & WilsonState.Claw) == 0) {
+				wilsonState |= (WilsonState.Claw | WilsonState.LookForward);
+				Claw (GameObject.Find (obj1Name).transform.position, GameObject.Find (obj2Name).transform.position+(Vector3.forward*0.5f));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, obj2Name)));
+				LookForward ();
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
+			} 
+			else {
+				bool satisfied = false;
+				foreach (List<GameObject> key in relationTracker.relations.Keys) {
+					if (key.SequenceEqual (new List<GameObject> (new GameObject[] {
+						GameObject.Find (obj2Name),
+						GameObject.Find (obj1Name)
 					}))) {
 						string[] relations = relationTracker.relations [key].ToString ().Split (',');
 						if (relations.Contains ("support")) {
@@ -585,58 +607,80 @@ public class G_reqScript : DemoScript {
 				}
 
 				if (humanMoveComplete) {
-					List<object> diff = Helper.DiffLists (currentState, relationTracker.relStrings.Cast<object>().ToList());
-					OnLogEvent (this, new LogEventArgs("Result: " + string.Join (";",diff.Cast<string>().ToArray())));
-					if (satisfied) {
-						OnLogEvent (this, new LogEventArgs("Response: Agreement"));
-						if ((int)(wilsonState & (WilsonState.ThumbsUp | WilsonState.HeadNod)) == 0) {
-							waitTimer.Enabled = true;
-							wilsonState |= (WilsonState.ThumbsUp | WilsonState.HeadNod);
-							ThumbsUp ();
-							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
-							HeadNod ();
-							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
-							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
-								OutputHelper.PrintOutput (OutputController.Role.Planner, "Great!");
-								OnLogEvent (this, new LogEventArgs("Wilson: S = \"Great!\""));
-							}
-						}
-					} 
-					else {
-						OnLogEvent (this, new LogEventArgs("Response: Disagreement"));
-						if ((int)(wilsonState & WilsonState.HeadShake) == 0) {
-							waitTimer.Enabled = true;
-							wilsonState |= WilsonState.HeadShake;
-							HeadShake ();
-							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
-							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
-								OutputHelper.PrintOutput (OutputController.Role.Planner, "That's not quite what I had in mind.");
-								OnLogEvent (this, new LogEventArgs("Wilson: S = \"That's not quite what I had in mind.\""));
-								goBack = true;
-							}
-						}
-					}
-					moveLogged = true;
+					CheckAgreement (satisfied);
 				}
 			}
 		}
 
-		if (currentStep == ScriptStep.Step6) {
+		if (currentStep == ScriptStep.Step8A) {
+			currentState = relationTracker.relStrings.Cast<object>().ToList();
+			goBack = false;
+			string objName = "block6";
+			if ((int)(wilsonState & WilsonState.Point) == 0) {
+				waitTimer.Enabled = true;
+				wilsonState |= WilsonState.Point;
+				PointAt (GameObject.Find (objName));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, objName)));
+				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+					PrintAndLogLinguisticOutput("Take that block");
+				}
+			}
+		}
+
+		if (currentStep == ScriptStep.Step8B) {
+			string objName = "block4";
+			if ((int)(wilsonState & WilsonState.Point) == 0) {
+				waitTimer.Enabled = true;
+				wilsonState |= WilsonState.Point;
+				PointAt (GameObject.Find (objName));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, objName)));
+				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+					PrintAndLogLinguisticOutput("And put it on that block");
+				}
+			}
+		}
+
+		if (currentStep == ScriptStep.Step8C) {
+			string obj1Name = "block6";
+			string obj2Name = "block4";
+			if ((int)(wilsonState & WilsonState.Claw) == 0) {
+				wilsonState |= (WilsonState.Claw | WilsonState.LookForward);
+				Claw (GameObject.Find (obj1Name).transform.position, GameObject.Find (obj2Name).transform.position+(Vector3.forward*0.5f));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, obj2Name)));
+				LookForward ();
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
+			} 
+			else {
+				bool satisfied = false;
+				foreach (List<GameObject> key in relationTracker.relations.Keys) {
+					if (key.SequenceEqual (new List<GameObject> (new GameObject[] {
+						GameObject.Find (obj2Name),
+						GameObject.Find (obj1Name)
+					}))) {
+						string[] relations = relationTracker.relations [key].ToString ().Split (',');
+						if (relations.Contains ("support")) {
+							satisfied = true;
+							break;
+						}
+					}
+				}
+
+				if (humanMoveComplete) {
+					CheckAgreement (satisfied);
+				}
+			}
+		}
+
+		if (currentStep == ScriptStep.Step9) {
 			if ((int)(wilsonState & WilsonState.Rest) == 0) {
 				wilsonState |= WilsonState.Rest;
 				Rest ();
 				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
-					OutputHelper.PrintOutput (OutputController.Role.Planner, "OK, we're done!");
-					OnLogEvent (this, new LogEventArgs("Wilson: S = \"OK, we're done!\""));
+					PrintAndLogLinguisticOutput ("OK, we're done!");
 				}
 				CloseLog ();
 			}		
 		}
-
-		/*if (Input.GetKeyDown (KeyCode.Space)) {
-			wilsonState = 0;
-			currentStep = (DemoStep)((int)currentStep + 1);
-		}*/
 	}
 		
 	void OnDestroy() {
@@ -809,32 +853,88 @@ public class G_reqScript : DemoScript {
 		case ScriptStep.Step2A:
 		case ScriptStep.Step2B:
 		case ScriptStep.Step2C:
-		case ScriptStep.Step2D:
 			currentStep = ScriptStep.Step2A;
 			break;
 
 		case ScriptStep.Step3A:
 		case ScriptStep.Step3B:
 		case ScriptStep.Step3C:
-		case ScriptStep.Step3D:
 			currentStep = ScriptStep.Step3A;
 			break;
 
 		case ScriptStep.Step4A:
 		case ScriptStep.Step4B:
 		case ScriptStep.Step4C:
+		case ScriptStep.Step4D:
 			currentStep = ScriptStep.Step4A;
 			break;
 
 		case ScriptStep.Step5A:
 		case ScriptStep.Step5B:
 		case ScriptStep.Step5C:
+		case ScriptStep.Step5D:
 			currentStep = ScriptStep.Step5A;
+			break;
+
+		case ScriptStep.Step6A:
+		case ScriptStep.Step6B:
+		case ScriptStep.Step6C:
+			currentStep = ScriptStep.Step6A;
+			break;
+
+		case ScriptStep.Step7A:
+		case ScriptStep.Step7B:
+		case ScriptStep.Step7C:
+			currentStep = ScriptStep.Step7A;
+			break;
+
+		case ScriptStep.Step8A:
+		case ScriptStep.Step8B:
+		case ScriptStep.Step8C:
+			currentStep = ScriptStep.Step8A;
 			break;
 
 		default:
 			break;
 		}
+	}
+
+	void CheckAgreement(bool satisfied) {
+		List<object> diff = Helper.DiffLists (currentState, relationTracker.relStrings.Cast<object>().ToList());
+		OnLogEvent (this, new LogEventArgs("Result: " + string.Join (";",diff.Cast<string>().ToArray())));
+		if (satisfied) {
+			OnLogEvent (this, new LogEventArgs("Response: Agreement"));
+			if ((int)(wilsonState & (WilsonState.ThumbsUp | WilsonState.HeadNod)) == 0) {
+				waitTimer.Enabled = true;
+				wilsonState |= (WilsonState.ThumbsUp | WilsonState.HeadNod);
+				ThumbsUp ();
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
+				HeadNod ();
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
+				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+					PrintAndLogLinguisticOutput ("Great!");
+				}
+			}
+		} 
+		else {
+			OnLogEvent (this, new LogEventArgs("Response: Disagreement"));
+			if ((int)(wilsonState & WilsonState.HeadShake) == 0) {
+				waitTimer.Enabled = true;
+				wilsonState |= WilsonState.HeadShake;
+				HeadShake ();
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
+				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
+					PrintAndLogLinguisticOutput ("That's not quite what I had in mind.");
+					goBack = true;
+				}
+			}
+		}
+		moveLogged = true;
+	}
+
+	void PrintAndLogLinguisticOutput(string output) {
+		OutputHelper.PrintOutput (OutputController.Role.Planner, output);
+		OnLogEvent (this, new LogEventArgs(MakeLogString("Wilson: S = ", FormatLogUtterance(output))));
 	}
 
 	void Proceed(object sender, ElapsedEventArgs e) {
@@ -847,7 +947,6 @@ public class G_reqScript : DemoScript {
 		rightAtTarget = false;
 
 		wilsonState = 0;
-
 		if (goBack) {	// try again
 			if (currentStep < ScriptStep.Step2A) {
 				currentStep = ScriptStep.Step1A;	
@@ -861,8 +960,17 @@ public class G_reqScript : DemoScript {
 			else if (currentStep < ScriptStep.Step5A) {
 				currentStep = ScriptStep.Step4A;	
 			}
-			else if (currentStep < ScriptStep.Step6) {
+			else if (currentStep < ScriptStep.Step6A) {
 				currentStep = ScriptStep.Step5A;	
+			}
+			else if (currentStep < ScriptStep.Step7A) {
+				currentStep = ScriptStep.Step6A;	
+			}
+			else if (currentStep < ScriptStep.Step8A) {
+				currentStep = ScriptStep.Step7A;	
+			}
+			else if (currentStep < ScriptStep.Step9) {
+				currentStep = ScriptStep.Step8A;	
 			}
 		}
 		else {
