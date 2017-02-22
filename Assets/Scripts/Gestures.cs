@@ -20,7 +20,6 @@ public class Gestures : MonoBehaviour {
 		leftReachObj = GameObject.Find ("LeftReachObject");
 		rightReachObj = GameObject.Find ("RightReachObject");
 		lookObj = GameObject.Find ("LookObject");
-	
 	}
 	
 	// Update is called once per frame

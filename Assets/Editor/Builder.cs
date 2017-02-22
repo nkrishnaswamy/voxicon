@@ -6,7 +6,7 @@ using System.IO;
 [CustomEditor(typeof(Builder))]
 public class Builder : Editor {
 
-	public string buildName = "VoxSim_Build7";
+	public string buildName = "VoxSimTrials";
 	List<string> scenes = new List<string>(){"Assets/Scenes/VoxSimMenu.unity"};
 
 	public override void OnInspectorGUI () 
@@ -18,14 +18,12 @@ public class Builder : Editor {
 			       new System.IO.StreamWriter(@"Assets/Resources/ScenesList.txt"))
 			{
 				string scenesDirPath = Application.dataPath + "/Scenes/";
-				string [] fileEntries = Directory.GetFiles(Application.dataPath+"/Scenes/");
+				string [] fileEntries = Directory.GetFiles(Application.dataPath+"/Scenes/","*.unity");
 				foreach (string s in fileEntries) {
-					if (!s.EndsWith(".meta")) {
-						string sceneName = s.Remove(0,Application.dataPath.Length-"Assets".Length);
-						if (!scenes.Contains(sceneName)) {
-							scenes.Add(sceneName);
-							file.WriteLine(sceneName.Split ('/')[2].Replace (".unity",""));
-						}
+					string sceneName = s.Remove(0,Application.dataPath.Length-"Assets".Length);
+					if (!scenes.Contains(sceneName)) {
+						scenes.Add(sceneName);
+						file.WriteLine(sceneName.Split ('/')[2].Replace (".unity",""));
 					}
 				}
 			}

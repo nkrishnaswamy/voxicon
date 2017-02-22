@@ -47,6 +47,7 @@ public class GraspScript : MonoBehaviour {
 	void UpdateGraspStatus(int complete) { 
  		//if (isGrasping != System.Convert.ToBoolean(complete)) {
 		//	Debug.Log (string.Format("Setting to {0}", complete));
+		//	Debug.Break ();
 		//}
 		isGrasping = System.Convert.ToBoolean(complete);
 	}

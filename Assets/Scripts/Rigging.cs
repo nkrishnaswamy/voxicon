@@ -13,6 +13,9 @@ public class Rigging : MonoBehaviour {
 	RelationTracker relationTracker;
 	List<Voxeme> ignorePhysics;	// ignore physics between this game object and listed objects
 
+	[HideInInspector]
+	public Rigidbody[] rigidbodies;
+
 	// Use this for initialization
 	void Start () {
 		relationTracker = (RelationTracker)GameObject.Find ("BehaviorController").GetComponent("RelationTracker");
@@ -29,6 +32,7 @@ public class Rigging : MonoBehaviour {
 		if (!active) {
 			// make this object unaffected by default physics rigging
 			Debug.Log (gameObject.name + ": deactivating physics");
+			//Debug.Break ();
 
 			// disable colliders
 			BoxCollider[] colliders = gameObject.GetComponentsInChildren<BoxCollider> ();
@@ -64,8 +68,14 @@ public class Rigging : MonoBehaviour {
 					// don't reactivate physics on rigged children
 					// if this object is concave
 					// and other physics special cases
+//					Debug.Log(collider.name);
+//					Debug.Log(collider.transform.IsChildOf (gameObject.transform));
+//					Debug.Log(collider.gameObject.GetComponent<Voxeme> ());
+//					Debug.Log(gameObject.GetComponent<Voxeme> ().voxml.Type.Concavity);
+					//Debug.Log ((collider.transform.IsChildOf (gameObject.transform) && collider.gameObject.GetComponent<Voxeme> () != null &&
+					//gameObject.GetComponent<Voxeme> ().voxml.Type.Concavity.Contains ("Concave")));
 					if ((!(collider.transform.IsChildOf (gameObject.transform) && collider.gameObject.GetComponent<Voxeme> () != null &&
-						gameObject.GetComponent<Voxeme> ().voxml.Type.Concavity == "Concave")) ||
+						gameObject.GetComponent<Voxeme> ().voxml.Type.Concavity.Contains("Concave"))) ||
 						(gameObject.GetComponent<Voxeme> ().isGrasped)){
 						//if (!(collider.transform.IsChildOf(gameObject.transform) && gameObject.GetComponent<Voxeme>().voxml.Type.Concavity == "Concave") &&
 						//	!RCC8.ProperPart(Helper.GetObjectWorldSize(collider.gameObject),Helper.GetObjectWorldSize(gameObject))) {
@@ -87,7 +97,7 @@ public class Rigging : MonoBehaviour {
 					// if this object is concave
 					// and other physics special cases
 					if ((!(rigidbody.transform.IsChildOf (gameObject.transform) && rigidbody.gameObject.GetComponent<Voxeme> () != null && 
-						gameObject.GetComponent<Voxeme> ().voxml.Type.Concavity == "Concave")) ||
+						gameObject.GetComponent<Voxeme> ().voxml.Type.Concavity.Contains("Concave"))) ||
 						(gameObject.GetComponent<Voxeme> ().isGrasped)){						//if (!(rigidbody.transform.IsChildOf(gameObject.transform) && gameObject.GetComponent<Voxeme>().voxml.Type.Concavity == "Concave") &&
 						//	!RCC8.ProperPart(Helper.GetObjectWorldSize(rigidbody.gameObject),Helper.GetObjectWorldSize(gameObject))) {
 						//if (!((rigidbody.transform.IsChildOf(gameObject.transform) &&
@@ -115,6 +125,7 @@ public static class RiggingHelper {
 		}
 
 		child.transform.parent = parent.transform;
+		Debug.Log (child.name + " rigged to " + parent.name);
 	}
 
 	public static void UnRig(GameObject child, GameObject parent) {

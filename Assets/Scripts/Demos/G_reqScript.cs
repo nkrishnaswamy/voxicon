@@ -52,7 +52,6 @@ public class G_reqScript : DemoScript {
 	WilsonState wilsonState = 0;
 
 	RelationTracker relationTracker;
-	EventManager eventManager;
 
 	List<object> currentState;
 
@@ -75,6 +74,8 @@ public class G_reqScript : DemoScript {
 	OutputModality outputModality;
 
 	bool goBack;
+	string mostRecentGesture = string.Empty;
+	string lastReceivedInput = string.Empty;
 
 	// Use this for initialization
 	void Start () {
@@ -85,6 +86,7 @@ public class G_reqScript : DemoScript {
 		animator = Wilson.GetComponent<Animator> ();
 		relationTracker = GameObject.Find ("BehaviorController").GetComponent<RelationTracker> ();
 		eventManager = GameObject.Find ("BehaviorController").GetComponent<EventManager> ();
+		inputController = GameObject.Find ("IOController").GetComponent<InputController> ();
 
 		leftGrasper = animator.GetBoneTransform (HumanBodyBones.LeftHand).transform.gameObject;
 		rightGrasper = animator.GetBoneTransform (HumanBodyBones.RightHand).transform.gameObject;
@@ -108,11 +110,12 @@ public class G_reqScript : DemoScript {
 		humanMoveComplete = false;
 		leftAtTarget = false;
 		rightAtTarget = false;
-		eventManager.EventComplete += HumanMoveComplete;
+		inputController.InputReceived += HumanInputReceived;
+		eventManager.QueueEmpty += HumanMoveComplete;
 		leftTarget.AtTarget += LeftAtTarget;
 		rightTarget.AtTarget += RightAtTarget;
 
-		OpenLog (demoName);
+		OpenLog (demoName, outputModality.modality);
 	}
 
 	void OnEnable() {
@@ -135,8 +138,10 @@ public class G_reqScript : DemoScript {
 				wilsonState |= (WilsonState.Rest|WilsonState.LookForward);
 				Rest ();
 				LookForward ();
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
 					OutputHelper.PrintOutput (OutputController.Role.Planner, "Please help me build something!");
+					OnLogEvent (this, new LogEventArgs("Wilson: S = \"Please help me build something!\""));
 				}
 			}
 		}
@@ -148,8 +153,10 @@ public class G_reqScript : DemoScript {
 				waitTimer.Enabled = true;
 				wilsonState |= WilsonState.Point;
 				PointAt (GameObject.Find ("block5"));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "block5")));
 				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
 					OutputHelper.PrintOutput (OutputController.Role.Planner, "Take that block");
+					OnLogEvent (this, new LogEventArgs("Wilson: S = \"Take that block\""));
 				}
 			}
 		}
@@ -159,8 +166,10 @@ public class G_reqScript : DemoScript {
 				waitTimer.Enabled = true;
 				wilsonState |= WilsonState.Point;
 				PointAt (GameObject.Find ("block3"));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "block3")));
 				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
 					OutputHelper.PrintOutput (OutputController.Role.Planner, "And put it behind that block");
+					OnLogEvent (this, new LogEventArgs("Wilson: S = \"And put it behind that block\""));
 				}
 			}
 		}
@@ -168,8 +177,10 @@ public class G_reqScript : DemoScript {
 		if (currentStep == ScriptStep.Step1C) {
 			if ((int)(wilsonState & WilsonState.Claw) == 0) {
 				wilsonState |= (WilsonState.Claw | WilsonState.LookForward);
-				Claw (GameObject.Find ("block5").transform.position, GameObject.Find ("block3").transform.position-(Vector3.forward*0.5f));
+				Claw (GameObject.Find ("block5").transform.position, GameObject.Find ("block3").transform.position-(Vector3.forward*0.5f));				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "behind(block3, Persp = Wilson)")));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "behind(block3, Persp = Wilson)")));
 				LookForward ();
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 			} 
 			else {
 				bool satisfied = false;
@@ -188,29 +199,37 @@ public class G_reqScript : DemoScript {
 
 				if (humanMoveComplete) {
 					List<object> diff = Helper.DiffLists (currentState, relationTracker.relStrings.Cast<object>().ToList());
-					Log (string.Join (";",diff.Cast<string>().ToArray()), satisfied);
+					OnLogEvent (this, new LogEventArgs("Result: " + string.Join (";",diff.Cast<string>().ToArray())));
 					if (satisfied) {
+						OnLogEvent (this, new LogEventArgs("Response: Agreement"));
 						if ((int)(wilsonState & (WilsonState.ThumbsUp | WilsonState.HeadNod)) == 0) {
 							waitTimer.Enabled = true;
 							wilsonState |= (WilsonState.ThumbsUp | WilsonState.HeadNod);
 							ThumbsUp ();
+							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 							HeadNod ();
+							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
 								OutputHelper.PrintOutput (OutputController.Role.Planner, "Great!");
+								OnLogEvent (this, new LogEventArgs("Wilson: S = \"Great!\""));
 							}
 						}
 					} 
 					else {
+						OnLogEvent (this, new LogEventArgs("Response: Disagreement"));
 						if ((int)(wilsonState & WilsonState.HeadShake) == 0) {
 							waitTimer.Enabled = true;
 							wilsonState |= WilsonState.HeadShake;
 							HeadShake ();
+							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
 								OutputHelper.PrintOutput (OutputController.Role.Planner, "That's not quite what I had in mind.");
+								OnLogEvent (this, new LogEventArgs("Wilson: S = \"That's not quite what I had in mind.\""));
 								goBack = true;
 							}
 						}
 					}
+					moveLogged = true;
 				}
 			}
 		}
@@ -222,8 +241,10 @@ public class G_reqScript : DemoScript {
 				waitTimer.Enabled = true;
 				wilsonState |= WilsonState.Point;
 				PointAt (GameObject.Find ("block1"));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "block1")));
 				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
 					OutputHelper.PrintOutput (OutputController.Role.Planner, "Take that block");
+					OnLogEvent (this, new LogEventArgs("Wilson: S = \"Take that block\""));
 				}
 			}
 		}
@@ -233,8 +254,10 @@ public class G_reqScript : DemoScript {
 				waitTimer.Enabled = true;
 				wilsonState |= WilsonState.Point;
 				PointAt (GameObject.Find ("block3"));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "block3")));
 				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
 					OutputHelper.PrintOutput (OutputController.Role.Planner, "And that block");
+					OnLogEvent (this, new LogEventArgs("Wilson: S = \"And that block\""));
 				}
 			}
 		}
@@ -243,6 +266,7 @@ public class G_reqScript : DemoScript {
 			if ((int)(wilsonState & WilsonState.LookForward) == 0) {
 				wilsonState |= WilsonState.LookForward;
 				LookForward ();
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 			} 
 
 			leftTarget.targetPosition = new Vector3 (1.0f, 2.5f, 0.0f);
@@ -257,8 +281,10 @@ public class G_reqScript : DemoScript {
 			if ((int)(wilsonState & WilsonState.PushTogether) == 0) {
 				wilsonState |= WilsonState.PushTogether;
 				PushTogether ();
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
 					OutputHelper.PrintOutput (OutputController.Role.Planner, "And put them together");
+					OnLogEvent (this, new LogEventArgs("Wilson: S = \"And put them together\""));
 				}
 			}
 			else {
@@ -278,29 +304,37 @@ public class G_reqScript : DemoScript {
 
 				if (humanMoveComplete) {
 					List<object> diff = Helper.DiffLists (currentState, relationTracker.relStrings.Cast<object>().ToList());
-					Log (string.Join (";",diff.Cast<string>().ToArray()), satisfied);
+					OnLogEvent (this, new LogEventArgs("Result: " + string.Join (";",diff.Cast<string>().ToArray())));
 					if (satisfied) {
+						OnLogEvent (this, new LogEventArgs("Response: Agreement"));
 						if ((int)(wilsonState & (WilsonState.ThumbsUp | WilsonState.HeadNod)) == 0) {
 							waitTimer.Enabled = true;
 							wilsonState |= (WilsonState.ThumbsUp | WilsonState.HeadNod);
 							ThumbsUp ();
+							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 							HeadNod ();
+							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
 								OutputHelper.PrintOutput (OutputController.Role.Planner, "Great!");
+								OnLogEvent (this, new LogEventArgs("Wilson: S = \"Great!\""));
 							}
 						}
 					} 
 					else {
+						OnLogEvent (this, new LogEventArgs("Response: Disagreement"));
 						if ((int)(wilsonState & WilsonState.HeadShake) == 0) {
 							waitTimer.Enabled = true;
 							wilsonState |= WilsonState.HeadShake;
 							HeadShake ();
+							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
 								OutputHelper.PrintOutput (OutputController.Role.Planner, "That's not quite what I had in mind.");
+								OnLogEvent (this, new LogEventArgs("Wilson: S = \"That's not quite what I had in mind.\""));
 								goBack = true;
 							}
 						}
 					}
+					moveLogged = true;
 				}
 			}
 		}
@@ -312,8 +346,10 @@ public class G_reqScript : DemoScript {
 				waitTimer.Enabled = true;
 				wilsonState |= WilsonState.Point;
 				PointAt (GameObject.Find ("block4"));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "block4")));
 				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
 					OutputHelper.PrintOutput (OutputController.Role.Planner, "Take that block");
+					OnLogEvent (this, new LogEventArgs("Wilson: S = \"Take that block\""));
 				}
 			}
 		}
@@ -323,8 +359,10 @@ public class G_reqScript : DemoScript {
 				waitTimer.Enabled = true;
 				wilsonState |= WilsonState.Point;
 				PointAt (GameObject.Find ("block5"));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "block5")));
 				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
 					OutputHelper.PrintOutput (OutputController.Role.Planner, "And that block");
+					OnLogEvent (this, new LogEventArgs("Wilson: S = \"And that block\""));
 				}
 			}
 		}
@@ -333,6 +371,7 @@ public class G_reqScript : DemoScript {
 			if ((int)(wilsonState & WilsonState.LookForward) == 0) {
 				wilsonState |= WilsonState.LookForward;
 				LookForward ();
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 			} 
 
 			leftTarget.targetPosition = new Vector3 (1.0f, 2.5f, 0.0f);
@@ -347,8 +386,10 @@ public class G_reqScript : DemoScript {
 			if ((int)(wilsonState & WilsonState.PushTogether) == 0) {
 				wilsonState |= WilsonState.PushTogether;
 				PushTogether ();
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
 					OutputHelper.PrintOutput (OutputController.Role.Planner, "And put them together");
+					OnLogEvent (this, new LogEventArgs("Wilson: S = \"And put them together\""));
 				}
 			}
 			else {
@@ -368,29 +409,37 @@ public class G_reqScript : DemoScript {
 
 				if (humanMoveComplete) {
 					List<object> diff = Helper.DiffLists (currentState, relationTracker.relStrings.Cast<object>().ToList());
-					Log (string.Join (";",diff.Cast<string>().ToArray()), satisfied);
+					OnLogEvent (this, new LogEventArgs("Result: " + string.Join (";",diff.Cast<string>().ToArray())));
 					if (satisfied) {
+						OnLogEvent (this, new LogEventArgs("Response: Agreement"));
 						if ((int)(wilsonState & (WilsonState.ThumbsUp | WilsonState.HeadNod)) == 0) {
 							waitTimer.Enabled = true;
 							wilsonState |= (WilsonState.ThumbsUp | WilsonState.HeadNod);
 							ThumbsUp ();
+							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 							HeadNod ();
+							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
 								OutputHelper.PrintOutput (OutputController.Role.Planner, "Great!");
+								OnLogEvent (this, new LogEventArgs("Wilson: S = \"Great!\""));
 							}
 						}
 					} 
 					else {
+						OnLogEvent (this, new LogEventArgs("Response: Disagreement"));
 						if ((int)(wilsonState & WilsonState.HeadShake) == 0) {
 							waitTimer.Enabled = true;
 							wilsonState |= WilsonState.HeadShake;
 							HeadShake ();
+							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
 								OutputHelper.PrintOutput (OutputController.Role.Planner, "That's not quite what I had in mind.");
+								OnLogEvent (this, new LogEventArgs("Wilson: S = \"That's not quite what I had in mind.\""));
 								goBack = true;
 							}
 						}
 					}
+					moveLogged = true;
 				}
 			}
 		}
@@ -402,8 +451,10 @@ public class G_reqScript : DemoScript {
 				waitTimer.Enabled = true;
 				wilsonState |= WilsonState.Point;
 				PointAt (GameObject.Find ("block2"));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "block2")));
 				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
 					OutputHelper.PrintOutput (OutputController.Role.Planner, "Take that block");
+					OnLogEvent (this, new LogEventArgs("Wilson: S = \"Take that block\""));
 				}
 			}
 		}
@@ -413,8 +464,11 @@ public class G_reqScript : DemoScript {
 				waitTimer.Enabled = true;
 				wilsonState |= WilsonState.Point;
 				PointAt (GameObject.Find ("block4"));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "block4")));
 				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
 					OutputHelper.PrintOutput (OutputController.Role.Planner, "And put it on that block");
+					OnLogEvent (this, new LogEventArgs("Wilson: S = \"And put it on that block\""));
+
 				}
 			}
 		}
@@ -423,7 +477,9 @@ public class G_reqScript : DemoScript {
 			if ((int)(wilsonState & WilsonState.Claw) == 0) {
 				wilsonState |= (WilsonState.Claw | WilsonState.LookForward);
 				Claw (GameObject.Find ("block2").transform.position,GameObject.Find ("block4").transform.position);
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "block4")));
 				LookForward ();
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 			}
 			else {
 				bool satisfied = false;
@@ -442,29 +498,37 @@ public class G_reqScript : DemoScript {
 
 				if (humanMoveComplete) {
 					List<object> diff = Helper.DiffLists (currentState, relationTracker.relStrings.Cast<object>().ToList());
-					Log (string.Join (";",diff.Cast<string>().ToArray()), satisfied);
+					OnLogEvent (this, new LogEventArgs("Result: " + string.Join (";",diff.Cast<string>().ToArray())));
 					if (satisfied) {
+						OnLogEvent (this, new LogEventArgs("Response: Agreement"));
 						if ((int)(wilsonState & (WilsonState.ThumbsUp | WilsonState.HeadNod)) == 0) {
 							waitTimer.Enabled = true;
 							wilsonState |= (WilsonState.ThumbsUp | WilsonState.HeadNod);
 							ThumbsUp ();
+							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 							HeadNod ();
+							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
 								OutputHelper.PrintOutput (OutputController.Role.Planner, "Great!");
+								OnLogEvent (this, new LogEventArgs("Wilson: S = \"Great!\""));
 							}
 						}
 					} 
 					else {
+						OnLogEvent (this, new LogEventArgs("Response: Disagreement"));
 						if ((int)(wilsonState & WilsonState.HeadShake) == 0) {
 							waitTimer.Enabled = true;
 							wilsonState |= WilsonState.HeadShake;
 							HeadShake ();
+							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
 								OutputHelper.PrintOutput (OutputController.Role.Planner, "That's not quite what I had in mind.");
+								OnLogEvent (this, new LogEventArgs("Wilson: S = \"That's not quite what I had in mind.\""));
 								goBack = true;
 							}
 						}
 					}
+					moveLogged = true;
 				}
 			}
 		}
@@ -476,8 +540,10 @@ public class G_reqScript : DemoScript {
 				waitTimer.Enabled = true;
 				wilsonState |= WilsonState.Point;
 				PointAt (GameObject.Find ("block6"));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "block6")));
 				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
 					OutputHelper.PrintOutput (OutputController.Role.Planner, "Take that block");
+					OnLogEvent (this, new LogEventArgs("Wilson: S = \"Take that block\""));
 				}
 			}
 		}
@@ -487,8 +553,10 @@ public class G_reqScript : DemoScript {
 				waitTimer.Enabled = true;
 				wilsonState |= WilsonState.Point;
 				PointAt (GameObject.Find ("block1"));
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "block1")));
 				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
 					OutputHelper.PrintOutput (OutputController.Role.Planner, "And put it on that block");
+					OnLogEvent (this, new LogEventArgs("Wilson: S = \"And put it on that block\""));
 				}
 			}
 		}
@@ -497,7 +565,9 @@ public class G_reqScript : DemoScript {
 			if ((int)(wilsonState & WilsonState.Claw) == 0) {
 				wilsonState |= (WilsonState.Claw | WilsonState.LookForward);
 				Claw (GameObject.Find ("block6").transform.position,GameObject.Find ("block1").transform.position);
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture, "block1")));
 				LookForward ();
+				OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 			}
 			else {
 				bool satisfied = false;
@@ -516,29 +586,37 @@ public class G_reqScript : DemoScript {
 
 				if (humanMoveComplete) {
 					List<object> diff = Helper.DiffLists (currentState, relationTracker.relStrings.Cast<object>().ToList());
-					Log (string.Join (";",diff.Cast<string>().ToArray()), satisfied);
+					OnLogEvent (this, new LogEventArgs("Result: " + string.Join (";",diff.Cast<string>().ToArray())));
 					if (satisfied) {
+						OnLogEvent (this, new LogEventArgs("Response: Agreement"));
 						if ((int)(wilsonState & (WilsonState.ThumbsUp | WilsonState.HeadNod)) == 0) {
 							waitTimer.Enabled = true;
 							wilsonState |= (WilsonState.ThumbsUp | WilsonState.HeadNod);
 							ThumbsUp ();
+							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 							HeadNod ();
+							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
 								OutputHelper.PrintOutput (OutputController.Role.Planner, "Great!");
+								OnLogEvent (this, new LogEventArgs("Wilson: S = \"Great!\""));
 							}
 						}
 					} 
 					else {
+						OnLogEvent (this, new LogEventArgs("Response: Disagreement"));
 						if ((int)(wilsonState & WilsonState.HeadShake) == 0) {
 							waitTimer.Enabled = true;
 							wilsonState |= WilsonState.HeadShake;
 							HeadShake ();
+							OnLogEvent (this, new LogEventArgs("Wilson: G = " + string.Format (mostRecentGesture)));
 							if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
 								OutputHelper.PrintOutput (OutputController.Role.Planner, "That's not quite what I had in mind.");
+								OnLogEvent (this, new LogEventArgs("Wilson: S = \"That's not quite what I had in mind.\""));
 								goBack = true;
 							}
 						}
 					}
+					moveLogged = true;
 				}
 			}
 		}
@@ -549,6 +627,7 @@ public class G_reqScript : DemoScript {
 				Rest ();
 				if ((int)(outputModality.modality & OutputModality.Modality.Linguistic) == 1) {
 					OutputHelper.PrintOutput (OutputController.Role.Planner, "OK, we're done!");
+					OnLogEvent (this, new LogEventArgs("Wilson: S = \"OK, we're done!\""));
 				}
 				CloseLog ();
 			}		
@@ -558,6 +637,10 @@ public class G_reqScript : DemoScript {
 			wilsonState = 0;
 			currentStep = (DemoStep)((int)currentStep + 1);
 		}*/
+	}
+		
+	void OnDestroy() {
+		CloseLog ();
 	}
 
 	void OnApplicationQuit() {
@@ -577,6 +660,7 @@ public class G_reqScript : DemoScript {
 
 	void PointAt(GameObject obj) {
 		Debug.Log ("Enter Point");
+		mostRecentGesture = "POINT_AT({0})";
 		GameObject grasper;
 
 		Bounds bounds = Helper.GetObjectWorldSize (obj);
@@ -610,6 +694,7 @@ public class G_reqScript : DemoScript {
 
 	void LookForward() {
 		Debug.Log ("Enter LookForward");
+		mostRecentGesture = "LOOK_FORWARD";
 
 		if (ikControl != null) {
 			headTarget.targetPosition = Diana.GetComponent<IKControl>().lookObj.transform.position;
@@ -618,6 +703,7 @@ public class G_reqScript : DemoScript {
 
 	void PushTogether() {
 		Debug.Log ("Enter PushTogether");
+		mostRecentGesture = "PALM_CONVERGE";
 
 		leftAtTarget = false;
 		rightAtTarget = false;
@@ -634,6 +720,7 @@ public class G_reqScript : DemoScript {
 
 	void Claw(Vector3 fromCoord, Vector3 toCoord) {
 		Debug.Log ("Enter Claw");
+		mostRecentGesture = "CLAW; JUMP_TO({0})";
 
 		GameObject grasper;
 
@@ -668,6 +755,7 @@ public class G_reqScript : DemoScript {
 
 	void ThumbsUp() {
 		Debug.Log ("Enter ThumbsUp");
+		mostRecentGesture = "THUMBS_UP";
 
 		graspController.grasper = (int)Gestures.HandPose.RightThumbsUp;
 
@@ -680,6 +768,7 @@ public class G_reqScript : DemoScript {
 
 	void HeadNod() {
 		Debug.Log ("Enter HeadNod");
+		mostRecentGesture = "HEAD_NOD";
 
 		if (ikControl != null) {
 			Vector3 headStartPos = headTarget.targetPosition;
@@ -695,6 +784,7 @@ public class G_reqScript : DemoScript {
 
 	void HeadShake() {
 		Debug.Log ("Enter HeadShake");
+		mostRecentGesture = "HEAD_SHAKE";
 
 		if (ikControl != null) {
 			Vector3 headStartPos = headTarget.targetPosition;
@@ -778,6 +868,11 @@ public class G_reqScript : DemoScript {
 		else {
 			currentStep = (ScriptStep)((int)currentStep + 1);
 		}
+	}
+
+	void HumanInputReceived(object sender, EventArgs e) {
+		lastReceivedInput = ((InputEventArgs)e).InputString;
+		OnLogEvent (this, new LogEventArgs("User: S = " + lastReceivedInput));
 	}
 
 	void HumanMoveComplete(object sender, EventArgs e) {

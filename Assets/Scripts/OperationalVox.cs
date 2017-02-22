@@ -43,7 +43,7 @@ public class OperationalVox {
 		// int: optional reentrancy index (-1 if none)
 		public List<Triple<string, GameObject, int>> Components = new List<Triple<string, GameObject, int>>();
 
-		public string Concavity = "";
+		public Triple<string, GameObject, int> Concavity = new Triple<string, GameObject, int>(String.Empty, null, -1);
 		public List<string> RotatSym = new List<string>();
 		public List<string> ReflSym = new List<string>();
 
