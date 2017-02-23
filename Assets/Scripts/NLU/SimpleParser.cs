@@ -1,8 +1,8 @@
 ﻿using System;
-using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using UnityEngine;
 
 namespace Assets.Scripts.NLU
 {
@@ -53,7 +53,7 @@ namespace Assets.Scripts.NLU
 			"bowl",
 			"knife",
 			"pencil",
-			"paper sheet",
+			"paper_sheet",
 			"hand",
 			"arm",
 			"mug",
@@ -76,13 +76,16 @@ namespace Assets.Scripts.NLU
 			"touching",
 			"in",
 			"on",
+			"at",
 			"behind",
 			"in front of",
 			"near",
 			"left of",
 			"right of",
 			"center of",
-			"under"
+			"edge of",
+			"under",
+			"against"
 		});
 
 		private List<string> _attribs = new List<string>(new[]
@@ -93,6 +96,10 @@ namespace Assets.Scripts.NLU
 			"green",
 			"yellow",
 			"red",
+			"orange",
+			"pink",
+			"white",
+			"gray",
 			"leftmost",
 			"middle",
 			"rightmost"
@@ -100,18 +107,17 @@ namespace Assets.Scripts.NLU
 
 		private List<string> _determiners = new List<string>(new[]
 		{
+			"the",
 			"a",
 			"two"
 		});
 
-		private List<string> _exclude = new List<string>(new[]
-		{
-			"the"
-		});
+		private List<string> _exclude = new List<string>();
 
 		private string[] SentSplit(string sent)
 		{
-			var tokens = new List<string>(Regex.Split(sent.ToLower(), " +"));
+			sent = sent.ToLower().Replace("paper sheet", "paper_sheet");
+			var tokens = new List<string>(Regex.Split(sent, " +"));
 			return tokens.Where(token => !_exclude.Contains(token)).ToArray();
 		}
 
@@ -121,10 +127,17 @@ namespace Assets.Scripts.NLU
 			var form = tokens[0] + "(";
 			var cur = 1;
 			var end = tokens.Length;
+			var lastObj = "";
+
 			while (cur < end)
 			{
-				if (cur + 2 < end &&
-					tokens[cur] == "in" && tokens[cur + 1] == "front" && tokens[cur + 2] == "of")
+				if (tokens[cur] == "and")
+				{
+					form += ",";
+					cur++;
+				}
+				else if (cur + 2 < end &&
+						 tokens[cur] == "in" && tokens[cur + 1] == "front" && tokens[cur + 2] == "of")
 				{
 					form += ",in_front(";
 					cur += 3;
@@ -147,12 +160,6 @@ namespace Assets.Scripts.NLU
 					form += ",center(";
 					cur += 2;
 				}
-				else if (cur + 1 < end &&
-						 tokens[cur] == "paper" && tokens[cur + 1] == "sheet")
-				{
-					form += "paper_sheet";
-					cur += 2;
-				}
 				else if (_relations.Contains(tokens[cur]))
 				{
 					if (form.EndsWith("("))
@@ -161,34 +168,93 @@ namespace Assets.Scripts.NLU
 					}
 					else
 					{
-						form += "," + tokens[cur] + "(";
+						if (tokens[cur] == "at" && tokens[cur + 1] == "center")
+						{
+							form += ",center(" + lastObj;
+						}
+						else if (tokens[cur] == "at" && tokens[cur + 1] == "center")
+						{
+							form += ",edge(" + lastObj;
+						}
+						else
+						{
+							form += "," + tokens[cur] + "(";
+						}
 					}
 					cur += 1;
 				}
-				else if (_attribs.Contains(tokens[cur]) ||
-						 _determiners.Contains(tokens[cur]))
+				else if (_determiners.Contains(tokens[cur]))
 				{
-					form += tokens[cur] + "(" + tokens[cur + 1] + ")";
-					cur += 2;
+					form += tokens[cur] + "(";
+					cur += ParseNextNP(tokens.Skip(cur+1).ToArray(), ref form, ref lastObj);
+				}
+				else if (_attribs.Contains(tokens[cur]))
+				{
+					cur += ParseNextNP(tokens.Skip(cur).ToArray(), ref form, ref lastObj);
 				}
 				else if (_objects.Contains(tokens[cur]))
 				{
-					form += tokens[cur];
-				    cur++;
+					lastObj = tokens[cur];
+					form += lastObj;
+					form = MatchParens(form);
+					cur++;
 				}
 				else
 				{
-				    cur++;
+					cur++;
 				}
 			}
-			var opens = form.Count(c => c == '(');
-			var closes = form.Count(c => c == ')');
-		    for (int i = closes; i < opens; i++)
-		    {
-		        form += ")";
-		    }
+			form = MatchParens(form);
 //			form += string.Concat(Enumerable.Repeat(")", opens - closes));
 			return form;
+		}
+
+		private string MatchParens(string input)
+		{
+			for (int i = input.Count(c => c == ')'); i < input.Count(c => c == '('); i++)
+			{
+				input += ")";
+			}
+			return input;
+		}
+
+		private int ParseNextNP(string[] restOfSent, ref string parsed, ref string lastObj)
+		{
+			var cur = 0;
+		    var openParen = 0;
+			var end = restOfSent.Length;
+			while (cur < end)
+			{
+				if (_attribs.Contains(restOfSent[cur]))
+				{
+					// allows only one adjective per a parenthesis level
+					parsed += restOfSent[cur] + "(";
+				    openParen++;
+					cur++;
+				}
+				else if (_objects.Contains(restOfSent[cur]))
+				{
+					lastObj = restOfSent[cur];
+				    parsed += lastObj;
+				    for (var i = 0; i < openParen; i++)
+				    {
+                        parsed += ")";
+				    }
+                    parsed += ")";
+					cur++;
+				}
+				else if (restOfSent[cur] == "and")
+				{
+					parsed += ",";
+					cur++;
+				}
+				else
+				{
+					MatchParens(parsed);
+					break;
+				}
+			}
+			return ++cur;
 		}
 
 		public void InitParserService(string address) {
