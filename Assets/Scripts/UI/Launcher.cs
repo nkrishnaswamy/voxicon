@@ -10,6 +10,7 @@ public class Launcher : FontManager {
 	public int fontSize = 12;
 
 	string ip;
+	string parserUrl;
 	string inPort;
 	string sriUrl;
 	bool makeLogs;
@@ -105,12 +106,16 @@ public class Launcher : FontManager {
 		GUI.Label (new Rect (bgLeft + 10, bgTop + 95, 90*fontSizeModifier, 25*fontSizeModifier), "Make Logs");
 		makeLogs = GUI.Toggle (new Rect (bgLeft+100, bgTop+95, 150, 25*fontSizeModifier), makeLogs, string.Empty);
 
-		GUI.Label (new Rect (bgLeft + 10, bgTop + 125, 90*fontSizeModifier, 25*fontSizeModifier), "Capture Video");
-		captureVideo = GUI.Toggle (new Rect (bgLeft+100, bgTop+125, 150, 25*fontSizeModifier), captureVideo, string.Empty);
+		GUI.Label (new Rect (bgLeft + 10, bgTop + 125, 90*fontSizeModifier, 40*fontSizeModifier), "Parser URL");
+		parserUrl = GUI.TextField (new Rect (bgLeft+100, bgTop+125, 150, 25), parserUrl);
+		GUI.Label (new Rect (bgLeft + 10, bgTop + 155, 300, 50), "(Leave empty to use simple regex parser)");
+
+		GUI.Label (new Rect (bgLeft + 10, bgTop + 185, 90*fontSizeModifier, 25*fontSizeModifier), "Capture Video");
+		captureVideo = GUI.Toggle (new Rect (bgLeft+100, bgTop+185, 150, 25*fontSizeModifier), captureVideo, string.Empty);
 
 		if (captureVideo) {
 			string warningText = "Enabling this option may affect performance";
-			GUI.TextArea (new Rect (bgLeft + 10, bgTop + 145, GUI.skin.label.CalcSize (new GUIContent (warningText)).x+10, 20),
+			GUI.TextArea (new Rect (bgLeft + 10, bgTop + 205, GUI.skin.label.CalcSize (new GUIContent (warningText)).x+10, 20),
 				warningText);
 		}
 
@@ -152,6 +157,7 @@ public class Launcher : FontManager {
 	void LoadPrefs() {
 		inPort = PlayerPrefs.GetString("Listener Port");
 		sriUrl = PlayerPrefs.GetString("SRI URL");
+		parserUrl = PlayerPrefs.GetString("Parser URL");
 		makeLogs = (PlayerPrefs.GetInt("Make Logs") == 1);
 		captureVideo = (PlayerPrefs.GetInt("Capture Video") == 1);
 	}
@@ -159,6 +165,7 @@ public class Launcher : FontManager {
 	void SavePrefs() {
 		PlayerPrefs.SetString("Listener Port", inPort);
 		PlayerPrefs.SetString("SRI URL", sriUrl);
+		PlayerPrefs.GetString("Parser URL", parserUrl);
 		PlayerPrefs.SetInt("Make Logs", System.Convert.ToInt32(makeLogs));
 		PlayerPrefs.SetInt("Capture Video", System.Convert.ToInt32(captureVideo));
 	}

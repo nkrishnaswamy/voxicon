@@ -2,12 +2,13 @@ using UnityEngine;
 using System.Collections;
 using System;
 using System.Runtime.InteropServices;
-
-using Global;
+using Assets.Scripts.NLU;
 
 public class PluginImport : MonoBehaviour {
 	// port definitions
 	public string port = "";
+
+	private NLParser parser;
 
 	// Make our calls from the Plugin
 	[DllImport ("CommunicationsBridge")]
@@ -22,13 +23,30 @@ public class PluginImport : MonoBehaviour {
 	[DllImport ("CommunicationsBridge")]
 	private static extern bool ClosePort(string id);
 
-	[DllImport ("CommunicationsBridge")]
-	private static extern IntPtr PythonCall(string scriptsPath, string module, string function, string[] args, int numArgs);
-	
-	void Start () {
-		port = PlayerPrefs.GetString ("Listener Port");
+//	[DllImport ("CommunicationsBridge")]
+//	private static extern IntPtr PythonCall(string scriptsPath, string module, string function, string[] args, int numArgs);
 
-		OpenPortInternal (port);
+	void Start()
+	{
+		port = PlayerPrefs.GetString("Listener Port");
+		OpenPortInternal(port);
+		InitParser();
+
+	}
+	public void InitParser() {
+		var parserUrl = PlayerPrefs.GetString ("Parser URL");
+		if (parserUrl.Length == 0)
+		{
+			Debug.Log("Initializing Simple Parser");
+			parser = new SimpleParser();
+		}
+		else
+		{
+			Debug.Log("Initializing Stanford Dependency Parser");
+			parser = new StanfordWrapper();
+			Debug.Log("Finding Stanford service at " + parserUrl);
+			parser.InitParserService(parserUrl);
+		}
 	}
 
 	void Update () {
@@ -64,11 +82,13 @@ public class PluginImport : MonoBehaviour {
 	}
 
 	public string NLParse(string input) {
-		string[] args = new string[]{input};
-		string result = Marshal.PtrToStringAuto(PythonCall (Application.dataPath + "/Externals/python/", "change_to_forms", "parse_sent", args, args.Length));
-		Debug.Log (result);
+//		string[] args = new string[]{input};
+//		string result = Marshal.PtrToStringAuto(PythonCall (Application.dataPath + "/Externals/python/", "change_to_forms", "parse_sent", args, args.Length));
+		var result = parser.NLParse(input);
+		Debug.Log ("Parsed as: " + result);
 
 		return result;
+
 	}
 
 	void OnDestroy () {
