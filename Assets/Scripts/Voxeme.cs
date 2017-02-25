@@ -242,10 +242,19 @@ public class Voxeme : MonoBehaviour {
 				transform.localScale = targetScale;
 			}
 		}
+			
+		Vector3 rayStart = new Vector3 (Helper.GetObjectWorldSize(gameObject).min.x-Constants.EPSILON,
+			Helper.GetObjectWorldSize(gameObject).min.y+Constants.EPSILON, Helper.GetObjectWorldSize(gameObject).center.z);
+		//rayStart += Helper.GetObjectWorldSize(gameObject).center;
+		Vector3 contactPoint = Helper.RayIntersectionPoint (rayStart, Vector3.right);
+		contactPoint = new Vector3 (contactPoint.x, transform.position.y, contactPoint.z);
+//		Debug.Log (gameObject.name);
+//		Debug.Log (Helper.VectorToParsable (contactPoint));
 
 		RaycastHit[] hits;
 
-		hits = Physics.RaycastAll (transform.position, AxisVector.negYAxis);
+//		hits = Physics.RaycastAll (transform.position, AxisVector.negYAxis);
+		hits = Physics.RaycastAll (contactPoint, AxisVector.negYAxis);
 		List<RaycastHit> hitList = new List<RaycastHit> ((RaycastHit[])hits);
 		hits = hitList.OrderBy (h => h.distance).ToArray ();
 		foreach (RaycastHit hit in hits) {

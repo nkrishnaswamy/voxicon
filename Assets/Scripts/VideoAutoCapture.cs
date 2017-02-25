@@ -22,6 +22,8 @@ public class VideoAutoCapture : MonoBehaviour {
 	bool writingFile = false;
 	bool stopCaptureFlag = false;
 
+	string outFileName = string.Empty;
+
 	public event EventHandler FileWritten;
 
 	public void OnFileWritten(object sender, EventArgs e)
@@ -71,7 +73,7 @@ public class VideoAutoCapture : MonoBehaviour {
 			return;
 		}
 
-		Debug.Log (((InputEventArgs)e).InputString);
+		outFileName = string.Format("{0}-{1}",(((InputEventArgs)e).InputString).Replace(" ","_"),DateTime.Now.ToString("yyyy-MM-dd-HHmmss"));
 		eventManager.InsertEvent ("wait()", 0);
 		eventTimeoutTimer.Enabled = true;
 
@@ -90,7 +92,7 @@ public class VideoAutoCapture : MonoBehaviour {
 		eventCompleteWaitTimer.Interval = eventCompleteWaitTime;
 
 		recorder.StopCapture ();
-		recorder.SaveCapturedFrames ();
+		recorder.SaveCapturedFrames (outFileName);
 		capturing = false;
 		writingFile = true;
 

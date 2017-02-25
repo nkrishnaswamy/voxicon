@@ -43,7 +43,7 @@ public class PluginImport : MonoBehaviour {
 		else
 		{
 			Debug.Log("Initializing Stanford Dependency Parser");
-			parser = new StanfordWrapper();
+			//parser = new StanfordWrapper();
 			Debug.Log("Finding Stanford service at " + parserUrl);
 			parser.InitParserService(parserUrl);
 		}
