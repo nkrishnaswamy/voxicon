@@ -2,8 +2,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Global {
 	/// <summary>
@@ -334,6 +336,26 @@ namespace Global {
 
 		public static List<object> DiffLists(List<object> baseline, List<object> comparand) {
 			return comparand.Except (baseline).ToList ();
+		}
+
+		public static byte[] SerializeObject(object obj) {
+			BinaryFormatter binFormatter = new BinaryFormatter ();
+			MemoryStream mStream = new MemoryStream ();
+			binFormatter.Serialize (mStream, obj);
+
+			//This gives you the byte array.
+			return mStream.ToArray();
+		}
+
+		public static T DeserializeObject<T>(byte[] bytes) {
+			MemoryStream mStream = new MemoryStream();
+			BinaryFormatter binFormatter = new BinaryFormatter();
+
+			// Where 'bytes' is your byte array.
+			mStream.Write (bytes, 0, bytes.Length);
+			mStream.Position = 0;
+
+			return (T)binFormatter.Deserialize(mStream);
 		}
 
 		// VECTOR METHODS

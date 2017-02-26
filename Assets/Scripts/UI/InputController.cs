@@ -4,11 +4,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+
 using Global;
 
 public class InputEventArgs : EventArgs {
 
-	public string InputString {get; set; }
+	public string InputString { get; set; }
 
 	public InputEventArgs(string str)
 	{
@@ -50,6 +51,16 @@ public class InputController : FontManager {
 		if (InputReceived != null)
 		{
 			InputReceived(this, e);
+		}
+	}
+
+	public event EventHandler ParseComplete;
+
+	public void OnParseComplete(object sender, EventArgs e)
+	{
+		if (ParseComplete != null)
+		{
+			ParseComplete(this, e);
 		}
 	}
 
@@ -144,8 +155,8 @@ public class InputController : FontManager {
 		string functionalCommand = "";
 
 		if (inputString != "") {
-			InputEventArgs eventArgs = new InputEventArgs (inputString);
-			OnInputReceived (this, eventArgs);
+			InputEventArgs inputArgs = new InputEventArgs (inputString);
+			OnInputReceived (this, inputArgs);
 
 			if (inputString == "reset") {
 				StartCoroutine(SceneHelper.LoadScene (UnityEngine.SceneManagement.SceneManager.GetActiveScene ().name));
@@ -187,6 +198,9 @@ public class InputController : FontManager {
 					}
 				}
 				Debug.Log ("Parsed as: " + functionalCommand);
+				InputEventArgs parseArgs = new InputEventArgs (functionalCommand);
+				OnParseComplete (this, parseArgs);
+
 				OutputHelper.PrintOutput (OutputController.Role.Affector,"OK.");
 				OutputHelper.PrintOutput (OutputController.Role.Planner,"");
 				commands = functionalCommand.Split (';');

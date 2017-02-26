@@ -5,6 +5,7 @@ using System.IO;
 using System.Net;
 
 using Global;
+using VideoCapture;
 
 public class Launcher : FontManager {
 	public int fontSize = 12;
@@ -15,6 +16,11 @@ public class Launcher : FontManager {
 	string sriUrl;
 	bool makeLogs;
 	bool captureVideo;
+	VideoCaptureMode videoCaptureMode;
+	VideoCaptureFilenameType prevVideoCaptureFilenameType;
+	VideoCaptureFilenameType videoCaptureFilenameType;
+	string customVideoFilenamePrefix;
+	string videoCaptureDB;
 
 	int bgLeft = Screen.width/6;
 	int bgTop = Screen.height/12;
@@ -107,16 +113,48 @@ public class Launcher : FontManager {
 		makeLogs = GUI.Toggle (new Rect (bgLeft+100, bgTop+95, 150, 25*fontSizeModifier), makeLogs, string.Empty);
 
 		GUI.Label (new Rect (bgLeft + 10, bgTop + 125, 90*fontSizeModifier, 40*fontSizeModifier), "Parser URL");
-		parserUrl = GUI.TextField (new Rect (bgLeft+100, bgTop+125, 150, 25), parserUrl);
-		GUI.Label (new Rect (bgLeft + 10, bgTop + 155, 300, 50), "(Leave empty to use simple regex parser)");
+		parserUrl = GUI.TextField (new Rect (bgLeft+100, bgTop+125, 150, 25*fontSizeModifier), parserUrl);
+		GUI.Label (new Rect (bgLeft + 10, bgTop + 150, 300, 50), "(Leave empty to use simple regex parser)");
 
 		GUI.Label (new Rect (bgLeft + 10, bgTop + 185, 90*fontSizeModifier, 25*fontSizeModifier), "Capture Video");
-		captureVideo = GUI.Toggle (new Rect (bgLeft+100, bgTop+185, 150, 25*fontSizeModifier), captureVideo, string.Empty);
+		captureVideo = GUI.Toggle (new Rect (bgLeft+100, bgTop+180, 150, 25*fontSizeModifier), captureVideo, string.Empty);
 
 		if (captureVideo) {
 			string warningText = "Enabling this option may affect performance";
-			GUI.TextArea (new Rect (bgLeft + 10, bgTop + 205, GUI.skin.label.CalcSize (new GUIContent (warningText)).x+10, 20),
+			GUI.TextArea (new Rect (bgLeft + 10, bgTop + 205, GUI.skin.label.CalcSize (new GUIContent (warningText)).x+10, 20*fontSizeModifier),
 				warningText);
+
+			GUI.Label (new Rect (bgLeft + 15, bgTop + 230, GUI.skin.label.CalcSize (new GUIContent ("Video Capture Mode")).x+10, 20*fontSizeModifier),
+				"Video Capture Mode");
+
+			string[] videoCaptureModeLabels = new string[]{ "Per Event", "Full-Time", "Manual" };
+			videoCaptureMode = (VideoCaptureMode)GUI.SelectionGrid (
+				new Rect (bgLeft + 15, bgTop + 250, 150, 20*fontSizeModifier*videoCaptureModeLabels.Length),
+				(int)videoCaptureMode, videoCaptureModeLabels, 1, "toggle");
+
+			GUI.Label (new Rect (bgLeft + 15 + 150*fontSizeModifier, bgTop + 230, GUI.skin.label.CalcSize (new GUIContent ("Capture Filename Type")).x+10, 20*fontSizeModifier),
+				"Capture Filename Type");
+
+			prevVideoCaptureFilenameType = videoCaptureFilenameType;
+			string[] videoCaptureFilenameTypeLabels = new string[]{ "Flashback Default", "Event String", "Custom" };
+			videoCaptureFilenameType = (VideoCaptureFilenameType)GUI.SelectionGrid (
+				new Rect (bgLeft + 15 + 150*fontSizeModifier, bgTop + 250, 150, 20*fontSizeModifier*videoCaptureFilenameTypeLabels.Length),
+				(int)videoCaptureFilenameType, videoCaptureFilenameTypeLabels, 1, "toggle");
+
+			// EventString can only be used with PerEvent
+			if (videoCaptureMode != VideoCaptureMode.PerEvent) {
+				if (videoCaptureFilenameType == VideoCaptureFilenameType.EventString) {
+					videoCaptureFilenameType = prevVideoCaptureFilenameType;
+				}
+			}
+
+			if (videoCaptureFilenameType == VideoCaptureFilenameType.Custom) {
+				customVideoFilenamePrefix = GUI.TextArea (new Rect (bgLeft + 15 + 160*fontSizeModifier, bgTop + 315, 150, 25*fontSizeModifier),
+					customVideoFilenamePrefix);
+			}
+
+			GUI.Label (new Rect (bgLeft + 15, bgTop + 345, 120*fontSizeModifier, 25*fontSizeModifier), "Video Database File");
+			videoCaptureDB = GUI.TextField (new Rect (bgLeft+140*fontSizeModifier, bgTop+345, 150, 25*fontSizeModifier), videoCaptureDB);
 		}
 
 		GUILayout.BeginArea(new Rect(13*Screen.width/24, bgTop + 35, 3*Screen.width/12, 3*Screen.height/6), GUI.skin.window);
@@ -160,6 +198,10 @@ public class Launcher : FontManager {
 		parserUrl = PlayerPrefs.GetString("Parser URL");
 		makeLogs = (PlayerPrefs.GetInt("Make Logs") == 1);
 		captureVideo = (PlayerPrefs.GetInt("Capture Video") == 1);
+		videoCaptureMode = (VideoCaptureMode)PlayerPrefs.GetInt("Video Capture Mode");
+		videoCaptureFilenameType = (VideoCaptureFilenameType)PlayerPrefs.GetInt("Video Capture Filename Type");
+		customVideoFilenamePrefix = PlayerPrefs.GetString("Custom Video Filename Prefix");
+		videoCaptureDB = PlayerPrefs.GetString("Video Capture DB");
 	}
 	
 	void SavePrefs() {
@@ -168,6 +210,10 @@ public class Launcher : FontManager {
 		PlayerPrefs.GetString("Parser URL", parserUrl);
 		PlayerPrefs.SetInt("Make Logs", System.Convert.ToInt32(makeLogs));
 		PlayerPrefs.SetInt("Capture Video", System.Convert.ToInt32(captureVideo));
+		PlayerPrefs.SetInt("Video Capture Mode", System.Convert.ToInt32(videoCaptureMode));
+		PlayerPrefs.SetInt("Video Capture Filename Type", System.Convert.ToInt32(videoCaptureFilenameType));
+		PlayerPrefs.SetString("Custom Video Filename Prefix", customVideoFilenamePrefix);
+		PlayerPrefs.SetString("Video Capture DB", videoCaptureDB);
 	}
 }
 

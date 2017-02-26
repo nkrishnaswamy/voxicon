@@ -243,13 +243,19 @@ public class Voxeme : MonoBehaviour {
 			}
 		}
 			
-		Vector3 rayStart = new Vector3 (Helper.GetObjectWorldSize(gameObject).min.x-Constants.EPSILON,
+		Vector3 rayStartX = new Vector3 (Helper.GetObjectWorldSize(gameObject).min.x-Constants.EPSILON,
 			Helper.GetObjectWorldSize(gameObject).min.y+Constants.EPSILON, Helper.GetObjectWorldSize(gameObject).center.z);
-		//rayStart += Helper.GetObjectWorldSize(gameObject).center;
-		Vector3 contactPoint = Helper.RayIntersectionPoint (rayStart, Vector3.right);
-		contactPoint = new Vector3 (contactPoint.x, transform.position.y, contactPoint.z);
-//		Debug.Log (gameObject.name);
-//		Debug.Log (Helper.VectorToParsable (contactPoint));
+		Vector3 contactPointX = Helper.RayIntersectionPoint (rayStartX, Vector3.right);
+		//contactPointX = new Vector3 (contactPointX.x, transform.position.y, contactPointX.z);
+
+		Vector3 rayStartZ = new Vector3 (Helper.GetObjectWorldSize(gameObject).center.x,
+			Helper.GetObjectWorldSize(gameObject).min.y+Constants.EPSILON, Helper.GetObjectWorldSize(gameObject).min.z-Constants.EPSILON);
+		Vector3 contactPointZ = Helper.RayIntersectionPoint (rayStartZ, Vector3.forward);
+		//contactPointZ = new Vector3 (contactPointZ.x, transform.position.y, contactPointZ.z);
+
+		Vector3 contactPoint = (contactPointZ.y < contactPointX.y) ?
+			new Vector3 (contactPointZ.x, transform.position.y, contactPointZ.z) : 
+			new Vector3 (contactPointX.x, transform.position.y, contactPointX.z);
 
 		RaycastHit[] hits;
 

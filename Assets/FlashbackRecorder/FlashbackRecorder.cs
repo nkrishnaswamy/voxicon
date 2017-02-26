@@ -499,7 +499,7 @@ namespace FlashbackVideoRecorder{
 		//The extesion will be added based on the format (gif and/or mp4)
 		//ex: Flashback_01-21-14-22-02
 		string GenerateFilename(){
-			return "Flashback_" + DateTime.Now.ToString("MM-dd-HH-mm-ss");
+			return "Flashback_" + DateTime.Now.ToString("yyyy-MM-dd-HHmmss");
 		}
 
 

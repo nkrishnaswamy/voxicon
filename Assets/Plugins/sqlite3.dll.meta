@@ -1,7 +1,6 @@
 fileFormatVersion: 2
-guid: 90ae5c674466848a794678b870ae0955
-folderAsset: yes
-timeCreated: 1473803824
+guid: 802d2aa2c99634024a402bb5dfebe291
+timeCreated: 1488052810
 licenseType: Pro
 PluginImporter:
   serializedVersion: 1
@@ -10,21 +9,12 @@ PluginImporter:
   isPreloaded: 0
   platformData:
     Any:
-      enabled: 0
+      enabled: 1
       settings: {}
     Editor:
-      enabled: 1
+      enabled: 0
       settings:
         DefaultValueInitialized: true
-    OSXIntel:
-      enabled: 1
-      settings: {}
-    OSXIntel64:
-      enabled: 1
-      settings: {}
-    OSXUniversal:
-      enabled: 1
-      settings: {}
   userData: 
   assetBundleName: 
   assetBundleVariant: 

@@ -23,8 +23,8 @@ public class PluginImport : MonoBehaviour {
 	[DllImport ("CommunicationsBridge")]
 	private static extern bool ClosePort(string id);
 
-//	[DllImport ("CommunicationsBridge")]
-//	private static extern IntPtr PythonCall(string scriptsPath, string module, string function, string[] args, int numArgs);
+	[DllImport ("CommunicationsBridge")]
+	public static extern IntPtr PythonCall(string scriptsPath, string module, string function, string[] args, int numArgs);
 
 	void Start()
 	{
@@ -88,7 +88,6 @@ public class PluginImport : MonoBehaviour {
 		Debug.Log ("Parsed as: " + result);
 
 		return result;
-
 	}
 
 	void OnDestroy () {
