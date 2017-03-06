@@ -3,11 +3,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Timers;
 
 using Global;
 using RCC;
 using Satisfaction;
+
+
 
 /// <summary>
 /// Semantics of each predicate should be explicated within the method itself
@@ -26,6 +29,26 @@ public class Predicates : MonoBehaviour {
 	ObjectSelector objSelector;
 	RelationTracker relationTracker;
 	Macros macros;
+
+	public event EventHandler PrepareLog;
+
+	public void OnPrepareLog(object sender, EventArgs e)
+	{
+		if (PrepareLog != null)
+		{
+			PrepareLog(this, e);
+		}
+	}
+
+	public event EventHandler ParamsCalculated;
+
+	public void OnParamsCalculated(object sender, EventArgs e)
+	{
+		if (ParamsCalculated != null)
+		{
+			ParamsCalculated(this, e);
+		}
+	}
 
 	void Start () {
 		eventManager = gameObject.GetComponent<EventManager> ();
@@ -351,6 +374,30 @@ public class Predicates : MonoBehaviour {
 		}
 		else if (args [0] is Vector3) {	// right of a location
 			outValue = (Vector3)args[0];
+		}
+
+		return outValue;
+	}
+
+	// IN: Object (single element array)
+	// OUT: Location
+	public Vector3 TOUCHING(object[] args)
+	{
+		List<string> manners = new List<string> () {"LEFT",
+			"RIGHT",
+			"BEHIND",
+			"IN_FRONT",
+			"ON"
+		};
+		Vector3 outValue = Vector3.zero;
+
+		int selected = new System.Random ().Next (manners.Count);
+		MethodInfo methodToCall = this.GetType ().GetMethod (manners[selected]);
+
+		if ((methodToCall != null) &&  (rdfTriples.Count > 0)) {
+			Debug.Log ("ExecuteCommand: invoke " + methodToCall.Name);
+			object obj = methodToCall.Invoke (this, new object[]{ args });
+			outValue = (Vector3)obj;
 		}
 
 		return outValue;
@@ -729,6 +776,15 @@ public class Predicates : MonoBehaviour {
 	// OUT: none
 	public void PUT(object[] args)
 	{
+		string originalEval = eventManager.events [0];
+
+		Vector3 targetPosition = Vector3.zero;
+		Vector3 targetRotation = Vector3.zero;
+		Vector3 translocDir = Vector3.zero;
+		float translocDist = 0.0f;
+		string relOrientation = string.Empty;
+		Vector3 relOffset = Vector3.zero;
+
 		string prep = rdfTriples.Count > 0 ? rdfTriples [0].Item2.Replace ("put", "") : "";
 		Debug.Log (prep);
 
@@ -756,55 +812,73 @@ public class Predicates : MonoBehaviour {
 		}
 
 		// add agent-independent preconditions
-		//if (args [args.Length - 1] is bool) {
-		//	if ((bool)args [args.Length - 1] == false) {
-				if (prep == "_under") {
-					if (args [0] is GameObject) {
-						if ((args [0] as GameObject).GetComponent<Voxeme> () != null) {
-							GameObject supportingSurface = (args [0] as GameObject).GetComponent<Voxeme> ().supportingSurface;
-							if (supportingSurface != null) {
-								//Debug.Log (rdfTriples [0].Item3);
-								Bounds destBounds = Helper.GetObjectWorldSize (GameObject.Find (rdfTriples [0].Item3));
-								destBounds.SetMinMax (destBounds.min + new Vector3 (Constants.EPSILON, 0.0f, Constants.EPSILON),
-									destBounds.max - new Vector3 (Constants.EPSILON, Constants.EPSILON, Constants.EPSILON));
-								//Debug.Log (Helper.VectorToParsable (bounds.min));
-								//Debug.Log (Helper.VectorToParsable ((Vector3)args [1]));
-								Bounds themeBounds = Helper.GetObjectWorldSize ((args [0] as GameObject));
-								Vector3 min = (Vector3)args [1] - new Vector3 (0.0f, themeBounds.extents.y, 0.0f);
-								Vector3 max = (Vector3)args [1] + new Vector3 (0.0f, themeBounds.extents.y, 0.0f);
-								if ((min.y <= destBounds.min.y + Constants.EPSILON) && (max.y > destBounds.min.y + Constants.EPSILON)) {
-									if (Mathf.Abs (Helper.GetObjectWorldSize (GameObject.Find (rdfTriples [0].Item3)).min.y -	// if no space between dest obj and dest obj's supporting surface
-									   	Helper.GetObjectWorldSize (supportingSurface).max.y) < Constants.EPSILON) {
-										Vector3 liftPos = GameObject.Find (rdfTriples [0].Item3).transform.position;
-										liftPos += new Vector3 (0.0f, Helper.GetObjectWorldSize (args [0] as GameObject).size.y * 4, 0.0f);
+		if (prep == "_under") {
+			if (args [0] is GameObject) {
+				if ((args [0] as GameObject).GetComponent<Voxeme> () != null) {
+					GameObject supportingSurface = (args [0] as GameObject).GetComponent<Voxeme> ().supportingSurface;
+					if (supportingSurface != null) {
+						//Debug.Log (rdfTriples [0].Item3);
+						Bounds destBounds = Helper.GetObjectWorldSize (GameObject.Find (rdfTriples [0].Item3));
+						destBounds.SetMinMax (destBounds.min + new Vector3 (Constants.EPSILON, 0.0f, Constants.EPSILON),
+							destBounds.max - new Vector3 (Constants.EPSILON, Constants.EPSILON, Constants.EPSILON));
+						//Debug.Log (Helper.VectorToParsable (bounds.min));
+						//Debug.Log (Helper.VectorToParsable ((Vector3)args [1]));
+						Bounds themeBounds = Helper.GetObjectWorldSize ((args [0] as GameObject));
+						Vector3 min = (Vector3)args [1] - new Vector3 (0.0f, themeBounds.extents.y, 0.0f);
+						Vector3 max = (Vector3)args [1] + new Vector3 (0.0f, themeBounds.extents.y, 0.0f);
+						if ((min.y <= destBounds.min.y + Constants.EPSILON) && (max.y > destBounds.min.y + Constants.EPSILON)) {
+							if (Mathf.Abs (Helper.GetObjectWorldSize (GameObject.Find (rdfTriples [0].Item3)).min.y -	// if no space between dest obj and dest obj's supporting surface
+							   	Helper.GetObjectWorldSize (supportingSurface).max.y) < Constants.EPSILON) {
+								Vector3 liftPos = GameObject.Find (rdfTriples [0].Item3).transform.position;
+								liftPos += new Vector3 (0.0f, Helper.GetObjectWorldSize (args [0] as GameObject).size.y * 4, 0.0f);
 
-										eventManager.InsertEvent (string.Format ("lift({0},{1})", GameObject.Find (rdfTriples [0].Item3).name,
-											Helper.VectorToParsable (liftPos)), 0);
+								eventManager.InsertEvent (string.Format ("lift({0},{1})", GameObject.Find (rdfTriples [0].Item3).name,
+									Helper.VectorToParsable (liftPos)), 0);
 
-										Vector3 adjustedPosition = ((Vector3)args [1]);
-										Debug.Log (adjustedPosition.y - (themeBounds.center.y - themeBounds.min.y));
-										Debug.Log (Helper.GetObjectWorldSize(supportingSurface).max.y);
-										if (adjustedPosition.y - (themeBounds.center.y - themeBounds.min.y) - ((args [0] as GameObject).transform.position.y - themeBounds.center.y) < 
-											Helper.GetObjectWorldSize(supportingSurface).max.y) {	// if bottom of theme obj at this position is under the supporting surface's max
-											adjustedPosition = new Vector3 (adjustedPosition.x,
-											adjustedPosition.y + (themeBounds.center.y - themeBounds.min.y) + ((args [0] as GameObject).transform.position.y - themeBounds.center.y),
-											adjustedPosition.z);
-										}
-
-										eventManager.InsertEvent (string.Format ("put({0},{1})", (args [0] as GameObject).name, Helper.VectorToParsable (adjustedPosition)), 1);
-										eventManager.RemoveEvent (eventManager.events.Count - 1);
-										eventManager.InsertEvent (string.Format ("put({0},on({1}))", rdfTriples [0].Item3, (args [0] as GameObject).name), 2);
-										return;
-									}
+								Vector3 adjustedPosition = ((Vector3)args [1]);
+								Debug.Log (adjustedPosition.y - (themeBounds.center.y - themeBounds.min.y));
+								Debug.Log (Helper.GetObjectWorldSize(supportingSurface).max.y);
+								if (adjustedPosition.y - (themeBounds.center.y - themeBounds.min.y) - ((args [0] as GameObject).transform.position.y - themeBounds.center.y) < 
+									Helper.GetObjectWorldSize(supportingSurface).max.y) {	// if bottom of theme obj at this position is under the supporting surface's max
+									adjustedPosition = new Vector3 (adjustedPosition.x,
+									adjustedPosition.y + (themeBounds.center.y - themeBounds.min.y) + ((args [0] as GameObject).transform.position.y - themeBounds.center.y),
+									adjustedPosition.z);
 								}
+
+								eventManager.InsertEvent (string.Format ("put({0},{1})", (args [0] as GameObject).name, Helper.VectorToParsable (adjustedPosition)), 1);
+								eventManager.RemoveEvent (eventManager.events.Count - 1);
+								eventManager.InsertEvent (string.Format ("put({0},on({1}))", rdfTriples [0].Item3, (args [0] as GameObject).name), 2);
+								return;
 							}
 						}
 					}
-
-					//eventManager.PrintEvents ();
 				}
-		//	}
-		//}
+			}
+		}
+		else if (prep == "_touching") {
+			if (args [0] is GameObject) {
+				if ((args [0] as GameObject).GetComponent<Voxeme> () != null) {
+					List<string> manners = new List<string> () {"left",
+						"right",
+						"behind",
+						"in_front",
+						"on"
+					};
+
+					int selected = new System.Random ().Next (manners.Count);
+					eventManager.InsertEvent (string.Format ("put({0},{1}({2}))", (args [0] as GameObject).name, manners[selected], rdfTriples [0].Item3), 1);
+					eventManager.AbortEvent ();
+
+					if (args [args.Length - 1] is bool) {
+						if ((bool)args [args.Length - 1] == false) {
+							relOrientation = manners [selected];
+							OnPrepareLog (this, new ParamsEventArgs ("RelOrientation", relOrientation));
+						}
+					}
+					return;
+				}
+			}
+		}
 
 
 		if (agent != null) {
@@ -822,9 +896,6 @@ public class Predicates : MonoBehaviour {
 				(arg as GameObject).GetComponent<Rigging> ().ActivatePhysics(false);
 			}
 		}
-
-		Vector3 targetPosition = Vector3.zero;
-		Vector3 targetRotation = Vector3.zero;
 
 		Helper.PrintRDFTriples (rdfTriples);
 
@@ -1297,6 +1368,7 @@ public class Predicates : MonoBehaviour {
 			if (args [0] is GameObject) {
 				if (args [1] is Vector3) {
 					GameObject theme = args [0] as GameObject;	// get theme obj ("apple" in "put apple on plate")
+					GameObject dest = GameObject.Find (rdfTriples [0].Item3);	// get destination obj ("plate" in "put apple on plate")
 
 					Bounds themeBounds = Helper.GetObjectWorldSize (theme);	// bounds of theme obj
 
@@ -1328,6 +1400,10 @@ public class Predicates : MonoBehaviour {
 							voxComponent.targetPosition = targetPosition;
 						}
 					}
+
+					translocDir = targetPosition - theme.transform.position;
+					translocDist = Vector3.Magnitude(translocDir);
+					relOffset = targetPosition - dest.transform.position;
 				}
 			}
 		}
@@ -1362,11 +1438,37 @@ public class Predicates : MonoBehaviour {
 			}
 		}
 
+		// update evalOrig dict
+		string adjustedEval = "put(" + (args [0] as GameObject).name + "," + Helper.VectorToParsable (targetPosition) + ")";
+
+		if (!eventManager.evalOrig.ContainsKey (adjustedEval)) {
+			eventManager.evalOrig.Add (adjustedEval, eventManager.evalOrig [originalEval]);
+			eventManager.evalOrig.Remove (originalEval);
+		}
+
 		// add to events manager
 		if (args[args.Length-1] is bool) {
 			if ((bool)args[args.Length-1] == false) {
 				//eventManager.eventsStatus.Add ("put("+(args [0] as GameObject).name+","+Helper.VectorToParsable(targetPosition)+")", false);
 				eventManager.events[0] = "put("+(args [0] as GameObject).name+","+Helper.VectorToParsable(targetPosition)+")";
+
+				// record parameter values
+				OnPrepareLog (this, new ParamsEventArgs ("TranslocSpeed", (args [0] as GameObject).GetComponent<Voxeme>().moveSpeed.ToString()));
+
+				if (Vector3.Magnitude(translocDir) > 0.0f) {
+					OnPrepareLog (this, new ParamsEventArgs ("TranslocDir", Helper.VectorToParsable (translocDir)));
+					OnPrepareLog (this, new ParamsEventArgs ("RelOffset", Helper.VectorToParsable (relOffset)));
+				}
+					
+//				Debug.Log (eventManager.events [0]);
+//				Debug.Log (eventManager.evalOrig [eventManager.events [0]]);
+				//if (eventManager.evalOrig.ContainsKey (eventManager.events [0])) {
+					if ((Helper.GetTopPredicate(eventManager.lastParse) == Helper.GetTopPredicate(eventManager.events [0])) ||
+						(PredicateParameters.IsSpecificationOf(Helper.GetTopPredicate(eventManager.events [0]),
+						Helper.GetTopPredicate(eventManager.lastParse)))){
+						OnParamsCalculated (null, null);
+					}
+				//}
 			}
 		}
 
@@ -1530,6 +1632,11 @@ public class Predicates : MonoBehaviour {
 			if ((bool)args[args.Length-1] == false) {
 				eventManager.events[0] = "lift("+(args [0] as GameObject).name+","+Helper.VectorToParsable(targetPosition)+")";
 				Debug.Log (eventManager.events [0]);
+
+				// record parameter values
+				OnPrepareLog (this, new ParamsEventArgs ("TranslocSpeed", (args [0] as GameObject).GetComponent<Voxeme>().moveSpeed.ToString()));
+				OnPrepareLog (this, new ParamsEventArgs ("TranslocDir", Helper.VectorToParsable(targetPosition-(args [0] as GameObject).transform.position)));
+				OnParamsCalculated (null, null);
 			}
 		}
 
@@ -1617,6 +1724,11 @@ public class Predicates : MonoBehaviour {
 			if ((bool)args[args.Length-1] == false) {
 				eventManager.events[0] = "slide("+(args [0] as GameObject).name+","+Helper.VectorToParsable(targetPosition)+")";
 				Debug.Log (eventManager.events [0]);
+
+				// record parameter values
+				OnPrepareLog (this, new ParamsEventArgs ("TranslocSpeed", (args [0] as GameObject).GetComponent<Voxeme>().moveSpeed.ToString()));
+				OnPrepareLog (this, new ParamsEventArgs ("TranslocDir", Helper.VectorToParsable (targetPosition-(args [0] as GameObject).transform.position)));
+				OnParamsCalculated (null, null);
 			}
 		}
 
@@ -1874,6 +1986,9 @@ public class Predicates : MonoBehaviour {
 //							voxComponent.staticStateRotations [rigidbody.name] = rigidbody.rotation.eulerAngles;
 //						}
 //					}
+					// record parameter values
+					OnPrepareLog (this, new ParamsEventArgs ("TranslocDir", Helper.VectorToParsable (offset)));
+					OnParamsCalculated (null, null);
 					return;
 				}
 				else {
@@ -1932,11 +2047,11 @@ public class Predicates : MonoBehaviour {
 
 				//Debug.Log (worldRotAxis);
 
-				while (degrees < -180.0f) {
-					targetRotation = Quaternion.AngleAxis (-180.0f, worldRotAxis) * targetRotation;
+				while (degrees < -90.0f) {
+					targetRotation = Quaternion.AngleAxis (-80.0f, worldRotAxis) * targetRotation;
 					//Debug.Log (targetRotation.eulerAngles);
 					voxComponent.interTargetRotations.Enqueue (targetRotation.eulerAngles);
-					degrees += 180.0f;
+					degrees += 90.0f;
 				}
 
 				targetRotation = Quaternion.AngleAxis (degrees, worldRotAxis) * targetRotation;
@@ -1995,9 +2110,11 @@ public class Predicates : MonoBehaviour {
 		System.Random random = new System.Random ();
 
 		Vector3 targetRotation = Vector3.zero;
-		Vector3 axis = Vector3.zero;
+		Vector3 objAxis = Vector3.zero;
+		Vector3 worldAxis = Vector3.zero;
 		Vector3 targetDir = Vector3.zero;
-		Vector3 rotationAxis = Vector3.zero;
+		Vector3 objRotAxis = Vector3.zero;
+		Vector3 worldRotAxis = Vector3.zero;
 
 		Helper.PrintRDFTriples (rdfTriples);
 
@@ -2028,16 +2145,18 @@ public class Predicates : MonoBehaviour {
 						}
 					}
 
-					axis = rotatSymAxes [random.Next (rotatSymAxes.Count)];
-					targetDir = -axis;
+					objAxis = rotatSymAxes [random.Next (rotatSymAxes.Count)];
+					worldAxis = objAxis;
+					targetDir = -worldAxis;
 
 					List<Vector3> normalAxes = new List<Vector3> ();
 					foreach (Vector3 vec in Constants.Axes.Values) {
-						if (vec != axis) {
+						if (vec != worldAxis) {
 							normalAxes.Add (vec);
 						}
 					}
-					rotationAxis = normalAxes [random.Next (normalAxes.Count)];
+					objRotAxis = normalAxes [random.Next (normalAxes.Count)];
+					worldRotAxis = objRotAxis;
 				}
 				else {
 					// flip on edge
@@ -2055,11 +2174,13 @@ public class Predicates : MonoBehaviour {
 						}
 					}
 
-					axis = obj.transform.rotation * rotatSymAxes [random.Next (rotatSymAxes.Count)];
+					objAxis = rotatSymAxes [random.Next (rotatSymAxes.Count)];
+					worldAxis = obj.transform.rotation * objAxis;
 
 					targetDir = (obj.transform.position-(Vector3)args[1]).normalized;
 
-					rotationAxis = Vector3.Cross (axis, targetDir);
+					objRotAxis = Vector3.Cross (objAxis, targetDir);
+					worldRotAxis = Vector3.Cross (worldAxis, targetDir);
 				}
 			}
 			else {
@@ -2079,16 +2200,18 @@ public class Predicates : MonoBehaviour {
 					}
 				}
 
-				axis = rotatSymAxes [random.Next (rotatSymAxes.Count)];
-				targetDir = -axis;
+				objAxis = rotatSymAxes [random.Next (rotatSymAxes.Count)];
+				worldAxis = objAxis;
+				targetDir = -worldAxis;
 
 				List<Vector3> normalAxes = new List<Vector3> ();
 				foreach (Vector3 vec in Constants.Axes.Values) {
-					if (vec != axis) {
+					if (vec != worldAxis) {
 						normalAxes.Add (vec);
 					}
 				}
-				rotationAxis = normalAxes [random.Next (normalAxes.Count)];
+				objRotAxis = normalAxes [random.Next (normalAxes.Count)];
+				worldRotAxis = objRotAxis;
 			}
 
 			if (voxComponent != null) {
@@ -2107,10 +2230,21 @@ public class Predicates : MonoBehaviour {
 				//eventManager.eventsStatus.Add ("flip("+(args [0] as GameObject).name+","+Helper.VectorToParsable(targetRotation)+")", false);
 				//eventManager.events[0] = "flip("+(args [0] as GameObject).name+","+Helper.VectorToParsable(targetRotation)+")";
 				eventManager.events [0] = string.Format ("turn({0},{1},{2},{3})", (args [0] as GameObject).name,
-					Helper.VectorToParsable (axis),
+					Helper.VectorToParsable (worldAxis),
 					Helper.VectorToParsable ((args [0] as GameObject).transform.rotation * targetDir),
-					Helper.VectorToParsable ((args [0] as GameObject).transform.rotation * rotationAxis));
+					Helper.VectorToParsable ((args [0] as GameObject).transform.rotation * worldRotAxis));
 					//flip("+(args [0] as GameObject).name+","+Helper.VectorToParsable(targetRotation)+")";
+
+				// record parameter values
+				Dictionary<string,string> paramValues = PredicateParameters.InitPredicateParametersCollection();
+				Debug.Log (Helper.VectorToParsable (objAxis));
+				Debug.Log (Helper.VectorToParsable (objRotAxis));
+				OnPrepareLog (this, new ParamsEventArgs ("SymmetryAxis", Constants.Axes.FirstOrDefault (a => 
+					(Helper.CloseEnough(objAxis,a.Value) || Helper.CloseEnough(-objAxis,a.Value))).Key.ToString()));
+				OnPrepareLog (this, new ParamsEventArgs ("RotAxis", Constants.Axes.FirstOrDefault (a => 
+					(Helper.CloseEnough(objRotAxis,a.Value) || Helper.CloseEnough(-objRotAxis,a.Value))).Key.ToString()));
+				OnParamsCalculated (null, null);
+				return;
 			}
 		}
 
@@ -2121,12 +2255,12 @@ public class Predicates : MonoBehaviour {
 	// OUT: none
 	public void TURN(object[] args)
 	{
-		// override physics rigging
-//		foreach (object arg in args) {
-//			if (arg is GameObject) {
-//				(arg as GameObject).GetComponent<Rigging> ().ActivatePhysics(false);
-//			}
-//		}
+		string originalEval = eventManager.events [0];
+
+		Vector3 targetRotation = Vector3.zero;
+		float sign = 1.0f;
+		float angle = 0.0f;
+		string rotAxis = "";
 
 		// look for agent
 		GameObject agent = GameObject.FindGameObjectWithTag("Agent");
@@ -2200,8 +2334,6 @@ public class Predicates : MonoBehaviour {
 			}
 		}
 
-		Vector3 targetRotation = Vector3.zero;
-
 		Helper.PrintRDFTriples (rdfTriples);
 
 		string prep = rdfTriples.Count > 0 ? rdfTriples [0].Item2.Replace ("turn", "") : "";
@@ -2229,14 +2361,14 @@ public class Predicates : MonoBehaviour {
 
 						// sign = direction of rotation = cross product of (local space) axis being tracked and (local space) target axis
 						//float sign = Mathf.Sign (Vector3.Cross (obj.transform.rotation * (Vector3)args [1], Quaternion.Inverse(obj.transform.rotation) * (Vector3)args [2]).y);
-						float sign = 1.0f;
+
 
 						//sign = Mathf.Sign (Vector3.Cross (obj.transform.rotation * (Vector3)args [1], (Vector3)args [2]).y);
 						sign = Mathf.Sign (Vector3.Dot(Vector3.Cross (obj.transform.rotation * (Vector3)args [1], (Vector3)args [2]), (Vector3)args[3]));
 
 						Debug.Log (Vector3.Dot(Vector3.Cross (obj.transform.rotation * (Vector3)args [1], (Vector3)args [2]), (Vector3)args[3]));
 						Debug.Log (sign * (Vector3)args [2]);
-						float angle = Vector3.Angle (obj.transform.rotation * (Vector3)args [1], (Vector3)args [2]);
+						angle = Vector3.Angle (obj.transform.rotation * (Vector3)args [1], (Vector3)args [2]);
 						Debug.Log (angle);
 						Debug.Log ((Quaternion.AngleAxis (angle, (Vector3)args [3]).eulerAngles));
 						Debug.Log ((Quaternion.Inverse(obj.transform.rotation) * Quaternion.AngleAxis (angle, (Vector3)args [3])).eulerAngles);
@@ -2246,6 +2378,7 @@ public class Predicates : MonoBehaviour {
 
 						// rotation from object axis [1] to world axis [2] around world axis [3]
 						targetRotation = (Quaternion.AngleAxis (sign * angle, (Vector3)args [3]) * obj.transform.rotation).eulerAngles;
+						rotAxis = Constants.Axes.FirstOrDefault (a => a.Value == (Vector3)args [3]).Key;
 						Debug.Log (targetRotation);
 					}
 					else {
@@ -2255,11 +2388,13 @@ public class Predicates : MonoBehaviour {
 
 						// rotation from object axis[1] to world axis [2]
 						targetRotation = Quaternion.FromToRotation((Vector3)args [1], (Vector3)args [2]).eulerAngles;
+						angle = Vector3.Angle ((Vector3)args [1], (Vector3)args [2]);
 						//targetRotation = Quaternion.LookRotation(obj.transform.rotation * (Vector3)args [1],(Vector3)args [2]).eulerAngles;
 					}
 				}
 				else {
 					targetRotation = (obj.transform.rotation * UnityEngine.Random.rotation).eulerAngles;
+					angle = Quaternion.Angle(transform.rotation,Quaternion.Euler(targetRotation));
 				}
 
 				voxComponent.targetRotation = targetRotation;
@@ -2286,6 +2421,28 @@ public class Predicates : MonoBehaviour {
 						Helper.VectorToParsable ((args [0] as GameObject).transform.rotation * Quaternion.Euler(targetRotation) * Constants.yAxis) + ")";
 				}
 				Debug.Log (eventManager.events [0]);
+
+				// record parameter values
+				OnPrepareLog (this, new ParamsEventArgs ("RotSpeed", (args [0] as GameObject).GetComponent<Voxeme>().turnSpeed.ToString()));
+
+				if (angle > 0.0f) {
+					OnPrepareLog (this, new ParamsEventArgs ("RotAngle", angle.ToString()));
+					OnPrepareLog (this, new ParamsEventArgs ("RotDir", sign.ToString ()));
+				}
+
+				if (rotAxis != string.Empty) {
+					OnPrepareLog (this, new ParamsEventArgs ("RotAxis", rotAxis));
+				}
+
+				Debug.Log (eventManager.events [0]);
+
+				//if (eventManager.evalOrig.ContainsKey (eventManager.events [0])) {
+					if ((Helper.GetTopPredicate(eventManager.lastParse) == Helper.GetTopPredicate(eventManager.events [0])) ||
+						(PredicateParameters.IsSpecificationOf(Helper.GetTopPredicate(eventManager.events [0]),
+						Helper.GetTopPredicate(eventManager.lastParse)))){
+						OnParamsCalculated (null, null);
+					}
+				//}
 			}
 		}
 
@@ -2337,13 +2494,16 @@ public class Predicates : MonoBehaviour {
 		Quaternion targetRotation = Quaternion.identity;
 		List<Vector3> orientations = new List<Vector3> ();
 		Vector3 trackAxis = Vector3.zero;
-		Vector3 rotAxis = Vector3.zero;
+		Vector3 worldRotAxis = Vector3.zero;
+		Vector3 objRotAxis = Vector3.zero;
+		float angle = 0.0f;
+		int sign = 0;
 
 		if (args [0] is GameObject) {
 			GameObject obj = (args [0] as GameObject);
 			Voxeme voxComponent = obj.GetComponent<Voxeme> ();
 
-			// find axis perpendicular to Y
+			// find object axis perpendicular to world Y
 			List<float> dotProducts = new List<float>();
 
 			foreach (Vector3 testAxis in Constants.Axes.Values) {
@@ -2364,40 +2524,61 @@ public class Predicates : MonoBehaviour {
 			}
 
 			if (parallel == 0) {		// x
-				rotAxis = obj.transform.rotation * Constants.xAxis;
+				objRotAxis = Constants.xAxis;
+				worldRotAxis = obj.transform.rotation * Constants.xAxis;
 			}
 			else if (parallel == 1) {	// y
-				rotAxis = obj.transform.rotation * Constants.yAxis;
+				objRotAxis = Constants.yAxis;
+				worldRotAxis = obj.transform.rotation * Constants.yAxis;
 			}
 			else if (parallel == 2) {	// z
-				rotAxis = obj.transform.rotation * Constants.zAxis;
+				objRotAxis = Constants.zAxis;
+				worldRotAxis = obj.transform.rotation * Constants.zAxis;
 			}
 
 			Debug.Log (trackAxis);
-			Debug.Log (rotAxis);
+			Debug.Log (worldRotAxis);
 			//Debug.Break ();
 
 			orientations.Add (obj.transform.rotation * trackAxis);
 
-			float degrees = 180.0f + UnityEngine.Random.rotation.eulerAngles.y;
+			sign = RandomHelper.RandomSign ();
+			angle = sign * (180.0f + UnityEngine.Random.rotation.eulerAngles.y);
+			float degrees = angle;
 
 			//targetRotation *= obj.transform.rotation;
 
-			while (degrees > 90.0f) {
-				//targetRotation = targetRotation * Quaternion.AngleAxis (90.0f, Constants.yAxis);
-				orientations.Add (Quaternion.AngleAxis (90.0f, rotAxis) * orientations[orientations.Count-1]);
-				degrees -= 90.0f;
+			if (sign > 0) {
+				while (degrees > 90.0f) {
+					//targetRotation = targetRotation * Quaternion.AngleAxis (90.0f, Constants.yAxis);
+					orientations.Add (Quaternion.AngleAxis (90.0f, worldRotAxis) * orientations [orientations.Count - 1]);
+					degrees -= 90.0f;
+				}
+			}
+			else {
+				while (degrees < -90.0f) {
+					//targetRotation = targetRotation * Quaternion.AngleAxis (90.0f, Constants.yAxis);
+					orientations.Add (Quaternion.AngleAxis (-90.0f, worldRotAxis) * orientations [orientations.Count - 1]);
+					degrees += 90.0f;
+				}
 			}
 
 			//targetRotation = targetRotation * Quaternion.AngleAxis(degrees, Constants.yAxis);
-			orientations.Add (Quaternion.AngleAxis (degrees, rotAxis) * orientations[orientations.Count-1]);
+			orientations.Add (Quaternion.AngleAxis (degrees, worldRotAxis) * orientations[orientations.Count-1]);
 		}
 
 		if (args [args.Length - 1] is bool) {
 			if ((bool)args [args.Length - 1] == false) {
 				for (int i = 0; i < orientations.Count; i++) {
 					eventManager.InsertEvent (string.Format ("turn({0},{1},{2},{3})", (args [0] as GameObject).name, 
-						Helper.VectorToParsable(trackAxis), Helper.VectorToParsable(orientations[i]), Helper.VectorToParsable(rotAxis)), 1 + i);
+						Helper.VectorToParsable(trackAxis), Helper.VectorToParsable(orientations[i]), Helper.VectorToParsable(worldRotAxis)), 1 + i);
+
+					// record parameter values
+					OnPrepareLog (this, new ParamsEventArgs ("RotSpeed", (args [0] as GameObject).GetComponent<Voxeme>().turnSpeed.ToString()));
+					OnPrepareLog (this, new ParamsEventArgs ("RotAxis", Constants.Axes.FirstOrDefault (a => a.Value == objRotAxis).Key));
+					OnPrepareLog (this, new ParamsEventArgs ("RotAngle", angle.ToString()));
+					OnPrepareLog (this, new ParamsEventArgs ("RotDir", (sign > 0) ? "+" : "-"));
+					OnParamsCalculated (null, null);
 				}
 				//Debug.Break ();
 			}
@@ -2510,6 +2691,11 @@ public class Predicates : MonoBehaviour {
 						eventManager.InsertEvent (string.Format ("put({0},on({1}))", objs [i + 1].name, objs [i].name), 1 + i);
 					}
 					//eventManager.RemoveEvent (i);
+
+					// record parameter values
+					string[] placementOrder = objs.Select (o => o.name).ToArray ();
+					OnPrepareLog (this, new ParamsEventArgs ("PlacementOrder", string.Join(",",placementOrder)));
+					OnParamsCalculated (null, null);
 				}
 			}
 		}
@@ -2786,6 +2972,13 @@ public class Predicates : MonoBehaviour {
 					eventManager.InsertEvent (string.Format ("put({0},{1})", (args [0] as GameObject).name,
 						Helper.VectorToParsable (targetPosition)), 2);
 					eventManager.RemoveEvent (eventManager.events.Count - 1);
+					if (args[args.Length-1] is bool) {
+						if ((bool)args[args.Length-1] == false) {
+							// record parameter values
+							OnPrepareLog (this, new ParamsEventArgs ("RotAngle", leanAngle.ToString()));
+							OnParamsCalculated (null, null);
+						}
+					}
 					return;
 				}
 			}
@@ -3064,10 +3257,16 @@ public class Predicates : MonoBehaviour {
 		else {
 		}
 
-		// add to events manager
 		if (args[args.Length-1] is bool) {
 			if ((bool)args[args.Length-1] == false) {
-				eventManager.events[0] = "put("+(args [0] as GameObject).name+","+Helper.VectorToParsable(targetPosition)+")";
+				// record parameter values
+//				Dictionary<string,string> paramValues = PredicateParameters.InitPredicateParametersCollection();
+//				paramValues ["TiltAngle"] = leanAngle.ToString();
+//				paramValues ["TranslocSpeed"] = (args [0] as GameObject).GetComponent<Voxeme> ().moveSpeed.ToString();
+//				OnParamsCalculated (this, new ParamsEventArgs (paramValues));
+//
+//				// add to events manager
+//				eventManager.events[0] = "put("+(args [0] as GameObject).name+","+Helper.VectorToParsable(targetPosition)+")";
 				//Debug.Log (eventManager.events [0]);
 			}
 		}
@@ -3338,12 +3537,18 @@ public class Predicates : MonoBehaviour {
 		// add to events manager
 		if (args[args.Length-1] is bool) {
 			if ((bool)args[args.Length-1] == false) {
+				GameObject movingComponent = null;
+				float motionSpeed = 0.0f;
 				if (!hasInteriorComponent) {
 					if (lids.Count > 0) {
 						eventManager.InsertEvent (string.Format ("put({0},on({1}))", lids [0].name, (args [0] as GameObject).name), 1);
+						movingComponent = lids [0];
+						motionSpeed = movingComponent.GetComponent<Voxeme> ().moveSpeed;
 					} 
 					else {
 						eventManager.InsertEvent (string.Format ("flip({0})", (args [0] as GameObject).name), 1);
+						movingComponent = (args [0] as GameObject);
+						motionSpeed = movingComponent.GetComponent<Voxeme> ().turnSpeed;
 					}
 				} 
 				else {
@@ -3351,7 +3556,13 @@ public class Predicates : MonoBehaviour {
 						Helper.VectorToParsable(Constants.xAxis),
 						Helper.VectorToParsable((args [0] as GameObject).transform.rotation * Constants.xAxis),
 						Helper.VectorToParsable((args [0] as GameObject).transform.rotation * Constants.yAxis)), 1);
+					movingComponent = cover;
+					motionSpeed = movingComponent.GetComponent<Voxeme> ().turnSpeed;
 				}
+
+				// record parameter values
+				OnPrepareLog (this, new ParamsEventArgs ("MotionSpeed", motionSpeed.ToString()));
+				OnParamsCalculated (null, null);
 			}
 		}
 
@@ -3513,12 +3724,23 @@ public class Predicates : MonoBehaviour {
 		// add to events manager
 		if (args[args.Length-1] is bool) {
 			if ((bool)args[args.Length-1] == false) {
+				GameObject movingComponent = null;
+				float motionSpeed = 0.0f;
+				Vector3 translocDir = Vector3.zero;
+				float translocDist = 0.0f;
+				float rotAngle = 0.0f;
 				if (!hasInteriorComponent) {
 					if (lid != null) {
 						eventManager.InsertEvent (string.Format ("put({0},{1})", lid.name, Helper.VectorToParsable(removeLocation)), 1);
+						movingComponent = lid;
+						motionSpeed = movingComponent.GetComponent<Voxeme> ().moveSpeed;
+						translocDir = removeLocation - movingComponent.transform.position;
 					} 
 					else {
 						eventManager.InsertEvent (string.Format ("flip({0})", (args [0] as GameObject).name), 1);
+						movingComponent = (args [0] as GameObject);
+						motionSpeed = movingComponent.GetComponent<Voxeme> ().turnSpeed;
+						rotAngle = 180.0f;
 					}
 				} 
 				else {
@@ -3526,7 +3748,22 @@ public class Predicates : MonoBehaviour {
 						Helper.VectorToParsable(Constants.xAxis),
 						Helper.VectorToParsable(targetRotation * Constants.xAxis),
 						Helper.VectorToParsable((args [0] as GameObject).transform.rotation * Constants.yAxis)), 1);
+					movingComponent = cover;
+					motionSpeed = movingComponent.GetComponent<Voxeme> ().turnSpeed;
+					rotAngle = Quaternion.Angle(movingComponent.transform.rotation,targetRotation);
 				}
+
+				// record parameter values						
+				OnPrepareLog (this, new ParamsEventArgs ("MotionSpeed", motionSpeed.ToString()));
+
+				if (Vector3.Magnitude(translocDir) > 0.0f) {
+					OnPrepareLog (this, new ParamsEventArgs ("TranslocDir", Helper.VectorToParsable(translocDir)));
+				}
+
+				if (rotAngle > 0.0f) {
+					OnPrepareLog (this, new ParamsEventArgs ("RotAngle", rotAngle.ToString()));
+				}
+				OnParamsCalculated (null, null);
 			}
 		}
 
@@ -3558,6 +3795,7 @@ public class Predicates : MonoBehaviour {
 	{	
 		foreach (object obj in args) {
 			if (obj is GameObject) {
+				//Debug.Log (obj);
 				objSelector.disabledObjects.Remove((obj as GameObject));
 				(obj as GameObject).SetActive (true);
 //				foreach (Renderer renderer in (obj as GameObject).GetComponentsInChildren<Renderer>()) {
@@ -3574,6 +3812,7 @@ public class Predicates : MonoBehaviour {
 	// OUT: none
 	public void DISABLE(object[] args)
 	{
+		//Debug.Break ();
 		foreach (object obj in args) {
 			if (obj is GameObject) {
 				objSelector.disabledObjects.Add((obj as GameObject));

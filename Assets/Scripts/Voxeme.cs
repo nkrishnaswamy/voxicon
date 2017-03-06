@@ -63,6 +63,10 @@ public class Voxeme : MonoBehaviour {
 	public Dictionary<GameObject,Vector3> parentToChildPositionOffset;
 	public Dictionary<GameObject,Quaternion> parentToChildRotationOffset;
 
+	public Vector3 startPosition;
+	public Vector3 startRotation;
+	public Vector3 startScale;
+
 	// Use this for initialization
 	void Start () {
 		// load in VoxML knowledge
@@ -76,11 +80,15 @@ public class Voxeme : MonoBehaviour {
 
 		// get movement blocking
 		minYBound = Helper.GetObjectWorldSize(gameObject).min.y;
-		Debug.Log (minYBound);
+		//Debug.Log (minYBound);
 
 		// get rigging components
 		rigging = gameObject.GetComponent<Rigging> ();
 		rigging.rigidbodies = gameObject.GetComponentsInChildren<Rigidbody> ();
+
+		startPosition = transform.position;
+		startRotation = transform.eulerAngles;
+		startScale = transform.localScale;
 
 		targetPosition = transform.position;
 		targetRotation = transform.eulerAngles;
@@ -298,7 +306,7 @@ public class Voxeme : MonoBehaviour {
 										//Debug.Break ();
 									}
 									else {	// if the object under this object is not upright
-										Debug.Break ();
+										//Debug.Break ();
 										minYBound = Helper.GetObjectWorldSize (supportingSurface).max.y;
 //								Debug.Log (minYBound);
 										//Debug.Log (minYBound);
@@ -390,11 +398,24 @@ public class Voxeme : MonoBehaviour {
 
 	}
 
-	void LateUpdate () {
-		//if (resolveDiscrepancies) {
-			//Debug.Log ("Voxeme.LateUpdate(): " + Time.time);
-			//PhysicsHelper.ResolvePhysicsDiscepancies (gameObject);
-		//}
+	public void Reset() {
+		if (gameObject.transform.parent != null) {
+			GameObject parent = gameObject.transform.parent.gameObject;
+			Voxeme parentVox = Helper.GetMostImmediateParentVoxeme (parent).GetComponent<Voxeme> ();
+
+			// if this voxeme is not (intentionally) a subcomponent of another voxeme object
+			if (!(parentVox.opVox.Type.Components.Select (i => i.Item2).ToList ()).Contains (gameObject)) {
+				RiggingHelper.UnRig (gameObject, gameObject.transform.parent.gameObject);
+			}
+		}
+
+		transform.position = startPosition;
+		transform.eulerAngles = startRotation;
+		transform.localScale = startScale;
+
+		targetPosition = startPosition;
+		targetRotation = startRotation;
+		targetScale = startScale;
 	}
 
 	Vector3 MoveToward(Vector3 target) {

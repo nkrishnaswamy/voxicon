@@ -1,14 +1,19 @@
 ﻿using UnityEngine;
+using UnityEngine.SceneManagement;
 using System.Collections;
+using System.Collections.Generic;
 
 using Global;
 
 public class VoxemeInit : MonoBehaviour {
+	Predicates preds;
 
 	// Use this for initialization
 	void Start () {
 		ObjectSelector objSelector = GameObject.Find ("BlocksWorld").GetComponent<ObjectSelector> ();
 		Macros macros = GameObject.Find ("BehaviorController").GetComponent<Macros> ();
+
+		preds = GameObject.Find ("BehaviorController").GetComponent<Predicates> ();
 
 		/* MAKE GLOBAL OBJECT RUNTIME ALTERATIONS */
 
@@ -141,8 +146,9 @@ public class VoxemeInit : MonoBehaviour {
 				}
 			}
 		}
-			
+
 		macros.PopulateMacros ();
+		objSelector.InitDisabledObjects ();
 	}
 	
 	// Update is called once per frame

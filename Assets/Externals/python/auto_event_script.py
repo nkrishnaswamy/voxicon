@@ -1,14 +1,14 @@
 import os
+import sentence_list
 
 def send_next_event_to_port(index, port):
-    sentence_list = ["put the apple on the plate",
-                     "put the plate on the cup"]
+    sentences = sentence_list.sentences
                      
     i = int(index)
-    os.system('''echo "%s" | nc -w 0 localhost %s''' % (sentence_list[i], port))
+    os.system('''echo "%s" | nc -w 0 localhost %s''' % (sentences[i], port))
     i += 1
     
-    if (i >= len(sentence_list)):
+    if (i >= len(sentences)):
         i = -1
 
     return str(i);

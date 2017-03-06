@@ -9,13 +9,16 @@ public class ObjectSelector : MonoBehaviour {
 	public List<Voxeme> allVoxemes = new List<Voxeme> ();
 
 	public List<GameObject> selectedObjects = new List<GameObject>();
+	//public List<GameObject> toDisable = new List<GameObject> ();
 	public List<GameObject> disabledObjects = new List<GameObject>();
 	
 	VoxemeInspector inspector;
+	RelationTracker relationTracker;
 	
 	// Use this for initialization
 	void Start () {
 		inspector = gameObject.GetComponent ("VoxemeInspector") as VoxemeInspector;
+		relationTracker = GameObject.Find ("BehaviorController").GetComponent<RelationTracker> ();
 	}
 	
 	// Update is called once per frame
@@ -71,6 +74,21 @@ public class ObjectSelector : MonoBehaviour {
 					inspector.InspectorPosition = new Vector2 (Input.mousePosition.x, Screen.height - Input.mousePosition.y);
 				}
 			}
+		}
+	}
+
+	public void ResetScene() {
+		relationTracker.relations.Clear ();
+		PhysicsHelper.ResolveAllPhysicsDiscepancies (false);
+		foreach (Voxeme voxeme in allVoxemes) {
+			voxeme.Reset ();
+		}
+	}
+
+	public void InitDisabledObjects() {
+		for (int i = 0; i < disabledObjects.Count; i++) {
+			disabledObjects[i] = Helper.GetMostImmediateParentVoxeme (disabledObjects [i]);
+			disabledObjects[i].SetActive (false);
 		}
 	}
 }

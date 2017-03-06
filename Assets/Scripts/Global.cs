@@ -275,7 +275,10 @@ namespace Global {
 					}
 				}
 			}
-			triple.Item2 = triple.Item2.Remove (triple.Item2.Length - 1, 1);
+
+			if (triple.Item2.Length > 0) {
+				triple.Item2 = triple.Item2.Remove (triple.Item2.Length - 1, 1);
+			}
 			//Debug.Log (triple.Item1 + " " + triple.Item2 + " " + triple.Item3);
 			return triple;
 		}
@@ -338,7 +341,7 @@ namespace Global {
 			return comparand.Except (baseline).ToList ();
 		}
 
-		public static byte[] SerializeObject(object obj) {
+		public static byte[] SerializeObjectToBinary(object obj) {
 			BinaryFormatter binFormatter = new BinaryFormatter ();
 			MemoryStream mStream = new MemoryStream ();
 			binFormatter.Serialize (mStream, obj);
@@ -347,7 +350,7 @@ namespace Global {
 			return mStream.ToArray();
 		}
 
-		public static T DeserializeObject<T>(byte[] bytes) {
+		public static T DeserializeObjectFromBinary<T>(byte[] bytes) {
 			MemoryStream mStream = new MemoryStream();
 			BinaryFormatter binFormatter = new BinaryFormatter();
 
@@ -356,6 +359,14 @@ namespace Global {
 			mStream.Position = 0;
 
 			return (T)binFormatter.Deserialize(mStream);
+		}
+
+		public static string SerializeObjectToJSON(object obj) {
+			string json = JsonUtility.ToJson (obj);
+//			Debug.Log (json);
+//			Debug.Break ();
+
+			return json;
 		}
 
 		// VECTOR METHODS
@@ -921,27 +932,30 @@ namespace Global {
 			}
 
 			// TODO: Abstract away
-			foreach (Voxeme child in voxComponent.children) {
-				if (child.isActiveAndEnabled) {
-					if (child.gameObject != voxComponent.gameObject) {
+			if (voxComponent != null) {
+				if (voxComponent.children != null) {
+					foreach (Voxeme child in voxComponent.children) {
+						if (child.isActiveAndEnabled) {
+							if (child.gameObject != voxComponent.gameObject) {
 //						ResolvePhysicsPositionDiscepancies (child.gameObject);
 //						ResolvePhysicsRotationDiscepancies (child.gameObject);
 
-						if (macroEventSatisfied) {
-							child.transform.localRotation = voxComponent.parentToChildRotationOffset [child.gameObject];
-							//voxComponent.parentToChildRotationOffset [child.gameObject] = child.transform.localRotation;
-							child.transform.rotation = voxComponent.gameObject.transform.rotation * child.transform.localRotation;
+								if (macroEventSatisfied) {
+									child.transform.localRotation = voxComponent.parentToChildRotationOffset [child.gameObject];
+									//voxComponent.parentToChildRotationOffset [child.gameObject] = child.transform.localRotation;
+									child.transform.rotation = voxComponent.gameObject.transform.rotation * child.transform.localRotation;
+								} else {
+									voxComponent.parentToChildRotationOffset [child.gameObject] = child.transform.localRotation;
+									child.targetRotation = child.transform.rotation.eulerAngles;
+								}
+								child.transform.localPosition = Helper.RotatePointAroundPivot (voxComponent.parentToChildPositionOffset [child.gameObject],
+									Vector3.zero, voxComponent.gameObject.transform.eulerAngles);
+								//child.transform.localPosition = Helper.RotatePointAroundPivot (child.transform.localEulerAngles,
+								//	Vector3.zero, voxComponent.gameObject.transform.eulerAngles);
+								child.transform.position = voxComponent.gameObject.transform.position + child.transform.localPosition;
+								child.targetPosition = child.transform.position;
+							}
 						}
-						else {
-							voxComponent.parentToChildRotationOffset [child.gameObject] = child.transform.localRotation;
-							child.targetRotation = child.transform.rotation.eulerAngles;
-						}
-						child.transform.localPosition = Helper.RotatePointAroundPivot (voxComponent.parentToChildPositionOffset [child.gameObject],
-							Vector3.zero, voxComponent.gameObject.transform.eulerAngles);
-						//child.transform.localPosition = Helper.RotatePointAroundPivot (child.transform.localEulerAngles,
-						//	Vector3.zero, voxComponent.gameObject.transform.eulerAngles);
-						child.transform.position = voxComponent.gameObject.transform.position + child.transform.localPosition;
-						child.targetPosition = child.transform.position;
 					}
 				}
 			}
@@ -1003,14 +1017,18 @@ namespace Global {
 			}
 
 			// TODO: Abstract away
-			foreach (Voxeme child in voxComponent.children) {
-				if (child.isActiveAndEnabled) {
-					if (child.gameObject != voxComponent.gameObject) {
-//						ResolvePhysicsPositionDiscepancies (child.gameObject);
-//						ResolvePhysicsRotationDiscepancies (child.gameObject);
-						//Debug.Log ("Moving child: " + gameObject.name);
-						child.transform.localPosition = voxComponent.parentToChildPositionOffset [child.gameObject];
-						child.targetPosition = child.transform.position;
+			if (voxComponent != null) {
+				if (voxComponent.children != null) {
+					foreach (Voxeme child in voxComponent.children) {
+						if (child.isActiveAndEnabled) {
+							if (child.gameObject != voxComponent.gameObject) {
+								//						ResolvePhysicsPositionDiscepancies (child.gameObject);
+								//						ResolvePhysicsRotationDiscepancies (child.gameObject);
+								//Debug.Log ("Moving child: " + gameObject.name);
+								child.transform.localPosition = voxComponent.parentToChildPositionOffset [child.gameObject];
+								child.targetPosition = child.transform.position;
+							}
+						}
 					}
 				}
 			}
@@ -1046,6 +1064,95 @@ namespace Global {
 
 			return concavityMinY;
 			 */
+		}
+	}
+
+	/// <summary>
+	/// RandomHelper class
+	/// </summary>
+	public static class RandomHelper {
+		public enum RangeFlags
+		{
+			MinInclusive = 1,
+			MaxInclusive = (1 << 1)
+		}
+
+		public static int RandomSign() {
+			return (UnityEngine.Random.Range (0, 2) * 2) - 1;
+		}
+
+		public static Vector3 RandomAxis() {
+			System.Random random = new System.Random ();
+			return Constants.Axes[Constants.Axes.Keys.ToList()[random.Next(0,3)]];
+		}
+
+		public static int RandomInt(int min, int max, int flags = (int)RangeFlags.MinInclusive) {
+			int rangeMin = min;
+			int rangeMax = max;
+
+			if ((flags & (int)RangeFlags.MinInclusive) == 0) {
+				rangeMin = min + 1;
+			}
+
+			if (((flags & (int)RangeFlags.MaxInclusive) >> 1) == 1) {
+				rangeMax = max + 1;
+			}
+
+			return UnityEngine.Random.Range(min, max);
+		}
+
+		public static float RandomFloat(float min, float max, int flags = (int)RangeFlags.MinInclusive) {
+			float rangeMin = min;
+			float rangeMax = max;
+
+			if ((flags & (int)RangeFlags.MinInclusive) == 0) {
+				rangeMin = min + Constants.EPSILON;
+			}
+
+			if (((flags & (int)RangeFlags.MaxInclusive) >> 1) == 1) {
+				rangeMax = max + Constants.EPSILON;
+			}
+
+			return UnityEngine.Random.Range (min, max);
+		}
+
+		public static GameObject RandomVoxeme() {
+			List<Voxeme> allVoxemes = GameObject.Find ("BlocksWorld").GetComponent<ObjectSelector> ().allVoxemes.ToList();
+
+			Voxeme voxeme = allVoxemes [RandomInt (0, allVoxemes.Count, (int)RangeFlags.MinInclusive)];
+			while (Helper.GetMostImmediateParentVoxeme(voxeme.gameObject).gameObject.transform.parent != null) {
+				voxeme = allVoxemes [RandomInt (0, allVoxemes.Count, (int)RangeFlags.MinInclusive)];
+			}
+
+			return voxeme.gameObject;
+		}
+
+		public static GameObject RandomVoxeme(GameObject[] exclude) {
+			List<Voxeme> allVoxemes = GameObject.Find ("BlocksWorld").GetComponent<ObjectSelector> ().allVoxemes.ToList();
+
+			Voxeme voxeme = allVoxemes [RandomInt (0, allVoxemes.Count, (int)RangeFlags.MinInclusive)];
+			while ((Helper.GetMostImmediateParentVoxeme(voxeme.gameObject).gameObject.transform.parent != null) ||
+				(exclude.ToList().Contains<GameObject>(voxeme.gameObject))) {
+				voxeme = allVoxemes [RandomInt (0, allVoxemes.Count, (int)RangeFlags.MinInclusive)];
+			}
+
+			return voxeme.gameObject;
+		}
+
+		public static GameObject RandomVoxeme(List<GameObject> fromList) {
+			Voxeme voxeme = fromList [RandomInt (0, fromList.Count, (int)RangeFlags.MinInclusive)].GetComponent<Voxeme>();
+
+			return voxeme.gameObject;
+		}
+
+		public static GameObject RandomVoxeme(List<GameObject> fromList, GameObject[] exclude) {
+			Voxeme voxeme = fromList [RandomInt (0, fromList.Count, (int)RangeFlags.MinInclusive)].GetComponent<Voxeme>();
+			while ((Helper.GetMostImmediateParentVoxeme(voxeme.gameObject).gameObject.transform.parent != null) ||
+				(exclude.ToList().Contains<GameObject>(voxeme.gameObject))) {
+				voxeme = fromList [RandomInt (0, fromList.Count, (int)RangeFlags.MinInclusive)].GetComponent<Voxeme>();
+			}
+
+			return voxeme.gameObject;
 		}
 	}
 

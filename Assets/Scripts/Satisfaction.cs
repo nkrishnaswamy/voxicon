@@ -265,6 +265,9 @@ namespace Satisfaction {
 				isMacroEvent = true;
 				satisfied = true;
 			}
+			else {
+				satisfied = true;
+			}
 				
 			if (satisfied) {
 				EventManagerArgs eventArgs = new EventManagerArgs (test, isMacroEvent);
@@ -311,7 +314,7 @@ namespace Satisfaction {
 									if (matches.Count == 0) {
 										go = GameObject.Find (arg as String);
 										if (go == null) {
-											Debug.Break ();
+//											Debug.Break ();
 											OutputHelper.PrintOutput (OutputController.Role.Affector,string.Format("What is that?", (arg as String)));
 											return false;	// abort
 										}

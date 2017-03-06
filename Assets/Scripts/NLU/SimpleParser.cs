@@ -172,7 +172,7 @@ namespace Assets.Scripts.NLU
 						{
 							form += ",center(" + lastObj;
 						}
-						else if (tokens[cur] == "at" && tokens[cur + 1] == "center")
+						else if (tokens[cur] == "on" && tokens[cur + 1] == "edge")
 						{
 							form += ",edge(" + lastObj;
 						}

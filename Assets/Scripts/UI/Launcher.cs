@@ -17,6 +17,7 @@ public class Launcher : FontManager {
 	bool makeLogs;
 	bool captureVideo;
 	VideoCaptureMode videoCaptureMode;
+	bool resetScene;
 	VideoCaptureFilenameType prevVideoCaptureFilenameType;
 	VideoCaptureFilenameType videoCaptureFilenameType;
 	string customVideoFilenamePrefix;
@@ -116,7 +117,7 @@ public class Launcher : FontManager {
 		parserUrl = GUI.TextField (new Rect (bgLeft+100, bgTop+125, 150, 25*fontSizeModifier), parserUrl);
 		GUI.Label (new Rect (bgLeft + 10, bgTop + 150, 300, 50), "(Leave empty to use simple regex parser)");
 
-		GUI.Label (new Rect (bgLeft + 10, bgTop + 185, 90*fontSizeModifier, 25*fontSizeModifier), "Capture Video");
+		GUI.Label (new Rect (bgLeft + 10, bgTop + 180, 90*fontSizeModifier, 25*fontSizeModifier), "Capture Video");
 		captureVideo = GUI.Toggle (new Rect (bgLeft+100, bgTop+180, 150, 25*fontSizeModifier), captureVideo, string.Empty);
 
 		if (captureVideo) {
@@ -127,10 +128,15 @@ public class Launcher : FontManager {
 			GUI.Label (new Rect (bgLeft + 15, bgTop + 230, GUI.skin.label.CalcSize (new GUIContent ("Video Capture Mode")).x+10, 20*fontSizeModifier),
 				"Video Capture Mode");
 
-			string[] videoCaptureModeLabels = new string[]{ "Per Event", "Full-Time", "Manual" };
+			string[] videoCaptureModeLabels = new string[]{ "Manual", "Full-Time", "Per Event" };
 			videoCaptureMode = (VideoCaptureMode)GUI.SelectionGrid (
 				new Rect (bgLeft + 15, bgTop + 250, 150, 20*fontSizeModifier*videoCaptureModeLabels.Length),
 				(int)videoCaptureMode, videoCaptureModeLabels, 1, "toggle");
+
+			if (videoCaptureMode == VideoCaptureMode.PerEvent) {
+				GUI.Label (new Rect (bgLeft + 40, bgTop + 310, 120*fontSizeModifier, 40*fontSizeModifier), "Reset Scene Between Events");
+				resetScene = GUI.Toggle (new Rect (bgLeft + 25, bgTop + 317, 150, 25 * fontSizeModifier), resetScene, string.Empty);
+			}
 
 			GUI.Label (new Rect (bgLeft + 15 + 150*fontSizeModifier, bgTop + 230, GUI.skin.label.CalcSize (new GUIContent ("Capture Filename Type")).x+10, 20*fontSizeModifier),
 				"Capture Filename Type");
@@ -153,8 +159,9 @@ public class Launcher : FontManager {
 					customVideoFilenamePrefix);
 			}
 
-			GUI.Label (new Rect (bgLeft + 15, bgTop + 345, 120*fontSizeModifier, 25*fontSizeModifier), "Video Database File");
-			videoCaptureDB = GUI.TextField (new Rect (bgLeft+140*fontSizeModifier, bgTop+345, 150, 25*fontSizeModifier), videoCaptureDB);
+			GUI.Label (new Rect (bgLeft + 15, bgTop + 355, 120*fontSizeModifier, 25*fontSizeModifier), "Video Database File");
+			videoCaptureDB = GUI.TextField (new Rect (bgLeft+140*fontSizeModifier, bgTop+355, 150, 25*fontSizeModifier), videoCaptureDB);
+			GUI.Label (new Rect (bgLeft + 15, bgTop + 380, 300, 50), "(Leave empty to omit videos from database)");
 		}
 
 		GUILayout.BeginArea(new Rect(13*Screen.width/24, bgTop + 35, 3*Screen.width/12, 3*Screen.height/6), GUI.skin.window);
@@ -199,6 +206,7 @@ public class Launcher : FontManager {
 		makeLogs = (PlayerPrefs.GetInt("Make Logs") == 1);
 		captureVideo = (PlayerPrefs.GetInt("Capture Video") == 1);
 		videoCaptureMode = (VideoCaptureMode)PlayerPrefs.GetInt("Video Capture Mode");
+		resetScene = (PlayerPrefs.GetInt("Reset Between Events") == 1);
 		videoCaptureFilenameType = (VideoCaptureFilenameType)PlayerPrefs.GetInt("Video Capture Filename Type");
 		customVideoFilenamePrefix = PlayerPrefs.GetString("Custom Video Filename Prefix");
 		videoCaptureDB = PlayerPrefs.GetString("Video Capture DB");
@@ -211,6 +219,7 @@ public class Launcher : FontManager {
 		PlayerPrefs.SetInt("Make Logs", System.Convert.ToInt32(makeLogs));
 		PlayerPrefs.SetInt("Capture Video", System.Convert.ToInt32(captureVideo));
 		PlayerPrefs.SetInt("Video Capture Mode", System.Convert.ToInt32(videoCaptureMode));
+		PlayerPrefs.SetInt("Reset Between Events", System.Convert.ToInt32(resetScene));
 		PlayerPrefs.SetInt("Video Capture Filename Type", System.Convert.ToInt32(videoCaptureFilenameType));
 		PlayerPrefs.SetString("Custom Video Filename Prefix", customVideoFilenamePrefix);
 		PlayerPrefs.SetString("Video Capture DB", videoCaptureDB);

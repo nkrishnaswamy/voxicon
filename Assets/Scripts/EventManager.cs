@@ -29,7 +29,10 @@ public class EventManager : MonoBehaviour {
 	public OrderedDictionary eventsStatus = new OrderedDictionary();
 	public ObjectSelector objSelector;
 	public InputController inputController;
+	public string lastParse = string.Empty;
+	//public string lastObjectResolved = string.Empty;
 	public Dictionary<String,String> evalOrig = new Dictionary<String, String>();
+	public Dictionary<String,String> evalResolved = new Dictionary<String, String>();
 
 	public double eventWaitTime = 2000.0;
 	Timer eventWaitTimer;
@@ -52,6 +55,16 @@ public class EventManager : MonoBehaviour {
 	}
 
 	public bool immediateExecution = true;
+
+	public event EventHandler ObjectsResolved;
+
+	public void OnObjectsResolved(object sender, EventArgs e)
+	{
+		if (ObjectsResolved != null)
+		{
+			ObjectsResolved(this, e);
+		}
+	}
 
 	public event EventHandler EventComplete;
 
@@ -89,6 +102,7 @@ public class EventManager : MonoBehaviour {
 		objSelector = GameObject.Find ("BlocksWorld").GetComponent<ObjectSelector> ();
 		inputController = GameObject.Find ("IOController").GetComponent<InputController> ();
 
+		inputController.ParseComplete += StoreParse;
 		//inputController.InputReceived += StartEventWaitTimer;
 
 		//eventWaitTimer = new Timer (eventWaitTime);
@@ -113,6 +127,8 @@ public class EventManager : MonoBehaviour {
 				Debug.Log ("Satisfied " + events [0]);
 				for (int i = 0; i < events.Count - 1; i++) {
 					events [i] = events [i + 1];
+					Debug.Log (i);
+					Debug.Log (events [i]);
 				}
 				string completedEvent = events [events.Count - 1];
 				RemoveEvent (events.Count - 1);
@@ -150,6 +166,10 @@ public class EventManager : MonoBehaviour {
 		events.Add(commandString);
 	}
 
+	public void StoreParse(object sender, EventArgs e) {
+		lastParse = ((InputEventArgs)e).InputString;
+	}
+
 	public void WaitComplete(object sender, EventArgs e) {
 		((System.Timers.Timer)sender).Enabled = false;
 //		RemoveEvent (0);
@@ -174,7 +194,10 @@ public class EventManager : MonoBehaviour {
 	public void ExecuteNextCommand() {
 		PhysicsHelper.ResolveAllPhysicsDiscepancies (false);
 		Debug.Log (events [0]);
-		EvaluateCommand (events [0]);
+		if (!EvaluateCommand (events [0])) {
+			return;
+		}
+
 		if (events.Count > 0) {
 			if (SatisfactionTest.ComputeSatisfactionConditions (events [0])) {
 				ExecuteCommand (events [0]);
@@ -185,7 +208,7 @@ public class EventManager : MonoBehaviour {
 		}
 	}
 
-	public void EvaluateCommand(String command) {
+	public bool EvaluateCommand(String command) {
 		ClearRDFTriples ();
 		ClearSkolems ();
 		ParseCommand (command);
@@ -196,12 +219,46 @@ public class EventManager : MonoBehaviour {
 
 		if (!EvaluateSkolemConstants (EvaluationPass.Attributes)) {
 			RemoveEvent (events.Count - 1);
-			return;
+			return false;
 		}
 		string objectResolved = ApplySkolems (skolemized);
 		Debug.Log (objectResolved);
 
-		Triple<String,String,String> triple = Helper.MakeRDFTriples(objectResolved);
+		if (objectResolved != command) {
+			OnObjectsResolved (this, new EventManagerArgs (objectResolved));
+		}
+
+		if (events.IndexOf (command) < 0) {
+			return false;
+		}
+
+//		Triple<String,String,String> triple = Helper.MakeRDFTriples(objectResolved);
+//		if (triple.Item1 != "" && triple.Item2 != "" && triple.Item3 != "") {
+//			preds.rdfTriples.Add(triple);
+//			Helper.PrintRDFTriples(preds.rdfTriples);
+//		}
+//		else {
+//			Debug.Log ("Failed to make RDF triple");
+//		}
+
+		if (!EvaluateSkolemConstants (EvaluationPass.RelationsAndFunctions)) {
+			RemoveEvent (events.Count - 1);
+			return false;
+		}
+
+		evaluated = ApplySkolems (skolemized);
+		Debug.Log ("Evaluated command: " + evaluated);
+		Debug.Log (events.IndexOf (command));
+		if (!evalOrig.ContainsKey (evaluated)) {
+			evalOrig.Add (evaluated, command);
+		}
+
+		if (!evalResolved.ContainsKey (evaluated)) {
+			evalResolved.Add (evaluated, objectResolved);
+		}
+		events [events.IndexOf (command)] = evaluated;
+
+		Triple<String,String,String> triple = Helper.MakeRDFTriples(evalResolved[evaluated]);
 		if (triple.Item1 != "" && triple.Item2 != "" && triple.Item3 != "") {
 			preds.rdfTriples.Add(triple);
 			Helper.PrintRDFTriples(preds.rdfTriples);
@@ -210,17 +267,7 @@ public class EventManager : MonoBehaviour {
 			Debug.Log ("Failed to make RDF triple");
 		}
 
-		if (!EvaluateSkolemConstants (EvaluationPass.RelationsAndFunctions)) {
-			RemoveEvent (events.Count - 1);
-			return;
-		}
-
-		evaluated = ApplySkolems (skolemized);
-		Debug.Log ("Evaluated command: " + evaluated);
-		if (!evalOrig.ContainsKey (evaluated)) {
-			evalOrig.Add (evaluated, command);
-		}
-		events [events.IndexOf (command)] = evaluated;
+		return true;
 	}
 
 	public void ExecuteCommand(String evaluatedCommand) {
@@ -278,9 +325,11 @@ public class EventManager : MonoBehaviour {
 		}
 	}
 
-	void AbortEvent() {
+	public void AbortEvent() {
 		if (events.Count > 0) {
-			RemoveEvent (events.Count - 1);
+//			InsertEvent ("", 0);
+//			RemoveEvent (1);
+			RemoveEvent (0);
 		}
 	}
 
