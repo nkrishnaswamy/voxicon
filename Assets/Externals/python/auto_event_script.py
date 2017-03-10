@@ -1,9 +1,10 @@
 import os
-import sentence_list
+#import sentence_list
 
-def send_next_event_to_port(index, port):
-    sentences = sentence_list.sentences
-                     
+def send_next_event_to_port(list_file, index, port):
+    module_obj = __import__(list_file, fromlist = [''])
+    sentences = module_obj.sentences
+    
     i = int(index)
     os.system('''echo "%s" | nc -w 0 localhost %s''' % (sentences[i], port))
     i += 1
@@ -11,4 +12,4 @@ def send_next_event_to_port(index, port):
     if (i >= len(sentences)):
         i = -1
 
-    return str(i);
+    return str(i)

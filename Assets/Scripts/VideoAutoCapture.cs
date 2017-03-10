@@ -68,6 +68,8 @@ namespace VideoCapture {
 		public double eventCompleteWaitTime = 1000.0f;
 		Timer eventCompleteWaitTimer;
 
+		bool initialWaitComplete = false;
+
 		bool capture;
 
 		bool capturing = false;
@@ -77,8 +79,10 @@ namespace VideoCapture {
 		VideoCaptureMode captureMode;
 		bool resetScene;
 		VideoCaptureFilenameType filenameScheme;
+		bool sortByEvent;
 		string filenamePrefix;
 		string dbFile;
+		string inputFile;
 
 		SQLiteConnection dbConnection;
 		VideoDBEntry dbEntry;
@@ -114,21 +118,32 @@ namespace VideoCapture {
 			captureMode = (VideoCaptureMode)PlayerPrefs.GetInt ("Video Capture Mode");
 			resetScene = (PlayerPrefs.GetInt ("Reset Between Events") == 1);
 			filenameScheme = (VideoCaptureFilenameType)PlayerPrefs.GetInt ("Video Capture Filename Type");
+			sortByEvent = (PlayerPrefs.GetInt ("Sort By Event String") == 1);
 			filenamePrefix = PlayerPrefs.GetString ("Custom Video Filename Prefix");
 			dbFile = PlayerPrefs.GetString ("Video Capture DB");
+			inputFile = PlayerPrefs.GetString ("Auto Events List");
 
 			eventObjs = new List<GameObject> ();
 
 			if (captureMode == VideoCaptureMode.PerEvent) {
-				inputController.InputReceived += StartCapture;
+				inputController.InputReceived += PrepareScene;
 				inputController.InputReceived += InputStringReceived;
 				inputController.ParseComplete += ParseReceived;
 
 				eventManager.ObjectsResolved += ObjectsResolved;
 				eventManager.ObjectsResolved += FilterSpecifiedManner;
-				eventManager.ObjectsResolved += ExecuteEvent;
+				eventManager.ObjectsResolved += EnableAffectedObjects;
+				eventManager.ObjectsResolved += InsertWaitPeriod;
+				//eventManager.ObjectsResolved += StartCapture;
+				eventManager.SatisfactionCalculated += SatisfactionCalculated;
+				eventManager.SatisfactionCalculated += EnableAffectedObjects;
+				eventManager.SatisfactionCalculated += InsertWaitPeriod;
+				//eventManager.SatisfactionCalculated += StartCapture;
+				//eventManager.ExecuteEvent += EnableAffectedObjects;
+				eventManager.ExecuteEvent += StartCapture;
 				eventManager.QueueEmpty += EventComplete;
 
+				preds.waitTimer.Elapsed += WaitComplete;
 				preds.PrepareLog += PrepareLog;
 				preds.ParamsCalculated += ParametersCalculated;
 
@@ -198,8 +213,14 @@ namespace VideoCapture {
 				return;
 			}
 
+			initialWaitComplete = false;
+
 			if (filenameScheme == VideoCaptureFilenameType.EventString) {
 				outFileName = string.Format ("{0}-{1}", (((InputEventArgs)e).InputString).Replace (" ", "_"), DateTime.Now.ToString ("yyyy-MM-dd-HHmmss"));
+
+				if (sortByEvent) {
+					outFileName = string.Format ("{0}/{1}", (((InputEventArgs)e).InputString).Replace (" ", "_"), outFileName);
+				}
 			}
 			else {
 				outFileName = string.Format ("{0}-{1}", filenamePrefix, DateTime.Now.ToString ("yyyy-MM-dd-HHmmss"));
@@ -229,7 +250,7 @@ namespace VideoCapture {
 			paramValues = PredicateParameters.InitPredicateParametersCollection();
 		}
 
-		void StartCapture(object sender, EventArgs e) {
+		void PrepareScene(object sender, EventArgs e) {
 			if (!capture) {
 				return;
 			}
@@ -241,32 +262,64 @@ namespace VideoCapture {
 				}
 
 				DisableObjects ();
+				eventObjs.Clear ();
 			}
-
-			recorder.StartCapture ();
-			Debug.Log ("Starting video capture...");
-
-			capturing = true;
-			stopCaptureFlag = false;
 		}
 
-		void ExecuteEvent(object sender, EventArgs e) {
+		void StartCapture(object sender, EventArgs e) {
+
+			if (!capture) {
+				return;
+			}
+
+			//if (initialWaitComplete) {
+				if (!capturing) {
+//					if (captureMode == VideoCaptureMode.PerEvent) {
+//						eventManager.InsertEvent ("wait()", 0);
+//
+//						eventTimeoutTimer.Enabled = true;
+//					}
+
+					recorder.StartCapture ();
+					Debug.Log ("Starting video capture...");
+
+					capturing = true;
+					stopCaptureFlag = false;
+				}
+			//}
+		}
+
+		void InsertWaitPeriod(object sender, EventArgs e) {
 			if (!capture) {
 				return;
 			}
 
 			if (captureMode == VideoCaptureMode.PerEvent) {
+				if ((!initialWaitComplete) && (eventManager.events [0] != "wait()")) {
+					eventManager.InsertEvent ("wait()", 0);
+					eventTimeoutTimer.Enabled = true;
+				}
+				else {
+					eventManager.InsertEvent ("wait()", 1);
+				}
+			}
+		}
 
+		void WaitComplete (object sender, EventArgs e) {
+			initialWaitComplete = true;
+		}
+
+		void EnableAffectedObjects(object sender, EventArgs e) {
+			if (!capture) {
+				return;
+			}
+
+			if (captureMode == VideoCaptureMode.PerEvent) {
 				foreach (GameObject obj in eventObjs) {
 					preds.ENABLE (new GameObject[]{ obj });
 				}
-
-				eventManager.InsertEvent ("wait()", 0);
-
-				eventTimeoutTimer.Enabled = true;
 			}
 		}
-			
 
 		void SaveCapture () {
 			if (!capture) {
@@ -360,31 +413,23 @@ namespace VideoCapture {
 		void FilterSpecifiedManner(object sender, EventArgs e) {
 			string specifiedEvent = PredicateParameters.FilterSpecifiedManner (((EventManagerArgs)e).EventString);
 
-			string[] constituents = specifiedEvent.Split (new char[]{ '(', ',', ')' });
-
-			eventObjs.Clear ();
-			foreach (string constituent in constituents) {
-				if ((GameObject.Find (constituent) != null) || (objSelector.disabledObjects.Find(o => o.name == constituent) != null)) {
-					GameObject obj = GameObject.Find (constituent) != null ? GameObject.Find (constituent) :
-						objSelector.disabledObjects.Find (o => o.name == constituent);
-
-					if (!eventObjs.Contains (obj)) {
-						eventObjs.Add(obj);
-					}
-				}
-			}
+			AddConstituentObjectsToAffectedList (specifiedEvent);
 
 			if (specifiedEvent != ((EventManagerArgs)e).EventString) {
 				paramValues["MotionManner"] = specifiedEvent;
 
 				eventManager.InsertEvent (specifiedEvent, 1);
+				eventManager.RemoveEvent (0);
 
 				if (captureMode == VideoCaptureMode.PerEvent) {
-					eventManager.InsertEvent ("wait()", 1);
+					eventManager.InsertEvent ("wait()", 0);
 				}
-
-				eventManager.AbortEvent ();
 			}
+		}
+
+		void SatisfactionCalculated (object sender, EventArgs e)
+		{
+			AddConstituentObjectsToAffectedList (((EventManagerArgs)e).EventString);
 		}
 
 		void PrepareLog(object sender, EventArgs e) {
@@ -404,10 +449,26 @@ namespace VideoCapture {
 
 		void CaptureComplete(object sender, EventArgs e) {
 			if (eventIndex != -1) {
-				string[] args = new string[]{ eventIndex.ToString (), PlayerPrefs.GetString ("Listener Port") };
+				string[] args = new string[]{ inputFile, eventIndex.ToString (), PlayerPrefs.GetString ("Listener Port") };
 				string result = Marshal.PtrToStringAuto (PluginImport.PythonCall (Application.dataPath + "/Externals/python/", "auto_event_script", "send_next_event_to_port", args, args.Length));
 				Debug.Log (result);
 				eventIndex = System.Convert.ToInt32 (result);
+			}
+		}
+
+		void AddConstituentObjectsToAffectedList(string eventForm) {
+			string[] constituents = eventForm.Split (new char[]{ '(', ',', ')' });
+
+			foreach (string constituent in constituents) {
+				if ((GameObject.Find (constituent) != null) || (objSelector.disabledObjects.Find(o => o.name == constituent) != null)) {
+					GameObject obj = GameObject.Find (constituent) != null ? GameObject.Find (constituent) :
+						objSelector.disabledObjects.Find (o => o.name == constituent);
+
+					if (!eventObjs.Contains (obj)) {
+						Debug.Log (obj);
+						eventObjs.Add(obj);
+					}
+				}
 			}
 		}
 

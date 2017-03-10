@@ -6,7 +6,7 @@ using System.IO;
 [CustomEditor(typeof(Builder))]
 public class Builder : Editor {
 
-	public string buildName = "VoxSimTrials";
+	public string buildName = "VoxSim (Build 9)";
 	List<string> scenes = new List<string>(){"Assets/Scenes/VoxSimMenu.unity"};
 
 	public override void OnInspectorGUI ()
@@ -28,7 +28,7 @@ public class Builder : Editor {
 				}
 			}
 			BuildPipeline.BuildPlayer(scenes.ToArray(),"Build/mac/"+buildName,BuildTarget.StandaloneOSXUniversal,BuildOptions.None);
-            BuildPipeline.BuildPlayer(scenes.ToArray(),"Build/win/"+buildName,BuildTarget.StandaloneWindows,BuildOptions.None);
+            //BuildPipeline.BuildPlayer(scenes.ToArray(),"Build/win/"+buildName,BuildTarget.StandaloneWindows,BuildOptions.None);
 			//BuildPipeline.BuildPlayer(scenes.ToArray(),"Build/web/"+buildName,BuildTarget.WebPlayer,BuildOptions.None);
 		}
 	}

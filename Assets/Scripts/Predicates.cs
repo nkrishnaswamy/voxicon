@@ -868,6 +868,7 @@ public class Predicates : MonoBehaviour {
 					int selected = new System.Random ().Next (manners.Count);
 					eventManager.InsertEvent (string.Format ("put({0},{1}({2}))", (args [0] as GameObject).name, manners[selected], rdfTriples [0].Item3), 1);
 					eventManager.AbortEvent ();
+					//eventManager.RemoveEvent (eventManager.events.Count - 1);
 
 					if (args [args.Length - 1] is bool) {
 						if ((bool)args [args.Length - 1] == false) {
@@ -2239,10 +2240,12 @@ public class Predicates : MonoBehaviour {
 				Dictionary<string,string> paramValues = PredicateParameters.InitPredicateParametersCollection();
 				Debug.Log (Helper.VectorToParsable (objAxis));
 				Debug.Log (Helper.VectorToParsable (objRotAxis));
+				Debug.Log(Mathf.Abs(Vector3.Angle(objRotAxis, -Constants.xAxis)));
+				Debug.Log(Mathf.Rad2Deg * Constants.EPSILON);
 				OnPrepareLog (this, new ParamsEventArgs ("SymmetryAxis", Constants.Axes.FirstOrDefault (a => 
-					(Helper.CloseEnough(objAxis,a.Value) || Helper.CloseEnough(-objAxis,a.Value))).Key.ToString()));
+					(Helper.AngleCloseEnough(objAxis,a.Value) || Helper.AngleCloseEnough(-objAxis,a.Value))).Key.ToString()));
 				OnPrepareLog (this, new ParamsEventArgs ("RotAxis", Constants.Axes.FirstOrDefault (a => 
-					(Helper.CloseEnough(objRotAxis,a.Value) || Helper.CloseEnough(-objRotAxis,a.Value))).Key.ToString()));
+					(Helper.AngleCloseEnough(objRotAxis,a.Value) || Helper.AngleCloseEnough(-objRotAxis,a.Value))).Key.ToString()));
 				OnParamsCalculated (null, null);
 				return;
 			}
@@ -2729,15 +2732,13 @@ public class Predicates : MonoBehaviour {
 
 				// turn the longest axis to $tilt degrees off from +Y axis
 				//	and the shortest axis perpendicular to the longest axis and coplanar with the plane that bisects the dest obj
-				Vector3 minorTilt = new Vector3 (0.0f, 0.0f,
-					                   ((theme.transform.position.x - dest.transform.position.x) /
-					                   Mathf.Abs (theme.transform.position.x - dest.transform.position.x)) * (leanAngle - 90.0f));
+				Vector3 minorTilt = new Vector3 (0.0f, 0.0f, (theme.transform.position.x < dest.transform.position.x) ? 
+					-(leanAngle - 90.0f) : (leanAngle - 90.0f));
 				Debug.Log (minorTilt);
 				Debug.Log (Quaternion.Euler (minorTilt) * Constants.yAxis);
 
-				Vector3 majorTilt = new Vector3 (0.0f, 0.0f,
-					                   ((theme.transform.position.x - dest.transform.position.x) /
-					                   Mathf.Abs (theme.transform.position.x - dest.transform.position.x)) * (leanAngle));
+				Vector3 majorTilt = new Vector3 (0.0f, 0.0f, (theme.transform.position.x < dest.transform.position.x) ?
+					-leanAngle : leanAngle);
 				Debug.Log (majorTilt);
 				Debug.Log (Quaternion.Euler (majorTilt) * Constants.yAxis);
 
@@ -2867,7 +2868,7 @@ public class Predicates : MonoBehaviour {
 					//Debug.Log (Helper.VectorToParsable (targetPosition + (transformedThemeContactPoint-(args [0] as GameObject).transform.position)));
 					//Debug.Log (Helper.VectorToParsable (destContactPoint-targetPosition));
 				}
-				else if (theme.transform.position.x > dest.transform.position.x) {	// place theme to right of dest
+				else {	// place theme to right of dest
 					float themeHeightAgainstDest = majorAxisLength * Mathf.Cos (Mathf.Deg2Rad * leanAngle);	// the y-extent of theme's rotated major axis
 					// the opposite side of the triangle where
 					//	the supporting surface is the adjacent side
@@ -3510,7 +3511,7 @@ public class Predicates : MonoBehaviour {
 							if (interior != null) {
 								if (Concavity.IsEnabled(interior)){
 									foreach (Voxeme voxeme in objSelector.allVoxemes) {
-										if (voxeme.gameObject.activeInHierarchy) {
+										//if (voxeme.gameObject.activeInHierarchy) {
 											if ((voxeme.gameObject != theme) && (!Helper.IsSupportedBy(voxComponent.gameObject, voxeme.gameObject)) &&
 												(voxeme.gameObject.transform.parent == null)) {
 												if ((Helper.GetObjectWorldSize (voxeme.gameObject).size.x >= Helper.GetObjectWorldSize (interior).size.x) &&
@@ -3520,7 +3521,7 @@ public class Predicates : MonoBehaviour {
 														Helper.GetObjectWorldSize (o).size.z) * Helper.GetObjectWorldSize (o).size.y).ToList ();
 												}
 											}
-										}
+										//}
 									}
 								}
 								else {
@@ -3536,7 +3537,7 @@ public class Predicates : MonoBehaviour {
 
 		// add to events manager
 		if (args[args.Length-1] is bool) {
-			if ((bool)args[args.Length-1] == false) {
+			if ((bool)args [args.Length - 1] == false) {
 				GameObject movingComponent = null;
 				float motionSpeed = 0.0f;
 				if (!hasInteriorComponent) {
@@ -3544,24 +3545,24 @@ public class Predicates : MonoBehaviour {
 						eventManager.InsertEvent (string.Format ("put({0},on({1}))", lids [0].name, (args [0] as GameObject).name), 1);
 						movingComponent = lids [0];
 						motionSpeed = movingComponent.GetComponent<Voxeme> ().moveSpeed;
-					} 
-					else {
+					} else {
 						eventManager.InsertEvent (string.Format ("flip({0})", (args [0] as GameObject).name), 1);
 						movingComponent = (args [0] as GameObject);
 						motionSpeed = movingComponent.GetComponent<Voxeme> ().turnSpeed;
 					}
-				} 
-				else {
+				} else {
 					eventManager.InsertEvent (string.Format ("turn({0},{1},{2},{3})", cover.name,
-						Helper.VectorToParsable(Constants.xAxis),
-						Helper.VectorToParsable((args [0] as GameObject).transform.rotation * Constants.xAxis),
-						Helper.VectorToParsable((args [0] as GameObject).transform.rotation * Constants.yAxis)), 1);
+						Helper.VectorToParsable (Constants.xAxis),
+						Helper.VectorToParsable ((args [0] as GameObject).transform.rotation * Constants.xAxis),
+						Helper.VectorToParsable ((args [0] as GameObject).transform.rotation * Constants.yAxis)), 1);
 					movingComponent = cover;
 					motionSpeed = movingComponent.GetComponent<Voxeme> ().turnSpeed;
 				}
 
+				eventManager.OnSatisfactionCalculated (eventManager, new EventManagerArgs (eventManager.events [1]));
+
 				// record parameter values
-				OnPrepareLog (this, new ParamsEventArgs ("MotionSpeed", motionSpeed.ToString()));
+				OnPrepareLog (this, new ParamsEventArgs ("MotionSpeed", motionSpeed.ToString ()));
 				OnParamsCalculated (null, null);
 			}
 		}
@@ -3752,7 +3753,7 @@ public class Predicates : MonoBehaviour {
 					motionSpeed = movingComponent.GetComponent<Voxeme> ().turnSpeed;
 					rotAngle = Quaternion.Angle(movingComponent.transform.rotation,targetRotation);
 				}
-
+					
 				// record parameter values						
 				OnPrepareLog (this, new ParamsEventArgs ("MotionSpeed", motionSpeed.ToString()));
 

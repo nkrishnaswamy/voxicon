@@ -66,6 +66,26 @@ public class EventManager : MonoBehaviour {
 		}
 	}
 
+	public event EventHandler SatisfactionCalculated;
+
+	public void OnSatisfactionCalculated(object sender, EventArgs e)
+	{
+		if (SatisfactionCalculated != null)
+		{
+			SatisfactionCalculated(this, e);
+		}
+	}
+
+	public event EventHandler ExecuteEvent;
+
+	public void OnExecuteEvent(object sender, EventArgs e)
+	{
+		if (ExecuteEvent != null)
+		{
+			ExecuteEvent(this, e);
+		}
+	}
+
 	public event EventHandler EventComplete;
 
 	public void OnEventComplete(object sender, EventArgs e)
@@ -158,6 +178,8 @@ public class EventManager : MonoBehaviour {
 	}
 
 	public void InsertEvent(String commandString, int before) {
+		//Debug.Break ();
+		Debug.Log ("Inserting: " + commandString);
 		events.Insert(before,commandString);
 	}
 
@@ -194,6 +216,7 @@ public class EventManager : MonoBehaviour {
 	public void ExecuteNextCommand() {
 		PhysicsHelper.ResolveAllPhysicsDiscepancies (false);
 		Debug.Log (events [0]);
+
 		if (!EvaluateCommand (events [0])) {
 			return;
 		}
@@ -267,6 +290,8 @@ public class EventManager : MonoBehaviour {
 			Debug.Log ("Failed to make RDF triple");
 		}
 
+		//OnExecuteEvent (this, new EventManagerArgs (evaluated));
+
 		return true;
 	}
 
@@ -321,15 +346,18 @@ public class EventManager : MonoBehaviour {
 			if ((methodToCall != null) &&  (preds.rdfTriples.Count > 0)) {
 				Debug.Log ("ExecuteCommand: invoke " + methodToCall.Name);
 				object obj = methodToCall.Invoke (preds, new object[]{ objs.ToArray () });
+				Debug.Log (evaluatedCommand);
+				OnExecuteEvent(this, new EventManagerArgs (evaluatedCommand));
 			}
 		}
 	}
 
 	public void AbortEvent() {
 		if (events.Count > 0) {
-//			InsertEvent ("", 0);
-//			RemoveEvent (1);
-			RemoveEvent (0);
+			//InsertEvent ("satisfy()", 0);
+			InsertEvent ("", 0);
+			RemoveEvent (1);
+			//RemoveEvent (0);
 		}
 	}
 

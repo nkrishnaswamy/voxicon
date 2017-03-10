@@ -281,7 +281,8 @@ namespace Satisfaction {
 			Hashtable predArgs = Helper.ParsePredicate (command);
 			String pred = Helper.GetTopPredicate (command);
 			ObjectSelector objSelector = GameObject.Find ("BlocksWorld").GetComponent<ObjectSelector> ();
-			
+			EventManager em = GameObject.Find ("BehaviorController").GetComponent<EventManager> ();
+
 			if (predArgs.Count > 0) {
 				Queue<String> argsStrings = new Queue<String> (((String)predArgs [pred]).Split (new char[] { ',' }));
 				List<object> objs = new List<object> ();
