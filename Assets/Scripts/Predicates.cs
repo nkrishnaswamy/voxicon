@@ -3540,13 +3540,16 @@ public class Predicates : MonoBehaviour {
 			if ((bool)args [args.Length - 1] == false) {
 				GameObject movingComponent = null;
 				float motionSpeed = 0.0f;
+				string mannerString = string.Empty;
 				if (!hasInteriorComponent) {
 					if (lids.Count > 0) {
 						eventManager.InsertEvent (string.Format ("put({0},on({1}))", lids [0].name, (args [0] as GameObject).name), 1);
+						mannerString = string.Format ("put({0},on({1}))", lids [0].name, (args [0] as GameObject).name);
 						movingComponent = lids [0];
 						motionSpeed = movingComponent.GetComponent<Voxeme> ().moveSpeed;
 					} else {
 						eventManager.InsertEvent (string.Format ("flip({0})", (args [0] as GameObject).name), 1);
+						mannerString = string.Format ("flip({0})", (args [0] as GameObject).name);
 						movingComponent = (args [0] as GameObject);
 						motionSpeed = movingComponent.GetComponent<Voxeme> ().turnSpeed;
 					}
@@ -3555,6 +3558,7 @@ public class Predicates : MonoBehaviour {
 						Helper.VectorToParsable (Constants.xAxis),
 						Helper.VectorToParsable ((args [0] as GameObject).transform.rotation * Constants.xAxis),
 						Helper.VectorToParsable ((args [0] as GameObject).transform.rotation * Constants.yAxis)), 1);
+					mannerString = string.Format ("turn({0})", cover.name);
 					movingComponent = cover;
 					motionSpeed = movingComponent.GetComponent<Voxeme> ().turnSpeed;
 				}
@@ -3562,6 +3566,7 @@ public class Predicates : MonoBehaviour {
 				eventManager.OnSatisfactionCalculated (eventManager, new EventManagerArgs (eventManager.events [1]));
 
 				// record parameter values
+				OnPrepareLog (this, new ParamsEventArgs ("MotionManner", mannerString));
 				OnPrepareLog (this, new ParamsEventArgs ("MotionSpeed", motionSpeed.ToString ()));
 				OnParamsCalculated (null, null);
 			}
@@ -3730,15 +3735,18 @@ public class Predicates : MonoBehaviour {
 				Vector3 translocDir = Vector3.zero;
 				float translocDist = 0.0f;
 				float rotAngle = 0.0f;
+				string mannerString = string.Empty;
 				if (!hasInteriorComponent) {
 					if (lid != null) {
 						eventManager.InsertEvent (string.Format ("put({0},{1})", lid.name, Helper.VectorToParsable(removeLocation)), 1);
+						mannerString = string.Format ("move({0})", lid.name);
 						movingComponent = lid;
 						motionSpeed = movingComponent.GetComponent<Voxeme> ().moveSpeed;
 						translocDir = removeLocation - movingComponent.transform.position;
 					} 
 					else {
 						eventManager.InsertEvent (string.Format ("flip({0})", (args [0] as GameObject).name), 1);
+						mannerString = string.Format ("flip({0})", (args [0] as GameObject).name);
 						movingComponent = (args [0] as GameObject);
 						motionSpeed = movingComponent.GetComponent<Voxeme> ().turnSpeed;
 						rotAngle = 180.0f;
@@ -3749,12 +3757,16 @@ public class Predicates : MonoBehaviour {
 						Helper.VectorToParsable(Constants.xAxis),
 						Helper.VectorToParsable(targetRotation * Constants.xAxis),
 						Helper.VectorToParsable((args [0] as GameObject).transform.rotation * Constants.yAxis)), 1);
+					mannerString = string.Format ("turn({0})", cover.name);
 					movingComponent = cover;
 					motionSpeed = movingComponent.GetComponent<Voxeme> ().turnSpeed;
 					rotAngle = Quaternion.Angle(movingComponent.transform.rotation,targetRotation);
 				}
-					
+
+				eventManager.OnSatisfactionCalculated (eventManager, new EventManagerArgs (eventManager.events [1]));
+
 				// record parameter values						
+				OnPrepareLog (this, new ParamsEventArgs ("MotionManner", mannerString));
 				OnPrepareLog (this, new ParamsEventArgs ("MotionSpeed", motionSpeed.ToString()));
 
 				if (Vector3.Magnitude(translocDir) > 0.0f) {

@@ -167,8 +167,8 @@ public class Launcher : FontManager {
 			}
 
 			if (videoCaptureFilenameType == VideoCaptureFilenameType.EventString) {
-				GUI.Label (new Rect (bgLeft + 35 + 160*fontSizeModifier, bgTop + 310, 120*fontSizeModifier, 40*fontSizeModifier), "Sort Videos By Event String");
-				sortByEventString = GUI.Toggle (new Rect (bgLeft + 20 + 160*fontSizeModifier, bgTop + 317, 150, 25 * fontSizeModifier), sortByEventString, string.Empty);
+				GUI.Label (new Rect (bgLeft + 30 + 160*fontSizeModifier, bgTop + 310, 120*fontSizeModifier, 40*fontSizeModifier), "Sort Videos By Event String");
+				sortByEventString = GUI.Toggle (new Rect (bgLeft + 15 + 160*fontSizeModifier, bgTop + 317, 150, 25 * fontSizeModifier), sortByEventString, string.Empty);
 			}
 			else if (videoCaptureFilenameType == VideoCaptureFilenameType.Custom) {
 				customVideoFilenamePrefix = GUI.TextArea (new Rect (bgLeft + 15 + 160*fontSizeModifier, bgTop + 315, 150, 25*fontSizeModifier),

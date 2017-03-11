@@ -27,7 +27,7 @@ namespace VideoCapture {
 	public class VideoDBEntry  {
 		[PrimaryKey, AutoIncrement]
 		public int Id { get; set; }
-		public string Filename { get; set; }
+		public string FilePath { get; set; }
 		public string InputString { get; set; }
 		public string Parse { get; set; }
 		public string ObjectResolvedParse { get; set; }
@@ -38,11 +38,11 @@ namespace VideoCapture {
 		public override string ToString ()
 		{
 			string head = string.Format ("[VideoDBEntry: Id={0}," +
-				" Filename={1}," +
+				" FilePath={1}," +
 				" InputString={2}," +
 				" Parse={3}," +
 				" ObjectResolvedParse={4}," +
-				" EventPredicate={5},", Id, Filename, InputString, Parse, ObjectResolvedParse, EventPredicate);
+				" EventPredicate={5},", Id, FilePath, InputString, Parse, ObjectResolvedParse, EventPredicate);
 			string valueContent = "";
 			string tail = "]";
 			return head + valueContent + tail;
@@ -229,7 +229,7 @@ namespace VideoCapture {
 			if (dbFile != string.Empty) {
 				OpenDB ();
 				dbEntry = new VideoDBEntry ();
-				dbEntry.Filename = outFileName;
+				dbEntry.FilePath = outFileName;
 				dbEntry.InputString = ((InputEventArgs)e).InputString;
 			}
 		}
@@ -340,7 +340,7 @@ namespace VideoCapture {
 				recorder.SaveCapturedFrames ();
 
 				if (dbFile != string.Empty) {
-					dbEntry.Filename = "Flashback_" + DateTime.Now.ToString ("yyyy-MM-dd-HHmmss");
+					dbEntry.FilePath = "Flashback_" + DateTime.Now.ToString ("yyyy-MM-dd-HHmmss");
 				}
 			}
 			else {
