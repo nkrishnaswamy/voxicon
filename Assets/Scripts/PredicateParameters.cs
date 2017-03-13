@@ -274,37 +274,41 @@ public static class PredicateParameters {
 
 	public static string SwitchPredicate(List<Triple<string, string, int>> alternateList, Hashtable predArgs, string pred) {
 		VideoAutoCapture vidCap = Camera.main.GetComponent<VideoAutoCapture> ();
-
+		ObjectSelector objSelector = GameObject.Find ("BlocksWorld").GetComponent<ObjectSelector> ();
 		string outValue = string.Empty;
 
-		Triple<string, string, int> alternate = alternateList[RandomHelper.RandomInt(0, alternateList.Count, (int)RandomHelper.RangeFlags.MinInclusive)];
+		Triple<string, string, int> alternate = alternateList[RandomHelper.RandomInt(0, alternateList.Count,
+			(int)RandomHelper.RangeFlags.MinInclusive)];
 
 		string altPred = alternate.Item1;
 		string adjunct = alternate.Item2;
 		int arity = alternate.Item3;
 
 		if (arity == 1) {
-			string directObj = predArgs [pred].ToString();
+			string directObjName = predArgs [pred].ToString();
 			if (adjunct == string.Empty) {
-				outValue = string.Format ("{0}({1})", altPred, directObj);
+				outValue = string.Format ("{0}({1})", altPred, directObjName);
 			} 
 			else {
-				outValue = string.Format ("{0}({1},{2}({1}))", altPred, directObj, adjunct);
+				outValue = string.Format ("{0}({1},{2}({1}))", altPred, directObjName, adjunct);
 			}
 		}
 		else if (arity == 2) {
-			string directObj = predArgs [pred].ToString();
-			GameObject obj = RandomHelper.RandomVoxeme (vidCap.availableObjs, new GameObject[] {GameObject.Find(directObj)});
-			while (Helper.GetMostImmediateParentVoxeme (obj).gameObject.transform.parent != null) {
-				obj = RandomHelper.RandomVoxeme (vidCap.availableObjs, new GameObject[] { GameObject.Find (directObj) });
-			}
+			string directObjName = predArgs [pred].ToString();
+			GameObject directObj = GameObject.Find (directObjName) != null ? GameObject.Find (directObjName) :
+				objSelector.disabledObjects.Find (o => o.name == directObjName);
+			GameObject obj = RandomHelper.RandomVoxeme (vidCap.availableObjs, new List<GameObject>(){ directObj });
+//			while (Helper.GetMostImmediateParentVoxeme (obj).gameObject.transform.parent != null) {
+//				obj = RandomHelper.RandomVoxeme (vidCap.availableObjs, new List<GameObject>(){ GameObject.Find (directObj) });
+//				Debug.Log (obj.name);
+//			}
 
-			string indirectObj = obj.name;
+			string indirectObjName = obj.name;
 			if (adjunct == string.Empty) {
-				outValue = string.Format ("{0}({1},{2})", altPred, directObj, indirectObj);
+				outValue = string.Format ("{0}({1},{2})", altPred, directObjName, indirectObjName);
 			} 
 			else {
-				outValue = string.Format ("{0}({1},{2}({3}))", altPred, directObj, adjunct, indirectObj);
+				outValue = string.Format ("{0}({1},{2}({3}))", altPred, directObjName, adjunct, indirectObjName);
 			}
 		}
 

@@ -1132,28 +1132,23 @@ namespace Global {
 			return voxeme.gameObject;
 		}
 
-		public static GameObject RandomVoxeme(GameObject[] exclude) {
+		public static GameObject RandomVoxeme(List<GameObject> exclude) {
 			List<Voxeme> allVoxemes = GameObject.Find ("BlocksWorld").GetComponent<ObjectSelector> ().allVoxemes.ToList();
 
 			Voxeme voxeme = allVoxemes [RandomInt (0, allVoxemes.Count, (int)RangeFlags.MinInclusive)];
 			while ((Helper.GetMostImmediateParentVoxeme(voxeme.gameObject).gameObject.transform.parent != null) ||
-				(exclude.ToList().Contains<GameObject>(voxeme.gameObject))) {
+				(exclude.Contains(voxeme.gameObject))) {
 				voxeme = allVoxemes [RandomInt (0, allVoxemes.Count, (int)RangeFlags.MinInclusive)];
 			}
 
 			return voxeme.gameObject;
 		}
 
-		public static GameObject RandomVoxeme(List<GameObject> fromList) {
+		public static GameObject RandomVoxeme(List<GameObject> fromList, List<GameObject> exclude) {
 			Voxeme voxeme = fromList [RandomInt (0, fromList.Count, (int)RangeFlags.MinInclusive)].GetComponent<Voxeme>();
 
-			return voxeme.gameObject;
-		}
-
-		public static GameObject RandomVoxeme(List<GameObject> fromList, GameObject[] exclude) {
-			Voxeme voxeme = fromList [RandomInt (0, fromList.Count, (int)RangeFlags.MinInclusive)].GetComponent<Voxeme>();
 			while ((Helper.GetMostImmediateParentVoxeme(voxeme.gameObject).gameObject.transform.parent != null) ||
-				(exclude.ToList().Contains<GameObject>(voxeme.gameObject))) {
+				(exclude.Contains(voxeme.gameObject))) {
 				voxeme = fromList [RandomInt (0, fromList.Count, (int)RangeFlags.MinInclusive)].GetComponent<Voxeme>();
 			}
 

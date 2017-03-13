@@ -156,8 +156,9 @@ public class Launcher : FontManager {
 				}
 				GUI.Label (new Rect (bgLeft + 15 + 90*fontSizeModifier, bgTop + 325, 130*fontSizeModifier, 20*fontSizeModifier), "Events");
 
-				GUI.Label (new Rect (bgLeft + 15, bgTop + 350, 130*fontSizeModifier, 25*fontSizeModifier), "Auto-Input Events");
+				GUI.Label (new Rect (bgLeft + 15, bgTop + 350, 130*fontSizeModifier, 25*fontSizeModifier), "Auto-Input Script");
 				autoEventsList = GUI.TextField (new Rect (bgLeft+140*fontSizeModifier, bgTop+350, 150, 25*fontSizeModifier), autoEventsList);
+				GUI.Label (new Rect (bgLeft + 290*fontSizeModifier, bgTop + 350, 25*fontSizeModifier, 25*fontSizeModifier), ".py");
 				GUI.Label (new Rect (bgLeft + 15, bgTop + 375, 300, 50), "(Leave empty to input events manually)");
 			}
 
@@ -188,6 +189,7 @@ public class Launcher : FontManager {
 
 			GUI.Label (new Rect (bgLeft + 15, bgTop + 350 + (60 * System.Convert.ToSingle((videoCaptureMode == VideoCaptureMode.PerEvent))), 120*fontSizeModifier, 25*fontSizeModifier), "Video Database File");
 			videoCaptureDB = GUI.TextField (new Rect (bgLeft+140*fontSizeModifier, bgTop+350 + (60 * System.Convert.ToSingle((videoCaptureMode == VideoCaptureMode.PerEvent))), 150, 25*fontSizeModifier), videoCaptureDB);
+			GUI.Label (new Rect (bgLeft + 290*fontSizeModifier, bgTop+350 + (60 * System.Convert.ToSingle((videoCaptureMode == VideoCaptureMode.PerEvent))), 25*fontSizeModifier, 25*fontSizeModifier), ".db");
 			GUI.Label (new Rect (bgLeft + 15, bgTop + 375 + (60 * System.Convert.ToSingle((videoCaptureMode == VideoCaptureMode.PerEvent))), 300, 50), "(Leave empty to omit video info from database)");
 		}
 

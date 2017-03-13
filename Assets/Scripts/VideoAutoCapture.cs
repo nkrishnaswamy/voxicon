@@ -134,6 +134,8 @@ namespace VideoCapture {
 			eventObjs = new List<GameObject> ();
 
 			if (captureMode == VideoCaptureMode.PerEvent) {
+				commBridge.PortOpened += StartAutoInput;
+
 				inputController.InputReceived += PrepareScene;
 				inputController.InputReceived += InputStringReceived;
 				inputController.ParseComplete += ParseReceived;
@@ -166,6 +168,13 @@ namespace VideoCapture {
 
 				FileWritten += CaptureComplete;
 			}
+		}
+
+		void StartAutoInput (object sender, EventArgs e)
+		{
+			string[] args = new string[]{ inputFile, eventIndex.ToString (), PlayerPrefs.GetString ("Listener Port") };
+			string result = Marshal.PtrToStringAuto (PluginImport.PythonCall (Application.dataPath + "/Externals/python/", "auto_event_script", "send_next_event_to_port", args, args.Length));
+			eventIndex = System.Convert.ToInt32 (result);
 		}
 		
 		// Update is called once per frame
@@ -506,7 +515,6 @@ namespace VideoCapture {
 			if (eventIndex != -1) {
 				string[] args = new string[]{ inputFile, eventIndex.ToString (), PlayerPrefs.GetString ("Listener Port") };
 				string result = Marshal.PtrToStringAuto (PluginImport.PythonCall (Application.dataPath + "/Externals/python/", "auto_event_script", "send_next_event_to_port", args, args.Length));
-				Debug.Log (result);
 				eventIndex = System.Convert.ToInt32 (result);
 			}
 		}

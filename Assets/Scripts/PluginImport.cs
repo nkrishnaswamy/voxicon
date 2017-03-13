@@ -26,6 +26,16 @@ public class PluginImport : MonoBehaviour {
 	[DllImport ("CommunicationsBridge")]
 	public static extern IntPtr PythonCall(string scriptsPath, string module, string function, string[] args, int numArgs);
 
+	public event EventHandler PortOpened;
+
+	public void OnPortOpened(object sender, EventArgs e)
+	{
+		if (PortOpened != null)
+		{
+			PortOpened(this, e);
+		}
+	}
+
 	void Start()
 	{
 		port = PlayerPrefs.GetString("Listener Port");
@@ -67,6 +77,7 @@ public class PluginImport : MonoBehaviour {
 			if (OpenPort (port)) {
 				Debug.Log ("Listening on port " + port);
 				SelfHandshakeInternal (port);
+				OnPortOpened (this, null);
 			}
 			else {
 				Debug.Log ("Failed to open port " + port);
