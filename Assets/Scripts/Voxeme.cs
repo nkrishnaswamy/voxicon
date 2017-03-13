@@ -32,6 +32,8 @@ public class Voxeme : MonoBehaviour {
 	public Vector3 targetScale;
 	public float moveSpeed = 1.0f;
 	public float turnSpeed = 5.0f;
+	public float defaultMoveSpeed = 0.0f;
+	public float defaultTurnSpeed = 0.0f;
 
 	public float minYBound;
 	//	public float minYBound {
@@ -93,6 +95,9 @@ public class Voxeme : MonoBehaviour {
 		targetPosition = transform.position;
 		targetRotation = transform.eulerAngles;
 		targetScale = transform.localScale;
+
+//		moveSpeed = defaultMoveSpeed;
+//		turnSpeed = defaultTurnSpeed;
 
 		parentToChildPositionOffset = new Dictionary<GameObject, Vector3>();
 		parentToChildRotationOffset = new Dictionary<GameObject, Quaternion>();
@@ -408,6 +413,9 @@ public class Voxeme : MonoBehaviour {
 				RiggingHelper.UnRig (gameObject, gameObject.transform.parent.gameObject);
 			}
 		}
+
+		moveSpeed = defaultMoveSpeed;
+		turnSpeed = defaultTurnSpeed;
 
 		transform.position = startPosition;
 		transform.eulerAngles = startRotation;

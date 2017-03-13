@@ -18,6 +18,7 @@ public class Launcher : FontManager {
 	bool captureVideo;
 	VideoCaptureMode videoCaptureMode;
 	bool resetScene;
+	string eventResetCounter;
 	VideoCaptureFilenameType prevVideoCaptureFilenameType;
 	VideoCaptureFilenameType videoCaptureFilenameType;
 	string customVideoFilenamePrefix;
@@ -142,21 +143,31 @@ public class Launcher : FontManager {
 				(int)videoCaptureMode, videoCaptureModeLabels, 1, "toggle");
 
 			if (videoCaptureMode == VideoCaptureMode.PerEvent) {
-				GUI.Label (new Rect (bgLeft + 40, bgTop + 310, 120*fontSizeModifier, 40*fontSizeModifier), "Reset Scene Between Events");
-				resetScene = GUI.Toggle (new Rect (bgLeft + 25, bgTop + 317, 150, 25 * fontSizeModifier), resetScene, string.Empty);
+				GUI.Label (new Rect (bgLeft + 40, bgTop + 310, 130*fontSizeModifier, 20*fontSizeModifier), "Reset Scene Between");
+				GUI.Label (new Rect (bgLeft + 40, bgTop + 325, 130*fontSizeModifier, 20*fontSizeModifier), "Every");
+				resetScene = GUI.Toggle (new Rect (bgLeft + 25, bgTop + 317, 20, 25 * fontSizeModifier), resetScene, string.Empty);
+				if (resetScene) {
+					eventResetCounter = GUI.TextArea (new Rect (bgLeft + 15 + 62 * fontSizeModifier, bgTop + 325, 25, 20 * fontSizeModifier),
+						eventResetCounter);
+				}
+				else {
+					GUI.TextArea (new Rect (bgLeft + 15 + 62 * fontSizeModifier, bgTop + 325, 25, 20 * fontSizeModifier),
+						eventResetCounter);
+				}
+				GUI.Label (new Rect (bgLeft + 15 + 90*fontSizeModifier, bgTop + 325, 130*fontSizeModifier, 20*fontSizeModifier), "Events");
 
-				GUI.Label (new Rect (bgLeft + 15, bgTop + 350, 120*fontSizeModifier, 25*fontSizeModifier), "Auto-Input Events");
+				GUI.Label (new Rect (bgLeft + 15, bgTop + 350, 130*fontSizeModifier, 25*fontSizeModifier), "Auto-Input Events");
 				autoEventsList = GUI.TextField (new Rect (bgLeft+140*fontSizeModifier, bgTop+350, 150, 25*fontSizeModifier), autoEventsList);
 				GUI.Label (new Rect (bgLeft + 15, bgTop + 375, 300, 50), "(Leave empty to input events manually)");
 			}
 
-			GUI.Label (new Rect (bgLeft + 15 + 150*fontSizeModifier, bgTop + 230, GUI.skin.label.CalcSize (new GUIContent ("Capture Filename Type")).x+10, 20*fontSizeModifier),
+			GUI.Label (new Rect (bgLeft + 15 + 160*fontSizeModifier, bgTop + 230, GUI.skin.label.CalcSize (new GUIContent ("Capture Filename Type")).x+10, 20*fontSizeModifier),
 				"Capture Filename Type");
 
 			//prevVideoCaptureFilenameType = videoCaptureFilenameType;
 			string[] videoCaptureFilenameTypeLabels = new string[]{ "Flashback Default", "Event String", "Custom" };
 			videoCaptureFilenameType = (VideoCaptureFilenameType)GUI.SelectionGrid (
-				new Rect (bgLeft + 15 + 150*fontSizeModifier, bgTop + 250, 150, 20*fontSizeModifier*videoCaptureFilenameTypeLabels.Length),
+				new Rect (bgLeft + 15 + 160*fontSizeModifier, bgTop + 250, 150, 20*fontSizeModifier*videoCaptureFilenameTypeLabels.Length),
 				(int)videoCaptureFilenameType, videoCaptureFilenameTypeLabels, 1, "toggle");
 
 			// EventString can only be used with PerEvent
@@ -167,11 +178,11 @@ public class Launcher : FontManager {
 			}
 
 			if (videoCaptureFilenameType == VideoCaptureFilenameType.EventString) {
-				GUI.Label (new Rect (bgLeft + 30 + 160*fontSizeModifier, bgTop + 310, 120*fontSizeModifier, 40*fontSizeModifier), "Sort Videos By Event String");
-				sortByEventString = GUI.Toggle (new Rect (bgLeft + 15 + 160*fontSizeModifier, bgTop + 317, 150, 25 * fontSizeModifier), sortByEventString, string.Empty);
+				GUI.Label (new Rect (bgLeft + 30 + 170*fontSizeModifier, bgTop + 310, 120*fontSizeModifier, 40*fontSizeModifier), "Sort Videos By Event String");
+				sortByEventString = GUI.Toggle (new Rect (bgLeft + 15 + 170*fontSizeModifier, bgTop + 317, 150, 25 * fontSizeModifier), sortByEventString, string.Empty);
 			}
 			else if (videoCaptureFilenameType == VideoCaptureFilenameType.Custom) {
-				customVideoFilenamePrefix = GUI.TextArea (new Rect (bgLeft + 15 + 160*fontSizeModifier, bgTop + 315, 150, 25*fontSizeModifier),
+				customVideoFilenamePrefix = GUI.TextArea (new Rect (bgLeft + 15 + 170*fontSizeModifier, bgTop + 315, 150, 25*fontSizeModifier),
 					customVideoFilenamePrefix);
 			}
 
@@ -224,6 +235,7 @@ public class Launcher : FontManager {
 		captureVideo = (PlayerPrefs.GetInt("Capture Video") == 1);
 		videoCaptureMode = (VideoCaptureMode)PlayerPrefs.GetInt("Video Capture Mode");
 		resetScene = (PlayerPrefs.GetInt("Reset Between Events") == 1);
+		eventResetCounter = PlayerPrefs.GetInt ("Event Reset Counter").ToString ();;
 		videoCaptureFilenameType = (VideoCaptureFilenameType)PlayerPrefs.GetInt("Video Capture Filename Type");
 		sortByEventString = (PlayerPrefs.GetInt("Sort By Event String") == 1);
 		customVideoFilenamePrefix = PlayerPrefs.GetString("Custom Video Filename Prefix");
@@ -239,6 +251,7 @@ public class Launcher : FontManager {
 		PlayerPrefs.SetInt("Capture Video", System.Convert.ToInt32(captureVideo));
 		PlayerPrefs.SetInt("Video Capture Mode", System.Convert.ToInt32(videoCaptureMode));
 		PlayerPrefs.SetInt("Reset Between Events", System.Convert.ToInt32(resetScene));
+		PlayerPrefs.SetInt("Event Reset Counter", System.Convert.ToInt32(eventResetCounter));
 		PlayerPrefs.SetInt("Video Capture Filename Type", System.Convert.ToInt32(videoCaptureFilenameType));
 		PlayerPrefs.SetInt("Sort By Event String", System.Convert.ToInt32(sortByEventString));
 		PlayerPrefs.SetString("Custom Video Filename Prefix", customVideoFilenamePrefix);

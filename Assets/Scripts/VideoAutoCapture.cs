@@ -78,11 +78,14 @@ namespace VideoCapture {
 
 		VideoCaptureMode captureMode;
 		bool resetScene;
+		int eventResetCounter;
 		VideoCaptureFilenameType filenameScheme;
 		bool sortByEvent;
 		string filenamePrefix;
 		string dbFile;
 		string inputFile;
+
+		int eventsExecuted = 0;
 
 		SQLiteConnection dbConnection;
 		VideoDBEntry dbEntry;
@@ -105,8 +108,6 @@ namespace VideoCapture {
 
 		// Use this for initialization
 		void Start () {
-			InitObjectDisabling ();
-
 			recorder = gameObject.GetComponent<FlashbackRecorder> ();
 			inputController = GameObject.Find ("IOController").GetComponent<InputController> ();
 			eventManager = GameObject.Find ("BehaviorController").GetComponent<EventManager> ();
@@ -117,11 +118,18 @@ namespace VideoCapture {
 			capture = (PlayerPrefs.GetInt ("Capture Video") == 1);
 			captureMode = (VideoCaptureMode)PlayerPrefs.GetInt ("Video Capture Mode");
 			resetScene = (PlayerPrefs.GetInt ("Reset Between Events") == 1);
+			eventResetCounter = PlayerPrefs.GetInt ("Event Reset Counter");
 			filenameScheme = (VideoCaptureFilenameType)PlayerPrefs.GetInt ("Video Capture Filename Type");
 			sortByEvent = (PlayerPrefs.GetInt ("Sort By Event String") == 1);
 			filenamePrefix = PlayerPrefs.GetString ("Custom Video Filename Prefix");
 			dbFile = PlayerPrefs.GetString ("Video Capture DB");
 			inputFile = PlayerPrefs.GetString ("Auto Events List");
+
+			if (!capture) {
+				return;
+			}
+
+			InitObjectDisabling ();
 
 			eventObjs = new List<GameObject> ();
 
@@ -162,6 +170,10 @@ namespace VideoCapture {
 		
 		// Update is called once per frame
 		void Update () {
+			if (!capture) {
+				return;
+			}
+
 			if (stopCaptureFlag) {
 				SaveCapture ();
 				stopCaptureFlag = false;
@@ -189,12 +201,20 @@ namespace VideoCapture {
 		}
 
 		public void InitObjectDisabling() {
+			if (!capture) {
+				return;
+			}
+
 			for (int i = 0; i < availableObjs.Count; i++) {
 				availableObjs[i] = Helper.GetMostImmediateParentVoxeme (availableObjs [i]);
 			}
 		}
 
 		void DisableObjects() {
+			if (!capture) {
+				return;
+			}
+
 			foreach (GameObject go in availableObjs) {
 				//eventManager.InsertEvent (string.Format("disable({0})",go.name), 0);
 				preds.DISABLE (new GameObject[] { go });
@@ -202,6 +222,10 @@ namespace VideoCapture {
 		}
 
 		void EnableObjects() {
+			if (!capture) {
+				return;
+			}
+
 			foreach (GameObject go in availableObjs) {
 				//eventManager.InsertEvent (string.Format("disable({0})",go.name), 0);
 				preds.ENABLE (new GameObject[] { go });
@@ -256,18 +280,16 @@ namespace VideoCapture {
 			}
 
 			if (captureMode == VideoCaptureMode.PerEvent) {
-				EnableObjects ();
-				if (resetScene) {
+				if ((resetScene) && (eventsExecuted % eventResetCounter == 0)) {
+					EnableObjects ();
 					GameObject.Find ("BlocksWorld").GetComponent<ObjectSelector> ().SendMessage ("ResetScene");
+					DisableObjects ();
+					eventObjs.Clear ();
 				}
-
-				DisableObjects ();
-				eventObjs.Clear ();
 			}
 		}
 
 		void StartCapture(object sender, EventArgs e) {
-
 			if (!capture) {
 				return;
 			}
@@ -306,6 +328,10 @@ namespace VideoCapture {
 		}
 
 		void WaitComplete (object sender, EventArgs e) {
+			if (!capture) {
+				return;
+			}
+
 			initialWaitComplete = true;
 		}
 
@@ -370,6 +396,10 @@ namespace VideoCapture {
 		}
 
 		void EventTimedOut(object sender, EventArgs e) {
+			if (!capture) {
+				return;
+			}
+
 			eventManager.AbortEvent ();
 		}
 
@@ -381,9 +411,15 @@ namespace VideoCapture {
 			if (capturing) {
 				eventCompleteWaitTimer.Enabled = true;
 			}
+
+			eventsExecuted++;
 		}
 
 		void ObjectsResolved(object sender, EventArgs e) {
+			if (!capture) {
+				return;
+			}
+
 			dbEntry.ObjectResolvedParse = ((EventManagerArgs)e).EventString;
 
 //			Regex r = new Regex (@"\([^()]*\)");
@@ -411,6 +447,10 @@ namespace VideoCapture {
 		}
 
 		void FilterSpecifiedManner(object sender, EventArgs e) {
+			if (!capture) {
+				return;
+			}
+
 			string specifiedEvent = PredicateParameters.FilterSpecifiedManner (((EventManagerArgs)e).EventString);
 
 			AddConstituentObjectsToAffectedList (specifiedEvent);
@@ -427,16 +467,27 @@ namespace VideoCapture {
 			}
 		}
 
-		void SatisfactionCalculated (object sender, EventArgs e)
-		{
+		void SatisfactionCalculated (object sender, EventArgs e){
+			if (!capture) {
+				return;
+			}
+
 			AddConstituentObjectsToAffectedList (((EventManagerArgs)e).EventString);
 		}
 
 		void PrepareLog(object sender, EventArgs e) {
+			if (!capture) {
+				return;
+			}
+
 			paramValues[((ParamsEventArgs)e).KeyValue.Key] = ((ParamsEventArgs)e).KeyValue.Value;
 		}
 
 		void ParametersCalculated(object sender, EventArgs e) {
+			if (!capture) {
+				return;
+			}
+
 			Dictionary<string,string> values = paramValues.Where(kvp => kvp.Value != string.Empty).
 				ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 //			foreach (string key in values.Keys) {
@@ -448,6 +499,10 @@ namespace VideoCapture {
 		}
 
 		void CaptureComplete(object sender, EventArgs e) {
+			if (!capture) {
+				return;
+			}
+
 			if (eventIndex != -1) {
 				string[] args = new string[]{ inputFile, eventIndex.ToString (), PlayerPrefs.GetString ("Listener Port") };
 				string result = Marshal.PtrToStringAuto (PluginImport.PythonCall (Application.dataPath + "/Externals/python/", "auto_event_script", "send_next_event_to_port", args, args.Length));
@@ -457,6 +512,10 @@ namespace VideoCapture {
 		}
 
 		void AddConstituentObjectsToAffectedList(string eventForm) {
+			if (!capture) {
+				return;
+			}
+
 			string[] constituents = eventForm.Split (new char[]{ '(', ',', ')' });
 
 			foreach (string constituent in constituents) {
@@ -473,6 +532,10 @@ namespace VideoCapture {
 		}
 
 		void OpenDB() {
+			if (!capture) {
+				return;
+			}
+
 			dbConnection = new SQLiteConnection (string.Format ("{0}.db", dbFile),
 				SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
 
@@ -480,6 +543,10 @@ namespace VideoCapture {
 		}
 
 		void WriteToDB() {
+			if (!capture) {
+				return;
+			}
+
 			dbConnection.InsertAll (new[]{ dbEntry });
 		}
 	}

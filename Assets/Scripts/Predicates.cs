@@ -905,6 +905,8 @@ public class Predicates : MonoBehaviour {
 				if (args [1] is Vector3) {
 					GameObject theme = args [0] as GameObject;	// get theme obj ("apple" in "put apple on plate")
 					GameObject dest = GameObject.Find (rdfTriples [0].Item3);	// get destination obj ("plate" in "put apple on plate")
+					Voxeme voxComponent = theme.GetComponent<Voxeme> ();
+
 					//Renderer[] renderers = obj.GetComponentsInChildren<Renderer> ();
 					/*Bounds bounds = new Bounds ();
 					
@@ -979,7 +981,6 @@ public class Predicates : MonoBehaviour {
 
 						Debug.Log (Helper.VectorToParsable (targetPosition));
 
-						Voxeme voxComponent = theme.GetComponent<Voxeme> ();
 						if (voxComponent != null) {
 							if (!voxComponent.enabled) {
 								voxComponent.gameObject.transform.parent = null;
@@ -994,6 +995,9 @@ public class Predicates : MonoBehaviour {
 							}*/
 						}
 					}
+					if (voxComponent.moveSpeed == 0.0f) {
+						voxComponent.moveSpeed = RandomHelper.RandomFloat (0.0f, 5.0f, (int)RandomHelper.RangeFlags.MaxInclusive);
+					}
 				}
 			}
 		} 
@@ -1002,6 +1006,7 @@ public class Predicates : MonoBehaviour {
 				if (args [1] is Vector3) {
 					GameObject theme = args [0] as GameObject;	// get theme obj ("apple" in "put apple in plate")
 					GameObject dest = GameObject.Find (rdfTriples [0].Item3);	// get destination obj ("plate" in "put apple in plate")
+					Voxeme voxComponent = theme.GetComponent<Voxeme> ();
 
 					Bounds themeBounds = Helper.GetObjectWorldSize (theme);	// bounds of theme obj
 					Bounds destBounds = Helper.GetObjectWorldSize (dest);	// bounds of dest obj
@@ -1063,7 +1068,6 @@ public class Predicates : MonoBehaviour {
 
 					Debug.Log (Helper.VectorToParsable (targetPosition));
 
-					Voxeme voxComponent = theme.GetComponent<Voxeme> ();
 					if (voxComponent != null) {
 						if (!voxComponent.enabled) {
 							voxComponent.gameObject.transform.parent = null;
@@ -1077,6 +1081,10 @@ public class Predicates : MonoBehaviour {
 							voxComponent.targetPosition = voxComponent.targetPosition +
 							(voxComponent.grasperCoord.position - voxComponent.gameObject.transform.position);
 						}*/
+					}
+
+					if (voxComponent.moveSpeed == 0.0f) {
+						voxComponent.moveSpeed = RandomHelper.RandomFloat (0.0f, 5.0f, (int)RandomHelper.RangeFlags.MaxInclusive);
 					}
 				}
 			}
@@ -1094,6 +1102,7 @@ public class Predicates : MonoBehaviour {
 					GameObject theme = args [0] as GameObject;	// get theme obj ("apple" in "put apple under plate")
 					GameObject dest = GameObject.Find (rdfTriples [0].Item3);	// get destination obj ("plate" in "put apple on plate")
 					GameObject supportingSurface = dest.GetComponent<Voxeme>().supportingSurface;
+					Voxeme voxComponent = theme.GetComponent<Voxeme> ();
 
 					Bounds themeBounds = Helper.GetObjectWorldSize (theme);	// bounds of theme obj
 					Bounds destBounds = Helper.GetObjectWorldSize (dest);	// bounds of dest obj => alter to get interior enumerated by VoxML structure
@@ -1120,7 +1129,6 @@ public class Predicates : MonoBehaviour {
 
 						Debug.Log (Helper.VectorToParsable (targetPosition));
 
-						Voxeme voxComponent = theme.GetComponent<Voxeme> ();
 						if (voxComponent != null) {
 							if (!voxComponent.enabled) {
 								voxComponent.gameObject.transform.parent = null;
@@ -1135,6 +1143,10 @@ public class Predicates : MonoBehaviour {
 							}*/
 						}
 					}
+
+					if (voxComponent.moveSpeed == 0.0f) {
+						voxComponent.moveSpeed = RandomHelper.RandomFloat (0.0f, 5.0f, (int)RandomHelper.RangeFlags.MaxInclusive);
+					}
 				}
 			}
 		}
@@ -1143,6 +1155,7 @@ public class Predicates : MonoBehaviour {
 				if (args [1] is Vector3) {
 					GameObject theme = args [0] as GameObject;	// get theme obj ("apple" in "put apple on plate")
 					GameObject dest = GameObject.Find (rdfTriples [0].Item3);	// get destination obj ("plate" in "put apple on plate")
+					Voxeme voxComponent = theme.GetComponent<Voxeme> ();
 
 					Bounds themeBounds = Helper.GetObjectWorldSize (theme);	// bounds of theme obj
 					Bounds destBounds = Helper.GetObjectWorldSize (dest);	// bounds of dest obj => alter to get interior enumerated by VoxML structure
@@ -1177,7 +1190,6 @@ public class Predicates : MonoBehaviour {
 
 						Debug.Log (Helper.VectorToParsable (targetPosition));
 
-						Voxeme voxComponent = theme.GetComponent<Voxeme> ();
 						if (voxComponent != null) {
 							if (!voxComponent.enabled) {
 								voxComponent.gameObject.transform.parent = null;
@@ -1192,6 +1204,10 @@ public class Predicates : MonoBehaviour {
 							}*/
 						}
 					}
+
+					if (voxComponent.moveSpeed == 0.0f) {
+						voxComponent.moveSpeed = RandomHelper.RandomFloat (0.0f, 5.0f, (int)RandomHelper.RangeFlags.MaxInclusive);
+					}
 				}
 			}
 		} 
@@ -1200,6 +1216,7 @@ public class Predicates : MonoBehaviour {
 				if (args [1] is Vector3) {
 					GameObject theme = args [0] as GameObject;	// get theme obj ("apple" in "put apple on plate")
 					GameObject dest = GameObject.Find (rdfTriples [0].Item3);	// get destination obj ("plate" in "put apple on plate")
+					Voxeme voxComponent = theme.GetComponent<Voxeme> ();
 
 					Bounds themeBounds = Helper.GetObjectWorldSize (theme);	// bounds of theme obj
 					Bounds destBounds = Helper.GetObjectWorldSize (dest);	// bounds of dest obj => alter to get interior enumerated by VoxML structure
@@ -1234,7 +1251,6 @@ public class Predicates : MonoBehaviour {
 
 						Debug.Log (Helper.VectorToParsable (targetPosition));
 
-						Voxeme voxComponent = theme.GetComponent<Voxeme> ();
 						if (voxComponent != null) {
 							if (!voxComponent.enabled) {
 								voxComponent.gameObject.transform.parent = null;
@@ -1249,6 +1265,10 @@ public class Predicates : MonoBehaviour {
 							}*/
 						}
 					}
+				
+					if (voxComponent.moveSpeed == 0.0f) {
+						voxComponent.moveSpeed = RandomHelper.RandomFloat (0.0f, 5.0f, (int)RandomHelper.RangeFlags.MaxInclusive);
+					}
 				}
 			}
 		} 
@@ -1257,6 +1277,7 @@ public class Predicates : MonoBehaviour {
 				if (args [1] is Vector3) {
 					GameObject theme = args [0] as GameObject;	// get theme obj ("apple" in "put apple on plate")
 					GameObject dest = GameObject.Find (rdfTriples [0].Item3);	// get destination obj ("plate" in "put apple on plate")
+					Voxeme voxComponent = theme.GetComponent<Voxeme> ();
 
 					Bounds themeBounds = Helper.GetObjectWorldSize (theme);	// bounds of theme obj
 					Bounds destBounds = Helper.GetObjectWorldSize (dest);	// bounds of dest obj => alter to get interior enumerated by VoxML structure
@@ -1291,7 +1312,6 @@ public class Predicates : MonoBehaviour {
 
 						Debug.Log (Helper.VectorToParsable (targetPosition));
 
-						Voxeme voxComponent = theme.GetComponent<Voxeme> ();
 						if (voxComponent != null) {
 							if (!voxComponent.enabled) {
 								voxComponent.gameObject.transform.parent = null;
@@ -1306,6 +1326,10 @@ public class Predicates : MonoBehaviour {
 							}*/
 						}
 					}
+
+					if (voxComponent.moveSpeed == 0.0f) {
+						voxComponent.moveSpeed = RandomHelper.RandomFloat (0.0f, 5.0f, (int)RandomHelper.RangeFlags.MaxInclusive);
+					}
 				}
 			}
 		} 
@@ -1314,6 +1338,7 @@ public class Predicates : MonoBehaviour {
 				if (args [1] is Vector3) {
 					GameObject theme = args [0] as GameObject;	// get theme obj ("apple" in "put apple on plate")
 					GameObject dest = GameObject.Find (rdfTriples [0].Item3);	// get destination obj ("plate" in "put apple on plate")
+					Voxeme voxComponent = theme.GetComponent<Voxeme> ();
 
 					Bounds themeBounds = Helper.GetObjectWorldSize (theme);	// bounds of theme obj
 					Bounds destBounds = Helper.GetObjectWorldSize (dest);	// bounds of dest obj => alter to get interior enumerated by VoxML structure
@@ -1347,7 +1372,6 @@ public class Predicates : MonoBehaviour {
 						}
 						Debug.Log (Helper.VectorToParsable (targetPosition));
 
-						Voxeme voxComponent = theme.GetComponent<Voxeme> ();
 						if (voxComponent != null) {
 							if (!voxComponent.enabled) {
 								voxComponent.gameObject.transform.parent = null;
@@ -1362,6 +1386,10 @@ public class Predicates : MonoBehaviour {
 							}*/
 						}
 					}
+
+					if (voxComponent.moveSpeed == 0.0f) {
+						voxComponent.moveSpeed = RandomHelper.RandomFloat (0.0f, 5.0f, (int)RandomHelper.RangeFlags.MaxInclusive);
+					}
 				}
 			}
 		}
@@ -1370,6 +1398,7 @@ public class Predicates : MonoBehaviour {
 				if (args [1] is Vector3) {
 					GameObject theme = args [0] as GameObject;	// get theme obj ("apple" in "put apple on plate")
 					GameObject dest = GameObject.Find (rdfTriples [0].Item3);	// get destination obj ("plate" in "put apple on plate")
+					Voxeme voxComponent = theme.GetComponent<Voxeme> ();
 
 					Bounds themeBounds = Helper.GetObjectWorldSize (theme);	// bounds of theme obj
 
@@ -1391,7 +1420,6 @@ public class Predicates : MonoBehaviour {
 						}
 						Debug.Log (Helper.VectorToParsable (targetPosition));
 
-						Voxeme voxComponent = theme.GetComponent<Voxeme> ();
 						if (voxComponent != null) {
 							if (!voxComponent.enabled) {
 								voxComponent.gameObject.transform.parent = null;
@@ -1400,6 +1428,10 @@ public class Predicates : MonoBehaviour {
 
 							voxComponent.targetPosition = targetPosition;
 						}
+					}
+
+					if (voxComponent.moveSpeed == 0.0f) {
+						voxComponent.moveSpeed = RandomHelper.RandomFloat (0.0f, 5.0f, (int)RandomHelper.RangeFlags.MaxInclusive);
 					}
 
 					translocDir = targetPosition - theme.transform.position;
@@ -1428,6 +1460,10 @@ public class Predicates : MonoBehaviour {
 							voxComponent.enabled = true;
 						}
 
+						if (voxComponent.moveSpeed == 0.0f) {
+							voxComponent.moveSpeed = RandomHelper.RandomFloat (0.0f, 5.0f, (int)RandomHelper.RangeFlags.MaxInclusive);
+						}
+
 						voxComponent.targetPosition = targetPosition;
 
 						if (voxComponent.isGrasped) {
@@ -1452,7 +1488,8 @@ public class Predicates : MonoBehaviour {
 			if ((bool)args[args.Length-1] == false) {
 				//eventManager.eventsStatus.Add ("put("+(args [0] as GameObject).name+","+Helper.VectorToParsable(targetPosition)+")", false);
 				eventManager.events[0] = "put("+(args [0] as GameObject).name+","+Helper.VectorToParsable(targetPosition)+")";
-
+			}
+			else{
 				// record parameter values
 				OnPrepareLog (this, new ParamsEventArgs ("TranslocSpeed", (args [0] as GameObject).GetComponent<Voxeme>().moveSpeed.ToString()));
 
@@ -1460,15 +1497,15 @@ public class Predicates : MonoBehaviour {
 					OnPrepareLog (this, new ParamsEventArgs ("TranslocDir", Helper.VectorToParsable (translocDir)));
 					OnPrepareLog (this, new ParamsEventArgs ("RelOffset", Helper.VectorToParsable (relOffset)));
 				}
-					
-//				Debug.Log (eventManager.events [0]);
-//				Debug.Log (eventManager.evalOrig [eventManager.events [0]]);
+
+				//				Debug.Log (eventManager.events [0]);
+				//				Debug.Log (eventManager.evalOrig [eventManager.events [0]]);
 				//if (eventManager.evalOrig.ContainsKey (eventManager.events [0])) {
-					if ((Helper.GetTopPredicate(eventManager.lastParse) == Helper.GetTopPredicate(eventManager.events [0])) ||
-						(PredicateParameters.IsSpecificationOf(Helper.GetTopPredicate(eventManager.events [0]),
+				if ((Helper.GetTopPredicate(eventManager.lastParse) == Helper.GetTopPredicate(eventManager.events [0])) ||
+					(PredicateParameters.IsSpecificationOf(Helper.GetTopPredicate(eventManager.events [0]),
 						Helper.GetTopPredicate(eventManager.lastParse)))){
-						OnParamsCalculated (null, null);
-					}
+					OnParamsCalculated (null, null);
+				}
 				//}
 			}
 		}
@@ -1623,6 +1660,9 @@ public class Predicates : MonoBehaviour {
 						obj.transform.position.z);
 				}
 
+				if (voxComponent.moveSpeed == 0.0f) {
+					voxComponent.moveSpeed = RandomHelper.RandomFloat (0.0f, 5.0f, (int)RandomHelper.RangeFlags.MaxInclusive);
+				}
 				voxComponent.targetPosition = targetPosition;
 			}
 		}
@@ -1630,10 +1670,11 @@ public class Predicates : MonoBehaviour {
 
 		// add to events manager
 		if (args[args.Length-1] is bool) {
-			if ((bool)args[args.Length-1] == false) {
-				eventManager.events[0] = "lift("+(args [0] as GameObject).name+","+Helper.VectorToParsable(targetPosition)+")";
+			if ((bool)args [args.Length - 1] == false) {
+				eventManager.events [0] = "lift(" + (args [0] as GameObject).name + "," + Helper.VectorToParsable (targetPosition) + ")";
 				Debug.Log (eventManager.events [0]);
-
+			}
+			else {
 				// record parameter values
 				OnPrepareLog (this, new ParamsEventArgs ("TranslocSpeed", (args [0] as GameObject).GetComponent<Voxeme>().moveSpeed.ToString()));
 				OnPrepareLog (this, new ParamsEventArgs ("TranslocDir", Helper.VectorToParsable(targetPosition-(args [0] as GameObject).transform.position)));
@@ -1718,14 +1759,19 @@ public class Predicates : MonoBehaviour {
 
 				voxComponent.targetPosition = targetPosition;
 			}
+
+			if (voxComponent.moveSpeed == 0.0f) {
+				voxComponent.moveSpeed = RandomHelper.RandomFloat (0.0f, 5.0f, (int)RandomHelper.RangeFlags.MaxInclusive);
+			}
 		}
 
 		// add to events manager
 		if (args[args.Length-1] is bool) {
-			if ((bool)args[args.Length-1] == false) {
-				eventManager.events[0] = "slide("+(args [0] as GameObject).name+","+Helper.VectorToParsable(targetPosition)+")";
+			if ((bool)args [args.Length - 1] == false) {
+				eventManager.events [0] = "slide(" + (args [0] as GameObject).name + "," + Helper.VectorToParsable (targetPosition) + ")";
 				Debug.Log (eventManager.events [0]);
-
+			}
+			else {
 				// record parameter values
 				OnPrepareLog (this, new ParamsEventArgs ("TranslocSpeed", (args [0] as GameObject).GetComponent<Voxeme>().moveSpeed.ToString()));
 				OnPrepareLog (this, new ParamsEventArgs ("TranslocDir", Helper.VectorToParsable (targetPosition-(args [0] as GameObject).transform.position)));
@@ -2061,6 +2107,10 @@ public class Predicates : MonoBehaviour {
 				//	}
 				//}
 
+
+				if (voxComponent.moveSpeed == 0.0f) {
+					voxComponent.moveSpeed = 1.0f;//RandomHelper.RandomFloat (0.0f, 5.0f, (int)RandomHelper.RangeFlags.MaxInclusive);
+				}
 				// calculate turnSpeed (angular velocity)
 				// estimate where obj will be next time step
 				Vector3 normalizedOffset = offset.normalized;
@@ -2380,6 +2430,11 @@ public class Predicates : MonoBehaviour {
 						Debug.Log ((obj.transform.rotation * Quaternion.AngleAxis (angle, (Vector3)args [3])).eulerAngles);
 
 						// rotation from object axis [1] to world axis [2] around world axis [3]
+
+						if (voxComponent.turnSpeed == 0.0f) {
+							voxComponent.turnSpeed = RandomHelper.RandomFloat (0.0f, 12.5f, (int)RandomHelper.RangeFlags.MaxInclusive);
+						}
+
 						targetRotation = (Quaternion.AngleAxis (sign * angle, (Vector3)args [3]) * obj.transform.rotation).eulerAngles;
 						rotAxis = Constants.Axes.FirstOrDefault (a => a.Value == (Vector3)args [3]).Key;
 						Debug.Log (targetRotation);
@@ -2390,12 +2445,21 @@ public class Predicates : MonoBehaviour {
 						Debug.Log ((Vector3)args [2]);
 
 						// rotation from object axis[1] to world axis [2]
+
+						if (voxComponent.turnSpeed == 0.0f) {
+							voxComponent.turnSpeed = RandomHelper.RandomFloat (0.0f, 12.5f, (int)RandomHelper.RangeFlags.MaxInclusive);
+						}
+
 						targetRotation = Quaternion.FromToRotation((Vector3)args [1], (Vector3)args [2]).eulerAngles;
 						angle = Vector3.Angle ((Vector3)args [1], (Vector3)args [2]);
 						//targetRotation = Quaternion.LookRotation(obj.transform.rotation * (Vector3)args [1],(Vector3)args [2]).eulerAngles;
 					}
 				}
 				else {
+					if (voxComponent.turnSpeed == 0.0f) {
+						voxComponent.turnSpeed = RandomHelper.RandomFloat (0.0f, 12.5f, (int)RandomHelper.RangeFlags.MaxInclusive);
+					}
+
 					targetRotation = (obj.transform.rotation * UnityEngine.Random.rotation).eulerAngles;
 					angle = Quaternion.Angle(transform.rotation,Quaternion.Euler(targetRotation));
 				}
@@ -2547,7 +2611,13 @@ public class Predicates : MonoBehaviour {
 
 			sign = RandomHelper.RandomSign ();
 			angle = sign * (180.0f + UnityEngine.Random.rotation.eulerAngles.y);
+
+			if (voxComponent.turnSpeed == 0.0f) {
+				voxComponent.turnSpeed = RandomHelper.RandomFloat (0.0f, 12.5f, (int)RandomHelper.RangeFlags.MaxInclusive);
+			}
+
 			float degrees = angle;
+
 
 			//targetRotation *= obj.transform.rotation;
 
@@ -2574,15 +2644,15 @@ public class Predicates : MonoBehaviour {
 			if ((bool)args [args.Length - 1] == false) {
 				for (int i = 0; i < orientations.Count; i++) {
 					eventManager.InsertEvent (string.Format ("turn({0},{1},{2},{3})", (args [0] as GameObject).name, 
-						Helper.VectorToParsable(trackAxis), Helper.VectorToParsable(orientations[i]), Helper.VectorToParsable(worldRotAxis)), 1 + i);
-
-					// record parameter values
-					OnPrepareLog (this, new ParamsEventArgs ("RotSpeed", (args [0] as GameObject).GetComponent<Voxeme>().turnSpeed.ToString()));
-					OnPrepareLog (this, new ParamsEventArgs ("RotAxis", Constants.Axes.FirstOrDefault (a => a.Value == objRotAxis).Key));
-					OnPrepareLog (this, new ParamsEventArgs ("RotAngle", angle.ToString()));
-					OnPrepareLog (this, new ParamsEventArgs ("RotDir", (sign > 0) ? "+" : "-"));
-					OnParamsCalculated (null, null);
+						Helper.VectorToParsable (trackAxis), Helper.VectorToParsable (orientations [i]), Helper.VectorToParsable (worldRotAxis)), 1 + i);
 				}
+
+				// record parameter values
+				OnPrepareLog (this, new ParamsEventArgs ("RotSpeed", (args [0] as GameObject).GetComponent<Voxeme>().turnSpeed.ToString()));
+				OnPrepareLog (this, new ParamsEventArgs ("RotAxis", Constants.Axes.FirstOrDefault (a => a.Value == objRotAxis).Key));
+				OnPrepareLog (this, new ParamsEventArgs ("RotAngle", angle.ToString()));
+				OnPrepareLog (this, new ParamsEventArgs ("RotDir", (sign > 0) ? "+" : "-"));
+				OnParamsCalculated (null, null);
 				//Debug.Break ();
 			}
 		}
@@ -3546,25 +3616,30 @@ public class Predicates : MonoBehaviour {
 						eventManager.InsertEvent (string.Format ("put({0},on({1}))", lids [0].name, (args [0] as GameObject).name), 1);
 						mannerString = string.Format ("put({0},on({1}))", lids [0].name, (args [0] as GameObject).name);
 						movingComponent = lids [0];
-						motionSpeed = movingComponent.GetComponent<Voxeme> ().moveSpeed;
-					} else {
+						motionSpeed = movingComponent.GetComponent<Voxeme> ().moveSpeed = 
+							RandomHelper.RandomFloat (0.0f, 5.0f, (int)RandomHelper.RangeFlags.MaxInclusive);
+
+						eventManager.OnSatisfactionCalculated (eventManager, new EventManagerArgs (eventManager.events [1]));
+					}
+					else {
 						eventManager.InsertEvent (string.Format ("flip({0})", (args [0] as GameObject).name), 1);
 						mannerString = string.Format ("flip({0})", (args [0] as GameObject).name);
 						movingComponent = (args [0] as GameObject);
-						motionSpeed = movingComponent.GetComponent<Voxeme> ().turnSpeed;
+						motionSpeed = movingComponent.GetComponent<Voxeme> ().turnSpeed = 
+							RandomHelper.RandomFloat (0.0f, 12.5f, (int)RandomHelper.RangeFlags.MaxInclusive);
 					}
-				} else {
+				}
+				else {
 					eventManager.InsertEvent (string.Format ("turn({0},{1},{2},{3})", cover.name,
 						Helper.VectorToParsable (Constants.xAxis),
 						Helper.VectorToParsable ((args [0] as GameObject).transform.rotation * Constants.xAxis),
 						Helper.VectorToParsable ((args [0] as GameObject).transform.rotation * Constants.yAxis)), 1);
 					mannerString = string.Format ("turn({0})", cover.name);
 					movingComponent = cover;
-					motionSpeed = movingComponent.GetComponent<Voxeme> ().turnSpeed;
+					motionSpeed = movingComponent.GetComponent<Voxeme> ().turnSpeed = 
+						RandomHelper.RandomFloat (0.0f, 12.5f, (int)RandomHelper.RangeFlags.MaxInclusive);
 				}
-
-				eventManager.OnSatisfactionCalculated (eventManager, new EventManagerArgs (eventManager.events [1]));
-
+					
 				// record parameter values
 				OnPrepareLog (this, new ParamsEventArgs ("MotionManner", mannerString));
 				OnPrepareLog (this, new ParamsEventArgs ("MotionSpeed", motionSpeed.ToString ()));
@@ -3695,7 +3770,8 @@ public class Predicates : MonoBehaviour {
 										Debug.Log (Helper.VectorToParsable(region.max));
 										Debug.Log (Helper.VectorToParsable(region.center));
 										Bounds lidBounds = Helper.GetObjectWorldSize (lid);
-										removeLocation = new Vector3(region.center.x, region.center.y + (lidBounds.center.y - lidBounds.min.y),
+										removeLocation = new Vector3(region.center.x,
+											region.center.y + (lidBounds.center.y - lidBounds.min.y) + (lid.transform.position.y - lidBounds.center.y),
 											region.center.z);
 									}
 									else {
@@ -3741,14 +3817,18 @@ public class Predicates : MonoBehaviour {
 						eventManager.InsertEvent (string.Format ("put({0},{1})", lid.name, Helper.VectorToParsable(removeLocation)), 1);
 						mannerString = string.Format ("move({0})", lid.name);
 						movingComponent = lid;
-						motionSpeed = movingComponent.GetComponent<Voxeme> ().moveSpeed;
+						motionSpeed = movingComponent.GetComponent<Voxeme> ().moveSpeed = 
+							RandomHelper.RandomFloat (0.0f, 5.0f, (int)RandomHelper.RangeFlags.MaxInclusive);
 						translocDir = removeLocation - movingComponent.transform.position;
+
+						eventManager.OnSatisfactionCalculated (eventManager, new EventManagerArgs (eventManager.events [1]));
 					} 
 					else {
 						eventManager.InsertEvent (string.Format ("flip({0})", (args [0] as GameObject).name), 1);
 						mannerString = string.Format ("flip({0})", (args [0] as GameObject).name);
 						movingComponent = (args [0] as GameObject);
-						motionSpeed = movingComponent.GetComponent<Voxeme> ().turnSpeed;
+						motionSpeed = movingComponent.GetComponent<Voxeme> ().turnSpeed = 
+							RandomHelper.RandomFloat (0.0f, 12.5f, (int)RandomHelper.RangeFlags.MaxInclusive);
 						rotAngle = 180.0f;
 					}
 				} 
@@ -3759,12 +3839,11 @@ public class Predicates : MonoBehaviour {
 						Helper.VectorToParsable((args [0] as GameObject).transform.rotation * Constants.yAxis)), 1);
 					mannerString = string.Format ("turn({0})", cover.name);
 					movingComponent = cover;
-					motionSpeed = movingComponent.GetComponent<Voxeme> ().turnSpeed;
+					motionSpeed = movingComponent.GetComponent<Voxeme> ().turnSpeed = 
+						RandomHelper.RandomFloat (0.0f, 12.5f, (int)RandomHelper.RangeFlags.MaxInclusive);
 					rotAngle = Quaternion.Angle(movingComponent.transform.rotation,targetRotation);
 				}
-
-				eventManager.OnSatisfactionCalculated (eventManager, new EventManagerArgs (eventManager.events [1]));
-
+					
 				// record parameter values						
 				OnPrepareLog (this, new ParamsEventArgs ("MotionManner", mannerString));
 				OnPrepareLog (this, new ParamsEventArgs ("MotionSpeed", motionSpeed.ToString()));

@@ -1,4 +1,7 @@
 sentences = [
+    "open the cup",
+    "open the book",
+    "close the book",
     "lift the plate",
     "put the apple on the plate",
     "move the apple",
