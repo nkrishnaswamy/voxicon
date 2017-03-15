@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
@@ -84,6 +85,7 @@ namespace VideoCapture {
 		string filenamePrefix;
 		string dbFile;
 		string inputFile;
+		string videoDir;
 
 		int eventsExecuted = 0;
 
@@ -124,10 +126,13 @@ namespace VideoCapture {
 			filenamePrefix = PlayerPrefs.GetString ("Custom Video Filename Prefix");
 			dbFile = PlayerPrefs.GetString ("Video Capture DB");
 			inputFile = PlayerPrefs.GetString ("Auto Events List");
+			videoDir = PlayerPrefs.GetString ("Video Output Directory");
 
 			if (!capture) {
 				return;
 			}
+
+			recorder.SetOutputDirectory (Path.GetFullPath (Application.dataPath + videoDir));
 
 			InitObjectDisabling ();
 
@@ -172,9 +177,18 @@ namespace VideoCapture {
 
 		void StartAutoInput (object sender, EventArgs e)
 		{
-			string[] args = new string[]{ inputFile, eventIndex.ToString (), PlayerPrefs.GetString ("Listener Port") };
-			string result = Marshal.PtrToStringAuto (PluginImport.PythonCall (Application.dataPath + "/Externals/python/", "auto_event_script", "send_next_event_to_port", args, args.Length));
-			eventIndex = System.Convert.ToInt32 (result);
+			if (inputFile != string.Empty) {
+				string fullPath = Path.GetFullPath (Application.dataPath + inputFile);
+				if (File.Exists (fullPath + ".py")) {
+					string[] args = new string[]{ fullPath.Remove(fullPath.LastIndexOf('/') + 1),
+						inputFile.Substring(inputFile.LastIndexOf('/') + 1), eventIndex.ToString (), PlayerPrefs.GetString ("Listener Port") };
+					string result = Marshal.PtrToStringAuto (PluginImport.PythonCall (Application.dataPath + "/Externals/python/", "auto_event_script", "send_next_event_to_port", args, args.Length));
+					eventIndex = System.Convert.ToInt32 (result);
+				}
+				else {
+					Debug.Log (string.Format("File {0} does not exist!", Path.GetFullPath (Application.dataPath + inputFile)));
+				}
+			}
 		}
 		
 		// Update is called once per frame
@@ -425,34 +439,25 @@ namespace VideoCapture {
 		}
 
 		void ObjectsResolved(object sender, EventArgs e) {
-			if (!capture) {
-				return;
-			}
+			if (dbEntry != null) {
+				dbEntry.ObjectResolvedParse = ((EventManagerArgs)e).EventString;
 
-			dbEntry.ObjectResolvedParse = ((EventManagerArgs)e).EventString;
+				string[] constituents = dbEntry.ObjectResolvedParse.Split (new char[]{ '(', ',', ')' });
+				List<String> argsStrings = new List<string> ();
 
-//			Regex r = new Regex (@"\([^()]*\)");
-//			MatchCollection matches = r.Matches (dbEntry.ObjectResolvedParse);
-//			List<String> argsStrings = matches.Cast<Match> ().Select (m => m.Value.Replace("(","").Replace(")","")).ToList ();
-
-			string[] constituents = dbEntry.ObjectResolvedParse.Split (new char[]{ '(', ',', ')' });
-			List<String> argsStrings = new List<string> ();
-
-			foreach (string constituent in constituents) {
-				if ((GameObject.Find (constituent) != null) || (objSelector.disabledObjects.Find(o => o.name == constituent) != null)) {
-					string objName = GameObject.Find (constituent) != null ? GameObject.Find (constituent).name : 
-						objSelector.disabledObjects.Find (o => o.name == constituent).name;
-					
-					if (!argsStrings.Contains (constituent)) {
-						argsStrings.Add (constituent);
+				foreach (string constituent in constituents) {
+					if ((GameObject.Find (constituent) != null) || (objSelector.disabledObjects.Find(o => o.name == constituent) != null)) {
+						string objName = GameObject.Find (constituent) != null ? GameObject.Find (constituent).name : 
+							objSelector.disabledObjects.Find (o => o.name == constituent).name;
+						
+						if (!argsStrings.Contains (constituent)) {
+							argsStrings.Add (constituent);
+						}
 					}
 				}
+
+				dbEntry.Objects = string.Join(", ",argsStrings.ToArray());
 			}
-
-			dbEntry.Objects = string.Join(", ",argsStrings.ToArray());
-
-//			preds.rdfTriples.Clear ();
-//			preds.rdfTriples.Add(Helper.MakeRDFTriples (dbEntry.ObjectResolvedParse));
 		}
 
 		void FilterSpecifiedManner(object sender, EventArgs e) {
@@ -485,18 +490,10 @@ namespace VideoCapture {
 		}
 
 		void PrepareLog(object sender, EventArgs e) {
-			if (!capture) {
-				return;
-			}
-
 			paramValues[((ParamsEventArgs)e).KeyValue.Key] = ((ParamsEventArgs)e).KeyValue.Value;
 		}
 
 		void ParametersCalculated(object sender, EventArgs e) {
-			if (!capture) {
-				return;
-			}
-
 			Dictionary<string,string> values = paramValues.Where(kvp => kvp.Value != string.Empty).
 				ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 //			foreach (string key in values.Keys) {
@@ -504,7 +501,10 @@ namespace VideoCapture {
 //			}
 //			Debug.Break ();
 			//dbEntry.ParameterValues = Helper.SerializeObjectToBinary (values);
-			dbEntry.ParameterValues = Helper.SerializeObjectToJSON (new PredicateParametersJSON(values));
+
+			if (dbEntry != null) {
+				dbEntry.ParameterValues = Helper.SerializeObjectToJSON (new PredicateParametersJSON (values));
+			}
 		}
 
 		void CaptureComplete(object sender, EventArgs e) {
@@ -512,10 +512,21 @@ namespace VideoCapture {
 				return;
 			}
 
-			if (eventIndex != -1) {
-				string[] args = new string[]{ inputFile, eventIndex.ToString (), PlayerPrefs.GetString ("Listener Port") };
-				string result = Marshal.PtrToStringAuto (PluginImport.PythonCall (Application.dataPath + "/Externals/python/", "auto_event_script", "send_next_event_to_port", args, args.Length));
-				eventIndex = System.Convert.ToInt32 (result);
+			if ((eventIndex != -1) && (inputFile != string.Empty)) {
+				string fullPath = Path.GetFullPath (Application.dataPath + inputFile);
+				if (File.Exists (fullPath + ".py")) {
+					string[] args = new string[]{ fullPath.Remove(fullPath.LastIndexOf('/') + 1),
+						inputFile.Substring(inputFile.LastIndexOf('/') + 1), eventIndex.ToString (), PlayerPrefs.GetString ("Listener Port") };
+					string result = Marshal.PtrToStringAuto (PluginImport.PythonCall (Application.dataPath + "/Externals/python/", "auto_event_script", "send_next_event_to_port", args, args.Length));
+					eventIndex = System.Convert.ToInt32 (result);
+				}
+				else {
+					Debug.Log (string.Format("File {0} does not exist!", Path.GetFullPath (Application.dataPath + inputFile)));
+				}
+			}
+			else {
+				EnableObjects ();
+				GameObject.Find ("BlocksWorld").GetComponent<ObjectSelector> ().SendMessage ("ResetScene");
 			}
 		}
 
@@ -532,7 +543,6 @@ namespace VideoCapture {
 						objSelector.disabledObjects.Find (o => o.name == constituent);
 
 					if (!eventObjs.Contains (obj)) {
-						Debug.Log (obj);
 						eventObjs.Add(obj);
 					}
 				}
@@ -540,22 +550,16 @@ namespace VideoCapture {
 		}
 
 		void OpenDB() {
-			if (!capture) {
-				return;
-			}
-
-			dbConnection = new SQLiteConnection (string.Format ("{0}.db", dbFile),
+			dbConnection = new SQLiteConnection (string.Format ("{0}.db", Path.GetFullPath (Application.dataPath + dbFile)),
 				SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
 
 			dbConnection.CreateTable<VideoDBEntry> ();
 		}
 
 		void WriteToDB() {
-			if (!capture) {
-				return;
+			if (dbEntry != null) {
+				dbConnection.InsertAll (new[]{ dbEntry });
 			}
-
-			dbConnection.InsertAll (new[]{ dbEntry });
 		}
 	}
 }

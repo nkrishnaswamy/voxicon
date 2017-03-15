@@ -67,7 +67,8 @@ namespace Assets.Scripts.NLU
 			"lid",
 			"stack",
 			"staircase",
-			"pyramid"
+			"pyramid",
+			"cork",
 		});
 
 

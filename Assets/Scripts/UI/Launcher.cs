@@ -23,8 +23,9 @@ public class Launcher : FontManager {
 	VideoCaptureFilenameType videoCaptureFilenameType;
 	string customVideoFilenamePrefix;
 	bool sortByEventString;
-	string videoCaptureDB;
 	string autoEventsList;
+	string videoCaptureDB;
+	string videoOutputDir;
 
 	int bgLeft = Screen.width/6;
 	int bgTop = Screen.height/12;
@@ -187,10 +188,13 @@ public class Launcher : FontManager {
 					customVideoFilenamePrefix);
 			}
 
-			GUI.Label (new Rect (bgLeft + 15, bgTop + 350 + (60 * System.Convert.ToSingle((videoCaptureMode == VideoCaptureMode.PerEvent))), 120*fontSizeModifier, 25*fontSizeModifier), "Video Database File");
-			videoCaptureDB = GUI.TextField (new Rect (bgLeft+140*fontSizeModifier, bgTop+350 + (60 * System.Convert.ToSingle((videoCaptureMode == VideoCaptureMode.PerEvent))), 150, 25*fontSizeModifier), videoCaptureDB);
-			GUI.Label (new Rect (bgLeft + 290*fontSizeModifier, bgTop+350 + (60 * System.Convert.ToSingle((videoCaptureMode == VideoCaptureMode.PerEvent))), 25*fontSizeModifier, 25*fontSizeModifier), ".db");
-			GUI.Label (new Rect (bgLeft + 15, bgTop + 375 + (60 * System.Convert.ToSingle((videoCaptureMode == VideoCaptureMode.PerEvent))), 300, 50), "(Leave empty to omit video info from database)");
+			GUI.Label (new Rect (bgLeft + 15, bgTop + 350 + (60 * System.Convert.ToSingle((videoCaptureMode == VideoCaptureMode.PerEvent))), 120*fontSizeModifier, 25*fontSizeModifier), "Video Output Folder");
+			videoOutputDir = GUI.TextField (new Rect (bgLeft+140*fontSizeModifier, bgTop+350 + (60 * System.Convert.ToSingle((videoCaptureMode == VideoCaptureMode.PerEvent))), 150, 25*fontSizeModifier), videoOutputDir);
+
+			GUI.Label (new Rect (bgLeft + 15, bgTop + 380 + (60 * System.Convert.ToSingle((videoCaptureMode == VideoCaptureMode.PerEvent))), 120*fontSizeModifier, 25*fontSizeModifier), "Video Database File");
+			videoCaptureDB = GUI.TextField (new Rect (bgLeft+140*fontSizeModifier, bgTop+380 + (60 * System.Convert.ToSingle((videoCaptureMode == VideoCaptureMode.PerEvent))), 150, 25*fontSizeModifier), videoCaptureDB);
+			GUI.Label (new Rect (bgLeft + 290*fontSizeModifier, bgTop+380 + (60 * System.Convert.ToSingle((videoCaptureMode == VideoCaptureMode.PerEvent))), 25*fontSizeModifier, 25*fontSizeModifier), ".db");
+			GUI.Label (new Rect (bgLeft + 15, bgTop + 405 + (60 * System.Convert.ToSingle((videoCaptureMode == VideoCaptureMode.PerEvent))), 300, 50), "(Leave empty to omit video info from database)");
 		}
 
 		GUILayout.BeginArea(new Rect(13*Screen.width/24, bgTop + 35, 3*Screen.width/12, 3*Screen.height/6), GUI.skin.window);
@@ -243,6 +247,7 @@ public class Launcher : FontManager {
 		customVideoFilenamePrefix = PlayerPrefs.GetString("Custom Video Filename Prefix");
 		autoEventsList = PlayerPrefs.GetString("Auto Events List");
 		videoCaptureDB = PlayerPrefs.GetString("Video Capture DB");
+		videoOutputDir = PlayerPrefs.GetString("Video Output Directory");
 	}
 	
 	void SavePrefs() {
@@ -259,6 +264,7 @@ public class Launcher : FontManager {
 		PlayerPrefs.SetString("Custom Video Filename Prefix", customVideoFilenamePrefix);
 		PlayerPrefs.SetString("Auto Events List", autoEventsList);
 		PlayerPrefs.SetString("Video Capture DB", videoCaptureDB);
+		PlayerPrefs.SetString("Video Output Directory", videoOutputDir);
 	}
 }
 

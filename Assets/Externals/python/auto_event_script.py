@@ -1,7 +1,8 @@
+import sys
 import os
-#import sentence_list
 
-def send_next_event_to_port(list_file, index, port):
+def send_next_event_to_port(dir, list_file, index, port):
+    sys.path.append(dir)
     module_obj = __import__(list_file, fromlist = [''])
     sentences = module_obj.sentences
     

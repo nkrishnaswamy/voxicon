@@ -139,6 +139,8 @@ public class VoxemeInspector : MonoBehaviour {
 	
 	bool markupCleared = false;
 	VoxML loadedObject = new VoxML();
+
+	string voxmlDataPath;
 	
 	// Use this for initialization
 	void Start () {
@@ -152,6 +154,12 @@ public class VoxemeInspector : MonoBehaviour {
 		listStyle.hover.background = tex;
 		listStyle.onHover.background = tex;
 		listStyle.padding.left = listStyle.padding.right = listStyle.padding.top = listStyle.padding.bottom = 4;
+
+#if UNITY_EDITOR
+		voxmlDataPath = Application.dataPath.Remove (Application.dataPath.LastIndexOf ('/') + 1) + string.Format ("Data/voxml");
+#elif UNITY_STANDALONE
+		voxmlDataPath = Application.dataPath.Remove (Application.dataPath.LastIndexOf('/', Application.dataPath.LastIndexOf('/') - 1)) + string.Format ("/Data/voxml");
+#endif
 	}
 	
 	// Update is called once per frame
@@ -208,12 +216,18 @@ public class VoxemeInspector : MonoBehaviour {
 #endif
 #if UNITY_WEBPLAYER*/
 			// Resources load here
-			TextAsset markup = Resources.Load (inspectorObject.name) as TextAsset;
-			if (markup != null) {
-				if (!ObjectLoaded (markup.text)) {
-					loadedObject = LoadMarkup (markup.text);
-					inspectorTitle = inspectorObject.name;
-					markupCleared = false;
+			//TextAsset markup = Resources.Load (inspectorObject.name) as TextAsset;
+			if (File.Exists (string.Format("{0}/{1}",voxmlDataPath,string.Format("objects/{0}.xml",inspectorObject.name)))) {
+				using (StreamReader sr = new StreamReader (
+					string.Format("{0}/{1}",voxmlDataPath,string.Format("objects/{0}.xml",inspectorObject.name)))) {
+					String markup = sr.ReadToEnd ();
+					//if (markup != null) {
+						if (!ObjectLoaded (markup)) {
+							loadedObject = LoadMarkup (markup);
+							inspectorTitle = inspectorObject.name;
+							markupCleared = false;
+						}
+					//}
 				}
 			}
 			else {
@@ -254,7 +268,7 @@ public class VoxemeInspector : MonoBehaviour {
 			GUILayout.EndArea ();
 
 			Vector2 textDimensions = GUI.skin.label.CalcSize (new GUIContent (inspectorTitle));
-			GUI.Label (new Rect (((2 * inspectorPositionAdjX + inspectorWidth) / 2) - textDimensions.x / 2, inspectorPositionAdjY, textDimensions.x, 25), inspectorObject.name);
+			GUI.Label (new Rect (((2 * inspectorPositionAdjX + inspectorWidth) / 2) - textDimensions.x / 2, inspectorPositionAdjY, textDimensions.x, 25), inspectorTitle);
 		}
 	}
 
@@ -306,22 +320,28 @@ public class VoxemeInspector : MonoBehaviour {
 		GUILayout.BeginVertical (inspectorStyle);
 		for (int i = 0; i < mlComponentCount; i++) {
 			string componentName = mlComponents [i].Split (new char[]{ '[' }) [0];
-			TextAsset ml = Resources.Load (componentName) as TextAsset;
-			if (ml != null) {
-				float textSize = GUI.skin.label.CalcSize (new GUIContent(mlComponents [i])).x;
-				float padSize = GUI.skin.label.CalcSize (new GUIContent(" ")).x;
-				int padLength = (int)(((inspectorWidth - 85) - textSize) / (int)padSize);
-				if (GUILayout.Button (mlComponents [i].PadRight(padLength+mlComponents [i].Length-3), GUILayout.Width (inspectorWidth - 85))) {
+			//TextAsset ml = Resources.Load (componentName) as TextAsset;
+			if (File.Exists (string.Format ("{0}/{1}",voxmlDataPath,string.Format ("objects/{0}.xml", componentName)))) {
+				using (StreamReader sr = new StreamReader (
+					string.Format ("{0}/{1}",voxmlDataPath,string.Format ("objects/{0}.xml", componentName)))) {
+					String ml = sr.ReadToEnd ();
 					if (ml != null) {
-						VoxemeInspectorModalWindow newInspector = gameObject.AddComponent<VoxemeInspectorModalWindow> ();
-						//LoadMarkup (ml.text);
-						//newInspector.DrawInspector = true;
-						newInspector.windowRect = new Rect(inspectorRect.x+25,inspectorRect.y+25,inspectorWidth,inspectorHeight);
-						//newInspector.InspectorTitle = mlComponents [i];
-						newInspector.InspectorVoxeme = componentName;
-						newInspector.Render = true;
-					}
-					else {
+						float textSize = GUI.skin.label.CalcSize (new GUIContent (mlComponents [i])).x;
+						float padSize = GUI.skin.label.CalcSize (new GUIContent (" ")).x;
+						int padLength = (int)(((inspectorWidth - 85) - textSize) / (int)padSize);
+						if (GUILayout.Button (mlComponents [i].PadRight (padLength + mlComponents [i].Length - 3), GUILayout.Width (inspectorWidth - 85))) {
+							if (ml != null) {
+								VoxemeInspectorModalWindow newInspector = gameObject.AddComponent<VoxemeInspectorModalWindow> ();
+								//LoadMarkup (ml.text);
+								//newInspector.DrawInspector = true;
+								newInspector.windowRect = new Rect (inspectorRect.x + 25, inspectorRect.y + 25, inspectorWidth, inspectorHeight);
+								//newInspector.InspectorTitle = mlComponents [i];
+								newInspector.InspectorVoxeme = "objects/" + componentName;
+								newInspector.Render = true;
+							} 
+							else {
+							}
+						}
 					}
 				}
 			}
@@ -423,40 +443,45 @@ public class VoxemeInspector : MonoBehaviour {
 		GUILayout.BeginVertical (inspectorStyle);
 		GUILayout.Label ("PARTICIPATION");
 		GUILayout.BeginVertical (inspectorStyle);
-		object[] assets = Resources.LoadAll ("Programs");
-		foreach (object asset in assets) {
-			if (asset != null) {
+		object[] programs = Directory.GetFiles (string.Format ("{0}/programs", voxmlDataPath));
+		//object[] assets = Resources.LoadAll ("Programs");
+		foreach (object program in programs) {
+			if (program != null) {
 				List<string> participations = new List<string> ();
 				foreach (string affordance in mlAffordances) {
-					if (affordance.Contains (((TextAsset)asset).name)) {
-						if (!participations.Contains (((TextAsset)asset).name)) {
-							participations.Add (((TextAsset)asset).name);
+					if (affordance.Contains (((string)program).Substring(((string)program).LastIndexOf('/')+1).Split('.')[0])) {
+						if (!participations.Contains (((string)program).Substring(((string)program).LastIndexOf('/')+1).Split('.')[0])) {
+							participations.Add (((string)program).Substring(((string)program).LastIndexOf('/')+1).Split('.')[0]);
 						}
 					}
 				}
 
 				foreach (string p in participations) {
-					TextAsset ml = Resources.Load ("Programs/" + p) as TextAsset;
-					if (ml != null) {
-						float textSize = GUI.skin.label.CalcSize (new GUIContent (p)).x;
-						float padSize = GUI.skin.label.CalcSize (new GUIContent (" ")).x;
-						int padLength = (int)(((inspectorWidth - 85) - textSize) / (int)padSize);
-						if (GUILayout.Button (p.PadRight (padLength + p.Length - 3), GUILayout.Width (inspectorWidth - 85))) {
-							if (ml != null) {
-								VoxemeInspectorModalWindow newInspector = gameObject.AddComponent<VoxemeInspectorModalWindow> ();
-								//LoadMarkup (ml.text);
-								//newInspector.DrawInspector = true;
-								newInspector.windowRect = new Rect (inspectorRect.x + 25, inspectorRect.y + 25, inspectorWidth, inspectorHeight);
-								//newInspector.InspectorTitle = mlComponents [i];
-								newInspector.InspectorVoxeme = "Programs/" + p;
-								newInspector.Render = true;
+					using (StreamReader sr = new StreamReader (
+						string.Format("{0}/{1}",voxmlDataPath,string.Format("programs/{0}.xml",p)))){
+						//TextAsset ml = Resources.Load ("Programs/" + p) as TextAsset;
+						String ml = sr.ReadToEnd();
+						if (ml != null) {
+							float textSize = GUI.skin.label.CalcSize (new GUIContent (p)).x;
+							float padSize = GUI.skin.label.CalcSize (new GUIContent (" ")).x;
+							int padLength = (int)(((inspectorWidth - 85) - textSize) / (int)padSize);
+							if (GUILayout.Button (p.PadRight (padLength + p.Length - 3), GUILayout.Width (inspectorWidth - 85))) {
+								if (ml != null) {
+									VoxemeInspectorModalWindow newInspector = gameObject.AddComponent<VoxemeInspectorModalWindow> ();
+									//LoadMarkup (ml.text);
+									//newInspector.DrawInspector = true;
+									newInspector.windowRect = new Rect (inspectorRect.x + 25, inspectorRect.y + 25, inspectorWidth, inspectorHeight);
+									//newInspector.InspectorTitle = mlComponents [i];
+									newInspector.InspectorVoxeme = "programs/" + p;
+									newInspector.Render = true;
+								} 
+								else {
+								}
 							}
-							else {
-							}
+						} 
+						else {
+							GUILayout.Box ((string)program, GUILayout.Width (inspectorWidth - 85));
 						}
-					}
-					else {
-						GUILayout.Box (((TextAsset)asset).name, GUILayout.Width (inspectorWidth - 85));
 					}
 				}
 			}

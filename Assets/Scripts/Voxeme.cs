@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -69,12 +70,33 @@ public class Voxeme : MonoBehaviour {
 	public Vector3 startRotation;
 	public Vector3 startScale;
 
+	string voxmlDataPath;
+
 	// Use this for initialization
 	void Start () {
 		// load in VoxML knowledge
-		TextAsset markup = Resources.Load (gameObject.name) as TextAsset;
-		if (markup != null) {
-			voxml = VoxML.LoadFromText (markup.text);
+//		TextAsset markup = Resources.Load (gameObject.name) as TextAsset;
+//		if (markup != null) {
+//			voxml = VoxML.LoadFromText (markup.text);
+//		}
+
+//		WWW www = new WWW ("file:///" + Application.dataPath.Remove (Application.dataPath.LastIndexOf ('/') + 1) + 
+//			string.Format("Data/voxml/objects/{0}.xml",gameObject.name));
+//
+//		yield return www;
+
+//		voxml = VoxML.LoadFromText (www.text);
+
+#if UNITY_EDITOR
+		voxmlDataPath = Application.dataPath.Remove (Application.dataPath.LastIndexOf ('/') + 1) + string.Format ("Data/voxml");
+#elif UNITY_STANDALONE
+		voxmlDataPath = Application.dataPath.Remove (Application.dataPath.LastIndexOf('/', Application.dataPath.LastIndexOf('/') - 1)) + string.Format ("/Data/voxml");
+#endif
+
+		using (StreamReader sr = new StreamReader(
+			string.Format("{0}/{1}",voxmlDataPath,string.Format("objects/{0}.xml",gameObject.name))))
+		{
+			voxml = VoxML.LoadFromText (sr.ReadToEnd());
 		}
 
 		// populate operational voxeme structure
@@ -198,7 +220,6 @@ public class Voxeme : MonoBehaviour {
 				if (!isGrasped) {
 					if (transform.rotation != Quaternion.Euler (targetRotation)) {
 						//Debug.Log (transform.eulerAngles);
-						//Debug.Break ();
 						float offset = RotateToward (targetRotation);
 
 						if ((Mathf.Deg2Rad * offset) < 0.01f) {
@@ -305,9 +326,9 @@ public class Voxeme : MonoBehaviour {
 								if (supportIsConcave) {	// if the object under this object is concave
 									if (Concavity.IsEnabled (Helper.GetMostImmediateParentVoxeme (supportingSurface))) {	// if the object under this object has its concavity enabled
 										minYBound = PhysicsHelper.GetConcavityMinimum (supportingSurface.transform.root.gameObject);
-										Debug.Log (gameObject.name);
-										Debug.Log (supportingSurface.name);
-										Debug.Log (minYBound);
+//										Debug.Log (gameObject.name);
+//										Debug.Log (supportingSurface.name);
+//										Debug.Log (minYBound);
 										//Debug.Break ();
 									}
 									else {	// if the object under this object is not upright
@@ -490,6 +511,7 @@ public class Voxeme : MonoBehaviour {
 			float timeToComplete = angle / turnSpeed;
 			float donePercentage = Mathf.Min (1.0f, Time.deltaTime / timeToComplete);
 			Quaternion rot = Quaternion.Slerp (transform.rotation, Quaternion.Euler (target), donePercentage * 100.0f);
+			//Debug.Log (turnSpeed);
 			//Quaternion resolve = Quaternion.identity;
 
 			if (rigging.usePhysicsRig) {
@@ -522,7 +544,8 @@ public class Voxeme : MonoBehaviour {
 
 			offset = Quaternion.Angle (rot, Quaternion.Euler (target));
 			//Debug.Log (offset);
-		} else {
+		}
+		else {
 			//float offset = Quaternion.FromToRotation (transform.eulerAngles, targetRotation);//graspTracker.transform.position - target;
 			//Vector3 normalizedOffset = Vector3.Normalize (offset);
 

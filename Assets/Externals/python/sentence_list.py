@@ -1,13 +1,5 @@
 sentences = [
     "move the apple",
-    "move the apple",
-    "move the apple",
-    "move the apple",
-    "move the apple",
-    "move the apple",
-    "move the apple",
-    "move the apple",
-    "move the apple",
     "turn the cup",
     "roll the cup",
     "slide the cup",

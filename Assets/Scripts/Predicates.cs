@@ -156,15 +156,17 @@ public class Predicates : MonoBehaviour {
 			if (isConcave) {	// concavity activated
 				// get surface with concavity
 				// which side is concavity on? - assume +Y for now
-				bounds = Helper.GetObjectWorldSize (obj);
+//				bounds = Helper.GetObjectWorldSize (obj);
+//
+//				float concavityMinY = bounds.min.y;
+//				foreach (Renderer renderer in obj.GetComponentsInChildren<Renderer>()) {
+//					Debug.Log (renderer.gameObject.name + " " + Helper.GetObjectWorldSize (renderer.gameObject).min.y);
+//					if (Helper.GetObjectWorldSize (renderer.gameObject).min.y > concavityMinY) {
+//						concavityMinY = Helper.GetObjectWorldSize (renderer.gameObject).min.y;
+//					}
+//				}
 
-				float concavityMinY = bounds.min.y;
-				foreach (Renderer renderer in obj.GetComponentsInChildren<Renderer>()) {
-					Debug.Log (renderer.gameObject.name + " " + Helper.GetObjectWorldSize (renderer.gameObject).min.y);
-					if (Helper.GetObjectWorldSize (renderer.gameObject).min.y > concavityMinY) {
-						concavityMinY = Helper.GetObjectWorldSize (renderer.gameObject).min.y;
-					}
-				}
+				float concavityMinY = PhysicsHelper.GetConcavityMinimum (obj);
 					
 				outValue = new Vector3 (obj.transform.position.x,
 					concavityMinY,
@@ -934,9 +936,16 @@ public class Predicates : MonoBehaviour {
 					if (args [args.Length - 1] is bool) {
 						if ((bool)args [args.Length - 1] == false) {
 							if (dest.GetComponent<Voxeme> ().voxml.Type.Concavity.Contains("Concave")) {	// putting on a concave object
-								if (!Helper.FitsIn (themeBounds, destBounds)) {
+								Bounds concavityBounds;
+								if (dest.GetComponent<Voxeme> ().opVox.Type.Concavity.Item2 != null) {
+									concavityBounds = Helper.GetObjectWorldSize (dest.GetComponent<Voxeme> ().opVox.Type.Concavity.Item2);
+								}
+								else {
+									concavityBounds = destBounds;
+								}
+								if (!Helper.FitsIn (themeBounds, concavityBounds)) {
 									loc = new Vector3 (dest.transform.position.x,
-										destBounds.max.y,
+										concavityBounds.max.y,
 										dest.transform.position.z);
 									Debug.Log (destBounds.max.y);
 								}
@@ -1025,7 +1034,7 @@ public class Predicates : MonoBehaviour {
 						if (!Helper.FitsIn (themeBounds, destBounds)) {	// if the glove don't fit, you must acquit! (rotate)
 							// rotate to align longest major axis with container concavity axis
 							Vector3 majorAxis = Helper.GetObjectMajorAxis (theme);
-							Quaternion adjust = Quaternion.FromToRotation (majorAxis, Vector3.up);
+							Quaternion adjust = Quaternion.FromToRotation (theme.transform.rotation * majorAxis, Vector3.up);
 							//Debug.Log (Helper.VectorToParsable (themeBounds.size));
 							//Debug.Log (Helper.VectorToParsable (adjust * themeBounds.size));
 							// create new test bounds with vector*quat
@@ -1037,13 +1046,14 @@ public class Predicates : MonoBehaviour {
 							//}
 							if (Helper.FitsIn (testBounds, destBounds)) {	// check fit again
 								targetRotation = Quaternion.FromToRotation (majorAxis, Vector3.up).eulerAngles;
-							} else {	// if still won't fit, return garbage (NaN) rotation to signal that you can't do that
+							}
+							else {	// if still won't fit, return garbage (NaN) rotation to signal that you can't do that
 								targetRotation = new Vector3 (float.NaN, float.NaN, float.NaN);
 							}
-							loc = new Vector3 (dest.transform.position.x,
-								destBounds.max.y,
-								dest.transform.position.z);
-							Debug.Log (destBounds.max.y);
+//							loc = new Vector3 (loc.x,
+//								loc.y + (themeBounds.center.y - themeBounds.min.y) + yAdjust,
+//								loc.z);
+//							Debug.Log (destBounds.max.y);
 						}
 					} 
 					else {
@@ -1054,7 +1064,11 @@ public class Predicates : MonoBehaviour {
 						if (args [args.Length - 1] is bool) {
 							if ((bool)args [args.Length - 1] == false) {
 								targetPosition = new Vector3 (loc.x,
-									loc.y + (themeBounds.center.y - themeBounds.min.y) + yAdjust,
+									loc.y + (
+										Mathf.Abs(new Bounds (themeBounds.center, Quaternion.Euler(targetRotation) * 
+											Quaternion.Inverse(theme.transform.rotation) * themeBounds.size).center.y - 
+											new Bounds (themeBounds.center, Quaternion.Euler(targetRotation) * 
+											Quaternion.Inverse(theme.transform.rotation) * themeBounds.size).min.y)) + yAdjust,
 									loc.z);
 							} 
 							else {
@@ -1076,7 +1090,7 @@ public class Predicates : MonoBehaviour {
 
 						voxComponent.targetPosition = targetPosition;
 						voxComponent.targetRotation = targetRotation;
-
+					
 						/*if (voxComponent.isGrasped) {
 							voxComponent.targetPosition = voxComponent.targetPosition +
 							(voxComponent.grasperCoord.position - voxComponent.gameObject.transform.position);
@@ -1085,6 +1099,10 @@ public class Predicates : MonoBehaviour {
 
 					if (voxComponent.moveSpeed == 0.0f) {
 						voxComponent.moveSpeed = RandomHelper.RandomFloat (0.0f, 5.0f, (int)RandomHelper.RangeFlags.MaxInclusive);
+					}
+
+					if (voxComponent.turnSpeed == 0.0f) {
+						voxComponent.turnSpeed = RandomHelper.RandomFloat (0.0f, 12.5f, (int)RandomHelper.RangeFlags.MaxInclusive);
 					}
 				}
 			}
@@ -3588,7 +3606,7 @@ public class Predicates : MonoBehaviour {
 													(Helper.GetObjectWorldSize (voxeme.gameObject).size.z >= Helper.GetObjectWorldSize (interior).size.z)) {
 													lids.Add (voxeme.gameObject);
 													lids = lids.OrderBy (o => (Helper.GetObjectWorldSize (o).size.x +
-														Helper.GetObjectWorldSize (o).size.z) * Helper.GetObjectWorldSize (o).size.y).ToList ();
+														Helper.GetObjectWorldSize (o).size.z) + Helper.GetObjectWorldSize (o).size.y).ToList ();
 												}
 											}
 										//}
