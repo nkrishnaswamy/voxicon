@@ -2,18 +2,19 @@
 <VoxML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
     <Entity Type="Object" />
   <Lex>
-    <Pred>knife</Pred>
+    <Pred>blackboard</Pred>
     <Type>physobj*artifact</Type>
   </Lex>
   <Type>
-    <Head>rectangular_prism</Head>
+    <Head>rectangular_prism[1]</Head>
     <Components>
-      <Component Value="handle" />
-      <Component Value="blade" />
+        <Component Value="surface[1]" />
+        <Component Value="frame" />
+        <Component Value="feet" />
     </Components>
     <Concavity>Flat</Concavity>
     <RotatSym />
-    <ReflSym>XY</ReflSym>
+    <ReflSym>YZ</ReflSym>
   </Type>
   <Habitat>
     <Intrinsic />
@@ -23,7 +24,7 @@
     <Affordances />
   </Afford_Str>
   <Embodiment>
-    <Scale>&lt;agent</Scale>
+    <Scale>agent</Scale>
     <Movable>true</Movable>
   </Embodiment>
 </VoxML>

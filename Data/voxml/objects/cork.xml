@@ -2,25 +2,26 @@
 <VoxML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
     <Entity Type="Object" />
   <Lex>
-    <Pred>block</Pred>
+    <Pred>cork</Pred>
     <Type>physobj*artifact</Type>
   </Lex>
   <Type>
-    <Head>rectangular_prism[1]</Head>
+    <Head>cylindroid[1]</Head>
     <Components />
-    <Concavity>Flat</Concavity>
-    <RotatSym>X,Y,Z</RotatSym>
-    <ReflSym>XY,XZ,YZ</ReflSym>
+    <Concavity>Convex</Concavity>
+    <RotatSym>Y</RotatSym>
+    <ReflSym>XY,YZ</ReflSym>
   </Type>
   <Habitat>
-    <Intrinsic>
-      <Intr Name="CONSTR[2]" Value="X = Y = Z" />
-    </Intrinsic>
+    <Intrinsic />
     <Extrinsic />
   </Habitat>
   <Afford_Str>
     <Affordances>
         <Affordance Formula="H-&gt;[put(x, on([1]))]support([1], x)" />
+        <Affordance Formula="H-&gt;[put(x, in([2]))]contain([2], x)" />
+        <Affordance Formula="H-&gt;[lift(x, [1])]hold(x, [1])" />
+        <Affordance Formula="H-&gt;[grasp(x, [1])]" />
     </Affordances>
   </Afford_Str>
   <Embodiment>
