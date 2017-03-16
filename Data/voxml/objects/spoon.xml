@@ -28,6 +28,7 @@
         <Affordances>
             <Affordance Formula="H[4]-&gt;[put(x, in([3]))]contain([3], x)" />
             <Affordance Formula="H[4]-&gt;[grasp(x, [2])]" />
+            <Affordance Formula="H-&gt;[lift(x, [1])]hold(x, [1])" />
             <Affordance Formula="H[5]-&gt;[put([1], in(x))]contain(x, [1])]" />
             <Affordance Formula="H[5],contain(x, [1])-&gt;[stir([1])]" />
         </Affordances>

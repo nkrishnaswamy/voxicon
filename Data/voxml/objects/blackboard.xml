@@ -21,7 +21,9 @@
     <Extrinsic />
   </Habitat>
   <Afford_Str>
-    <Affordances />
+    <Affordances>
+        <Affordance Formula="H-&gt;[lift(x, [1])]hold(x, [1])" />
+    </Affordances>
   </Afford_Str>
   <Embodiment>
     <Scale>agent</Scale>

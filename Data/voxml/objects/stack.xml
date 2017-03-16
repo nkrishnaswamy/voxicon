@@ -29,6 +29,7 @@
       <Affordance Formula="H[3]-&gt;[put(x,on([2]))]support([1],x)" />
       <Affordance Formula="H[3]-&gt;[put(x,on([1]))]comp_of([1],x)" />
       <Affordance Formula="H[3]-&gt;[put(x,on([1]))]extends([1],x)" />
+      <Affordance Formula="H-&gt;[lift(x, [1])]hold(x, [1])" />
     </Affordances>
   </Afford_Str>
   <Embodiment>

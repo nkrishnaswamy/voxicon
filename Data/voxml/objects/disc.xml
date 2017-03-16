@@ -19,6 +19,7 @@
   <Afford_Str>
     <Affordances>
       <Affordance Formula="H-&gt;[put(x, on([1]))]support([1], x)" />
+      <Affordance Formula="H-&gt;[lift(x, [1])]hold(x, [1])" />
     </Affordances>
   </Afford_Str>
   <Embodiment>
