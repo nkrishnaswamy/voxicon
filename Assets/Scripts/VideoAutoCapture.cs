@@ -85,6 +85,7 @@ namespace VideoCapture {
 		string filenamePrefix;
 		string dbFile;
 		string inputFile;
+		int eventIndex;
 		string videoDir;
 
 		int eventsExecuted = 0;
@@ -103,7 +104,6 @@ namespace VideoCapture {
 			}
 		}
 
-		int eventIndex = 0;
 		List<GameObject> eventObjs;
 
 		Dictionary<string,string> paramValues;
@@ -126,6 +126,7 @@ namespace VideoCapture {
 			filenamePrefix = PlayerPrefs.GetString ("Custom Video Filename Prefix");
 			dbFile = PlayerPrefs.GetString ("Video Capture DB");
 			inputFile = PlayerPrefs.GetString ("Auto Events List");
+			eventIndex = PlayerPrefs.GetInt ("Start Index");
 			videoDir = PlayerPrefs.GetString ("Video Output Directory");
 
 			if (!capture) {

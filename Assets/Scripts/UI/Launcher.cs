@@ -24,6 +24,7 @@ public class Launcher : FontManager {
 	string customVideoFilenamePrefix;
 	bool sortByEventString;
 	string autoEventsList;
+	string startIndex;
 	string videoCaptureDB;
 	string videoOutputDir;
 
@@ -159,7 +160,9 @@ public class Launcher : FontManager {
 
 				GUI.Label (new Rect (bgLeft + 15, bgTop + 350, 130*fontSizeModifier, 25*fontSizeModifier), "Auto-Input Script");
 				autoEventsList = GUI.TextField (new Rect (bgLeft+140*fontSizeModifier, bgTop+350, 150, 25*fontSizeModifier), autoEventsList);
-				GUI.Label (new Rect (bgLeft + 290*fontSizeModifier, bgTop + 350, 25*fontSizeModifier, 25*fontSizeModifier), ".py");
+				GUI.Label (new Rect (bgLeft + 290*fontSizeModifier, bgTop + 350, 30*fontSizeModifier, 25*fontSizeModifier), ".py : ");
+				startIndex = GUI.TextArea (new Rect (bgLeft + 320*fontSizeModifier, bgTop + 350, 25, 20 * fontSizeModifier),
+					startIndex);
 				GUI.Label (new Rect (bgLeft + 15, bgTop + 375, 300, 50), "(Leave empty to input events manually)");
 			}
 
@@ -254,6 +257,7 @@ public class Launcher : FontManager {
 		sortByEventString = (PlayerPrefs.GetInt("Sort By Event String") == 1);
 		customVideoFilenamePrefix = PlayerPrefs.GetString("Custom Video Filename Prefix");
 		autoEventsList = PlayerPrefs.GetString("Auto Events List");
+		startIndex = PlayerPrefs.GetInt("Start Index").ToString();
 		videoCaptureDB = PlayerPrefs.GetString("Video Capture DB");
 		videoOutputDir = PlayerPrefs.GetString("Video Output Directory");
 	}
@@ -271,6 +275,7 @@ public class Launcher : FontManager {
 		PlayerPrefs.SetInt("Sort By Event String", System.Convert.ToInt32(sortByEventString));
 		PlayerPrefs.SetString("Custom Video Filename Prefix", customVideoFilenamePrefix);
 		PlayerPrefs.SetString("Auto Events List", autoEventsList);
+		PlayerPrefs.SetInt("Start Index", System.Convert.ToInt32(startIndex));
 		PlayerPrefs.SetString("Video Capture DB", videoCaptureDB);
 		PlayerPrefs.SetString("Video Output Directory", videoOutputDir);
 	}
