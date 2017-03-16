@@ -222,7 +222,15 @@ public class Launcher : FontManager {
 		GUI.Label (new Rect (2*Screen.width/3 - textDimensions.x/2, bgTop + 35, textDimensions.x, 25), "Scenes");
 		GUI.EndScrollView ();
 
-		if (GUI.Button (new Rect (Screen.width / 2 - 50, bgTop + bgHeight - 60, 100, 50), "Launch")) {
+		if (GUI.Button (new Rect ((Screen.width / 2 - 50) - 125, bgTop + bgHeight - 60, 100, 50), "Revert Prefs")) {
+			LoadPrefs ();
+		}
+
+		if (GUI.Button (new Rect (Screen.width / 2 - 50, bgTop + bgHeight - 60, 100, 50), "Save Prefs")) {
+			SavePrefs ();
+		}
+
+		if (GUI.Button (new Rect ((Screen.width / 2 - 50) + 125, bgTop + bgHeight - 60, 100, 50), "Save & Launch")) {
 			if (sceneSelected != "") {
 				SavePrefs ();
 				StartCoroutine(SceneHelper.LoadScene (sceneSelected));

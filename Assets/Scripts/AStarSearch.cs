@@ -177,10 +177,10 @@ public class AStarSearch : MonoBehaviour {
 			for (int j = i+1; j < nodes.Count; j++) {
 				Vector3 dir = (nodes [j].position - nodes [i].position);
 				float dist = dir.magnitude;
-				bool r = Physics.Raycast (nodes [i].position, dir.normalized, out hitInfo, dist);
-				r |= Physics.Raycast (nodes [i].position-objBounds.extents, dir.normalized, out hitInfo, dist);
-				r |= Physics.Raycast (nodes [i].position+objBounds.extents, dir.normalized, out hitInfo, dist);
-				if (!r) {
+				bool blocked = Physics.Raycast (nodes [i].position, dir.normalized, out hitInfo, dist);
+				blocked |= Physics.Raycast (nodes [i].position-objBounds.extents, dir.normalized, out hitInfo, dist);
+				blocked |= Physics.Raycast (nodes [i].position+objBounds.extents, dir.normalized, out hitInfo, dist);
+				if (!blocked) {
 					arcs.Add (new Pair<PathNode, PathNode> (nodes [i], nodes [j]));
 
 //					if (debugNodes) {
@@ -225,11 +225,39 @@ public class AStarSearch : MonoBehaviour {
 		QuantizeSpace (obj, embeddingSpaceBounds, increment, constraints);	// set increment to moving object size, clean up after each run
 
 		// find closest node to goal
-		float dist = Mathf.Infinity;
-		foreach (PathNode node in nodes) {
-			if ((node.position - goalPos).magnitude < dist) {
-				dist = (node.position - goalPos).magnitude;
-				endNode = node;
+		// TODO: if goal is inside concave object (concave voxeme provided as constraint)
+		//	find closest node to goal such that arc from testNode to goal
+		//	does not intersect non-concave component of object
+
+		// if constraints contain a voxeme
+		Voxeme target = constraints.OfType<Voxeme> ().FirstOrDefault ();
+		if (target != null) {
+			Debug.Log (target);
+			// if that object is concave (e.g. cup)
+			// if goalPos is within the bounds of target (e.g. in cup)
+			if (target.voxml.Type.Concavity.Contains ("Concave") && Helper.GetObjectWorldSize (target.gameObject).Contains (goalPos)) {
+				endNode = new PathNode (new Vector3(goalPos.x,
+					Helper.GetObjectWorldSize (target.gameObject).max.y+size.y, goalPos.z));
+				nodes.Add (endNode);
+				//Debug.Break();
+			}
+			else {
+				float dist = Mathf.Infinity;
+				foreach (PathNode node in nodes) {
+					if ((node.position - goalPos).magnitude < dist) {	// if dist from this node to goal < dstance from previous node in list to goal
+						dist = (node.position - goalPos).magnitude;
+						endNode = node;
+					}
+				}
+			}
+		}
+		else {
+			float dist = Mathf.Infinity;
+			foreach (PathNode node in nodes) {
+				if ((node.position - goalPos).magnitude < dist) {	// if dist from this node to goal < dstance from previous node in list to goal
+					dist = (node.position - goalPos).magnitude;
+					endNode = node;
+				}
 			}
 		}
 
@@ -272,7 +300,9 @@ public class AStarSearch : MonoBehaviour {
 			//dist = (nextNode - endNode).magnitude;
 			//float dist = ((embeddingSpaceBounds.max + Vector3.one)-endNode.position).magnitude;
 
+			// if reached end node
 			if ((curNode.position - endNode.position).magnitude < Constants.EPSILON) {
+				// extend path to goal node (goal position)
 				PathNode goalNode = new PathNode (goalPos);
 				goalNode.cameFrom = curNode;
 				path = ReconstructPath (startNode, goalNode);
