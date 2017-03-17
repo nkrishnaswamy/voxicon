@@ -27,6 +27,7 @@ public class Launcher : FontManager {
 	string startIndex;
 	string videoCaptureDB;
 	string videoOutputDir;
+	string ioPrefsPath = "";
 
 	int bgLeft = Screen.width/6;
 	int bgTop = Screen.height/12;
@@ -161,7 +162,7 @@ public class Launcher : FontManager {
 				GUI.Label (new Rect (bgLeft + 15, bgTop + 350, 130*fontSizeModifier, 25*fontSizeModifier), "Auto-Input Script");
 				autoEventsList = GUI.TextField (new Rect (bgLeft+140*fontSizeModifier, bgTop+350, 150, 25*fontSizeModifier), autoEventsList);
 				GUI.Label (new Rect (bgLeft + 290*fontSizeModifier, bgTop + 350, 30*fontSizeModifier, 25*fontSizeModifier), ".py : ");
-				startIndex = GUI.TextArea (new Rect (bgLeft + 320*fontSizeModifier, bgTop + 350, 25, 20 * fontSizeModifier),
+				startIndex = GUI.TextArea (new Rect (bgLeft + 320*fontSizeModifier, bgTop + 350, 40, 20 * fontSizeModifier),
 					startIndex);
 				GUI.Label (new Rect (bgLeft + 15, bgTop + 375, 300, 50), "(Leave empty to input events manually)");
 			}
@@ -225,6 +226,17 @@ public class Launcher : FontManager {
 		GUI.Label (new Rect (2*Screen.width/3 - textDimensions.x/2, bgTop + 35, textDimensions.x, 25), "Scenes");
 		GUI.EndScrollView ();
 
+		GUI.Label (new Rect (bgLeft + 10, bgTop + bgHeight - 90, 90*fontSizeModifier, 25*fontSizeModifier), "External Prefs");
+		ioPrefsPath = GUI.TextField (new Rect (bgLeft+100, bgTop + bgHeight - 90, 150, 25*fontSizeModifier), ioPrefsPath);
+
+		if (GUI.Button (new Rect (bgLeft + 10, bgTop + bgHeight - 60, 100, 20), "Export Prefs")) {
+			ExportPrefs (ioPrefsPath);
+		}
+
+		if (GUI.Button (new Rect (bgLeft + 10, bgTop + bgHeight - 30, 100, 20), "Import Prefs")) {
+			ImportPrefs (ioPrefsPath);
+		}
+
 		if (GUI.Button (new Rect ((Screen.width / 2 - 50) - 125, bgTop + bgHeight - 60, 100, 50), "Revert Prefs")) {
 			LoadPrefs ();
 		}
@@ -252,7 +264,7 @@ public class Launcher : FontManager {
 		captureVideo = (PlayerPrefs.GetInt("Capture Video") == 1);
 		videoCaptureMode = (VideoCaptureMode)PlayerPrefs.GetInt("Video Capture Mode");
 		resetScene = (PlayerPrefs.GetInt("Reset Between Events") == 1);
-		eventResetCounter = PlayerPrefs.GetInt ("Event Reset Counter").ToString ();;
+		eventResetCounter = PlayerPrefs.GetInt ("Event Reset Counter").ToString ();
 		videoCaptureFilenameType = (VideoCaptureFilenameType)PlayerPrefs.GetInt("Video Capture Filename Type");
 		sortByEventString = (PlayerPrefs.GetInt("Sort By Event String") == 1);
 		customVideoFilenamePrefix = PlayerPrefs.GetString("Custom Video Filename Prefix");
@@ -260,6 +272,103 @@ public class Launcher : FontManager {
 		startIndex = PlayerPrefs.GetInt("Start Index").ToString();
 		videoCaptureDB = PlayerPrefs.GetString("Video Capture DB");
 		videoOutputDir = PlayerPrefs.GetString("Video Output Directory");
+	}
+
+	void ImportPrefs(string path) {
+		string line;
+		using (StreamReader inputFile = new StreamReader (Path.GetFullPath (Application.dataPath + "/" + path))) {
+			while ((line = inputFile.ReadLine ()) != null) { 
+				switch (line.Split (',') [0]) {
+				case "Listener Port":
+					inPort = line.Split (',') [1].Trim();
+					break;
+				
+				case "SRI URL":
+					sriUrl = line.Split (',') [1].Trim();
+					break;
+				
+				case "Parser URL":
+					parserUrl = line.Split (',') [1].Trim();
+					break;
+				
+				case "Make Logs":
+					makeLogs = System.Convert.ToBoolean(line.Split (',') [1].Trim());
+					break;
+				
+				case "Capture Video":
+					captureVideo = System.Convert.ToBoolean(line.Split (',') [1].Trim());
+					break;
+				
+				case "Video Capture Mode":
+					videoCaptureMode = (VideoCaptureMode)System.Convert.ToInt32(line.Split (',') [1].Trim());
+					break;
+				
+				case "Reset Between Events":
+					resetScene = System.Convert.ToBoolean(line.Split (',') [1].Trim());
+					break;
+				
+				case "Event Reset Counter":
+					eventResetCounter = line.Split (',') [1].Trim();
+					break;
+				
+				case "Video Capture Filename Type":
+					videoCaptureFilenameType = (VideoCaptureFilenameType)System.Convert.ToInt32(line.Split (',') [1].Trim());
+					break;
+				
+				case "Sort By Event String":
+					sortByEventString = System.Convert.ToBoolean(line.Split (',') [1].Trim());
+					break;
+				
+				case "Custom Video Filename Prefix":
+					customVideoFilenamePrefix = line.Split (',') [1].Trim();
+					break;
+				
+				case "Auto Events List":
+					autoEventsList = line.Split (',') [1].Trim();
+					break;
+				
+				case "Start Index":
+					startIndex = line.Split (',') [1].Trim();
+					break;
+				
+				case "Video Capture DB":
+					videoCaptureDB = line.Split (',') [1].Trim();
+					break;
+				
+				case "Video Output Directory":
+					videoOutputDir = line.Split (',') [1].Trim();
+					break;
+
+				default:
+					break;
+				}
+			}
+		}
+	}
+
+	void ExportPrefs(string path) {
+		Dictionary<string, object> prefsDict = new Dictionary<string, object> ();
+		prefsDict.Add ("Listener Port", PlayerPrefs.GetString ("Listener Port"));
+		prefsDict.Add ("SRI URL", PlayerPrefs.GetString ("SRI URL"));
+		prefsDict.Add ("Parser URL", PlayerPrefs.GetString ("Parser URL"));
+		prefsDict.Add ("Make Logs", (PlayerPrefs.GetInt ("Make Logs") == 1));
+		prefsDict.Add ("Capture Video", (PlayerPrefs.GetInt ("Capture Video") == 1));
+		prefsDict.Add ("Video Capture Mode", PlayerPrefs.GetInt ("Video Capture Mode"));
+		prefsDict.Add ("Reset Between Events", (PlayerPrefs.GetInt ("Reset Between Events") == 1));
+		prefsDict.Add ("Event Reset Counter", PlayerPrefs.GetInt ("Event Reset Counter").ToString ());
+		prefsDict.Add ("Video Capture Filename Type", PlayerPrefs.GetInt ("Video Capture Filename Type"));
+		prefsDict.Add ("Sort By Event String", (PlayerPrefs.GetInt ("Sort By Event String") == 1));
+		prefsDict.Add ("Custom Video Filename Prefix", PlayerPrefs.GetString ("Custom Video Filename Prefix"));
+		prefsDict.Add ("Auto Events List", PlayerPrefs.GetString ("Auto Events List"));
+		prefsDict.Add ("Start Index", PlayerPrefs.GetInt ("Start Index").ToString ());
+		prefsDict.Add ("Video Capture DB", PlayerPrefs.GetString("Video Capture DB"));
+		prefsDict.Add ("Video Output Directory", PlayerPrefs.GetString("Video Output Directory"));
+
+		using (StreamWriter outputFile = new StreamWriter (Path.GetFullPath (Application.dataPath + "/" + path))) {
+			foreach (var entry in prefsDict) {
+				outputFile.WriteLine (string.Format("{0},{1}",entry.Key,entry.Value));
+			}
+		}
 	}
 	
 	void SavePrefs() {

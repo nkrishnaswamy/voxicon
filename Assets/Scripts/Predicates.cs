@@ -2310,6 +2310,9 @@ public class Predicates : MonoBehaviour {
 				Debug.Log (Helper.VectorToParsable (objAxis));
 				Debug.Log (Helper.VectorToParsable (objRotAxis));
 				Debug.Log(Mathf.Abs(Vector3.Angle(objRotAxis, -Constants.xAxis)));
+				Debug.Log(Mathf.Abs(Vector3.Angle(objRotAxis, Constants.xAxis)));
+				Debug.Log(Mathf.Abs(Vector3.Angle(objRotAxis, -Constants.zAxis)));
+				Debug.Log(Mathf.Abs(Vector3.Angle(objRotAxis, Constants.zAxis)));
 				Debug.Log(Mathf.Rad2Deg * Constants.EPSILON);
 				OnPrepareLog (this, new ParamsEventArgs ("SymmetryAxis", Constants.Axes.FirstOrDefault (a => 
 					(Helper.AngleCloseEnough(objAxis,a.Value) || Helper.AngleCloseEnough(-objAxis,a.Value))).Key.ToString()));
@@ -2806,6 +2809,7 @@ public class Predicates : MonoBehaviour {
 
 		Vector3 targetPosition = Vector3.zero;
 		float leanAngle = UnityEngine.Random.Range (25.0f, 65.0f);
+		//float leanAngle = UnityEngine.Random.Range (0.0f, 0.0f);
 
 		// add agent-independent precondition (turn)
 		if (args [0] is GameObject) {
@@ -2949,7 +2953,8 @@ public class Predicates : MonoBehaviour {
 
 
 					//Debug.Log (Helper.VectorToParsable(destContactPoint));
-
+//					Debug.Log (Helper.VectorToParsable(theme.transform.position - Helper.GetObjectWorldSize(theme).center));
+//					Debug.Break ();
 					Vector3 displacement = destContactPoint - transformedThemeContactPoint;
 					targetPosition = (args [0] as GameObject).transform.position + displacement;
 					//targetPosition = new Vector3 (targetPosition.x, targetPosition.y, targetPosition.z);
@@ -3037,11 +3042,11 @@ public class Predicates : MonoBehaviour {
 					//Debug.Log (Helper.VectorToParsable(transformedThemeContactPoint-(args [0] as GameObject).transform.position));
 					//Debug.Log (Helper.VectorToParsable(transformedThemeContactPoint));
 
-
-					//Debug.Log (Helper.VectorToParsable(destContactPoint));
-
 					Vector3 displacement = destContactPoint - transformedThemeContactPoint;
 					targetPosition = (args [0] as GameObject).transform.position + displacement;
+//					targetPosition = new Vector3 (targetPosition.x + (theme.transform.position.x - themeBounds.center.x),
+//						targetPosition.y + (theme.transform.position.y - themeBounds.center.y),
+//						targetPosition.z + (theme.transform.position.z - themeBounds.center.z));
 					//targetPosition = new Vector3 (targetPosition.x, targetPosition.y, targetPosition.z);
 					//Debug.Log (Helper.VectorToParsable (displacement));
 					//Debug.Log (Helper.VectorToParsable (targetPosition + (transformedThemeContactPoint-(args [0] as GameObject).transform.position)));

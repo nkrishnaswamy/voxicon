@@ -105,6 +105,7 @@ public class VoxemeInit : MonoBehaviour {
 					}
 					// add to master voxeme list
 					objSelector.allVoxemes.Add (container.GetComponent<Voxeme> ());
+					Debug.Log (Helper.VectorToParsable(container.transform.position - Helper.GetObjectWorldSize (container).center));
 				}
 			}
 		}

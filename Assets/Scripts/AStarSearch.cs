@@ -230,14 +230,13 @@ public class AStarSearch : MonoBehaviour {
 		//	does not intersect non-concave component of object
 
 		// if constraints contain a voxeme
-		Voxeme target = constraints.OfType<Voxeme> ().FirstOrDefault ();
-		if (target != null) {
-			Debug.Log (target);
+		Voxeme testTarget = constraints.OfType<Voxeme> ().FirstOrDefault ();
+		if (testTarget != null) {
 			// if that object is concave (e.g. cup)
 			// if goalPos is within the bounds of target (e.g. in cup)
-			if (target.voxml.Type.Concavity.Contains ("Concave") && Helper.GetObjectWorldSize (target.gameObject).Contains (goalPos)) {
+			if (testTarget.voxml.Type.Concavity.Contains ("Concave") && Helper.GetObjectWorldSize (testTarget.gameObject).Contains (goalPos)) {
 				endNode = new PathNode (new Vector3(goalPos.x,
-					Helper.GetObjectWorldSize (target.gameObject).max.y+size.y, goalPos.z));
+					Helper.GetObjectWorldSize (testTarget.gameObject).max.y+size.y, goalPos.z));
 				nodes.Add (endNode);
 				//Debug.Break();
 			}

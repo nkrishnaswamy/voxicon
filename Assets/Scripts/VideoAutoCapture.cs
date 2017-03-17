@@ -133,7 +133,9 @@ namespace VideoCapture {
 				return;
 			}
 
-			recorder.SetOutputDirectory (Path.GetFullPath (Application.dataPath + videoDir));
+			if (videoDir != string.Empty) {
+				recorder.SetOutputDirectory (Path.GetFullPath (Application.dataPath + videoDir));
+			}
 
 			InitObjectDisabling ();
 

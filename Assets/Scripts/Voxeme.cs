@@ -108,7 +108,9 @@ public class Voxeme : MonoBehaviour {
 
 		// get rigging components
 		rigging = gameObject.GetComponent<Rigging> ();
-		rigging.rigidbodies = gameObject.GetComponentsInChildren<Rigidbody> ();
+		if (rigging != null) {
+			rigging.rigidbodies = gameObject.GetComponentsInChildren<Rigidbody> ();
+		}
 
 		startPosition = transform.position;
 		startRotation = transform.eulerAngles;

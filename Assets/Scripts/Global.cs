@@ -758,7 +758,7 @@ namespace Global {
 
 		// two vectors are within epsilon (angle)
 		public static bool AngleCloseEnough(Vector3 v1, Vector3 v2) {
-			return (Mathf.Abs(Vector3.Angle(v1, v2)) < 10.0f * Mathf.Rad2Deg * Constants.EPSILON);
+			return (Mathf.Abs(Vector3.Angle(v1, v2)) < Mathf.Rad2Deg * Mathf.Rad2Deg * Constants.EPSILON);
 		}
 
 		// two quaternions are within epsilon
