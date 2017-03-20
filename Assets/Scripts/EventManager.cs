@@ -282,6 +282,9 @@ public class EventManager : MonoBehaviour {
 		events [events.IndexOf (command)] = evaluated;
 
 		Triple<String,String,String> triple = Helper.MakeRDFTriples(evalResolved[evaluated]);
+		Debug.Log(evalOrig[evaluated]);
+		Debug.Log(evalResolved[evaluated]);
+
 		if (triple.Item1 != "" && triple.Item2 != "" && triple.Item3 != "") {
 			preds.rdfTriples.Add(triple);
 			Helper.PrintRDFTriples(preds.rdfTriples);

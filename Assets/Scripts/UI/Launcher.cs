@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Text.RegularExpressions;
 
 using Global;
 using VideoCapture;
@@ -150,20 +151,20 @@ public class Launcher : FontManager {
 				GUI.Label (new Rect (bgLeft + 40, bgTop + 325, 130*fontSizeModifier, 20*fontSizeModifier), "Every");
 				resetScene = GUI.Toggle (new Rect (bgLeft + 25, bgTop + 317, 20, 25 * fontSizeModifier), resetScene, string.Empty);
 				if (resetScene) {
-					eventResetCounter = GUI.TextArea (new Rect (bgLeft + 15 + 62 * fontSizeModifier, bgTop + 325, 25, 20 * fontSizeModifier),
-						eventResetCounter);
+					eventResetCounter = Regex.Replace(GUI.TextField (new Rect (bgLeft + 15 + 62 * fontSizeModifier, bgTop + 325, 25, 20 * fontSizeModifier),
+						eventResetCounter), @"[^0-9]", "");
 				}
 				else {
-					GUI.TextArea (new Rect (bgLeft + 15 + 62 * fontSizeModifier, bgTop + 325, 25, 20 * fontSizeModifier),
-						eventResetCounter);
+					eventResetCounter = Regex.Replace(GUI.TextField (new Rect (bgLeft + 15 + 62 * fontSizeModifier, bgTop + 325, 25, 20 * fontSizeModifier),
+						eventResetCounter), @"[^0-9]", "");
 				}
 				GUI.Label (new Rect (bgLeft + 15 + 90*fontSizeModifier, bgTop + 325, 130*fontSizeModifier, 20*fontSizeModifier), "Events");
 
 				GUI.Label (new Rect (bgLeft + 15, bgTop + 350, 130*fontSizeModifier, 25*fontSizeModifier), "Auto-Input Script");
 				autoEventsList = GUI.TextField (new Rect (bgLeft+140*fontSizeModifier, bgTop+350, 150, 25*fontSizeModifier), autoEventsList);
 				GUI.Label (new Rect (bgLeft + 290*fontSizeModifier, bgTop + 350, 30*fontSizeModifier, 25*fontSizeModifier), ".py : ");
-				startIndex = GUI.TextArea (new Rect (bgLeft + 320*fontSizeModifier, bgTop + 350, 40, 20 * fontSizeModifier),
-					startIndex);
+				startIndex = Regex.Replace(GUI.TextField (new Rect (bgLeft + 320*fontSizeModifier, bgTop + 350, 40, 20 * fontSizeModifier),
+					startIndex), @"[^0-9]", "");
 				GUI.Label (new Rect (bgLeft + 15, bgTop + 375, 300, 50), "(Leave empty to input events manually)");
 			}
 
@@ -347,6 +348,14 @@ public class Launcher : FontManager {
 	}
 
 	void ExportPrefs(string path) {
+		if ((eventResetCounter == string.Empty) || (eventResetCounter == "0")) {
+			eventResetCounter = "1";
+		}
+
+		if (startIndex == string.Empty) {
+			startIndex = "0";
+		}
+
 		Dictionary<string, object> prefsDict = new Dictionary<string, object> ();
 		prefsDict.Add ("Listener Port", PlayerPrefs.GetString ("Listener Port"));
 		prefsDict.Add ("SRI URL", PlayerPrefs.GetString ("SRI URL"));
@@ -372,6 +381,14 @@ public class Launcher : FontManager {
 	}
 	
 	void SavePrefs() {
+		if ((eventResetCounter == string.Empty) || (eventResetCounter == "0")) {
+			eventResetCounter = "1";
+		}
+
+		if (startIndex == string.Empty) {
+			startIndex = "0";
+		}
+
 		PlayerPrefs.SetString("Listener Port", inPort);
 		PlayerPrefs.SetString("SRI URL", sriUrl);
 		PlayerPrefs.GetString("Parser URL", parserUrl);
