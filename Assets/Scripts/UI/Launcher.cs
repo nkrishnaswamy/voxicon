@@ -28,6 +28,10 @@ public class Launcher : FontManager {
 	string startIndex;
 	string videoCaptureDB;
 	string videoOutputDir;
+	bool eulaAccepted;
+
+	EULAModalWindow eulaWindow;
+
 	string ioPrefsPath = "";
 
 	int bgLeft = Screen.width/6;
@@ -249,14 +253,32 @@ public class Launcher : FontManager {
 		if (GUI.Button (new Rect ((Screen.width / 2 - 50) + 125, bgTop + bgHeight - 60, 100, 50), "Save & Launch")) {
 			if (sceneSelected != "") {
 				SavePrefs ();
-				StartCoroutine(SceneHelper.LoadScene (sceneSelected));
+
+				if (eulaAccepted) {
+					StartCoroutine (SceneHelper.LoadScene (sceneSelected));
+				}
+				else {
+					PopUpEULAWindow ();
+				}
 			}
 		}
 
 		textDimensions = GUI.skin.label.CalcSize (new GUIContent ("VoxSim"));
 		GUI.Label (new Rect (((2 * bgLeft + bgWidth) / 2) - textDimensions.x / 2, bgTop, textDimensions.x, 25), "VoxSim");
 	}
-	
+
+	void PopUpEULAWindow () {
+		eulaWindow = gameObject.AddComponent<EULAModalWindow> ();
+		eulaWindow.windowRect = new Rect (bgLeft + 25 , bgTop + 25, bgWidth - 50, bgHeight - 50);
+		eulaWindow.windowTitle = "VoxSim End User License Agreement";
+		eulaWindow.Render = true;
+	}
+
+	void EULAAccepted(bool accepted) {
+		eulaAccepted = accepted;
+		PlayerPrefs.SetInt("EULA Accepted", System.Convert.ToInt32(eulaAccepted));
+	}
+
 	void LoadPrefs() {
 		inPort = PlayerPrefs.GetString("Listener Port");
 		sriUrl = PlayerPrefs.GetString("SRI URL");
@@ -273,6 +295,7 @@ public class Launcher : FontManager {
 		startIndex = PlayerPrefs.GetInt("Start Index").ToString();
 		videoCaptureDB = PlayerPrefs.GetString("Video Capture DB");
 		videoOutputDir = PlayerPrefs.GetString("Video Output Directory");
+		eulaAccepted = (PlayerPrefs.GetInt("EULA Accepted") == 1);
 	}
 
 	void ImportPrefs(string path) {

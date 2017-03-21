@@ -18,7 +18,7 @@ public class ModalWindow : FontManager
 		set { render = value; }
 	}
 
-	ModalWindowManager windowManager;
+	protected ModalWindowManager windowManager;
 
 	// Use this for initialization
 	protected virtual void Start () {
