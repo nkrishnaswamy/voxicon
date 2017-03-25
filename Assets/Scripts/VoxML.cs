@@ -135,6 +135,15 @@ namespace Vox {
 		public VoxHabitat Habitat = new VoxHabitat();
 		public VoxAfford_Str Afford_Str = new VoxAfford_Str();
 		public VoxEmbodiment Embodiment = new VoxEmbodiment();
+
+		public void Save(string path)
+		{
+			XmlSerializer serializer = new XmlSerializer(typeof(VoxML));
+			using(var stream = new FileStream(path, FileMode.Create))
+			{
+				serializer.Serialize(stream, this);
+			}
+		}
 		
 		public static VoxML Load(string path)
 		{

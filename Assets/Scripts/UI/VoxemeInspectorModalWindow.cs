@@ -73,6 +73,8 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 			}
 		}
 	}
+
+	bool editable;
 	
 	GUIStyle listStyle = new GUIStyle ();
 	Texture2D tex;
@@ -98,16 +100,19 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 	int mlHeadSelectVisible = -1;
 	int mlHeadSelected = -1;
 	string mlHead = "";
+	string mlHeadReentrancy = "";
 	
 	int mlAddComponent = -1;
 	List<int> mlRemoveComponent = new List<int>();
 	int mlComponentCount = 0;
 	List<string> mlComponents = new List<string>();
+	List<string> mlComponentReentrancies = new List<string>();
 	
 	string[] mlConcavityOptions = new string[]{"Concave","Flat","Convex"};
 	int mlConcavitySelectVisible = -1;
 	int mlConcavitySelected = -1;
 	string mlConcavity = "";
+	string mlConcavityReentrancy = "";
 	
 	bool mlRotatSymX = false;
 	bool mlRotatSymY = false;
@@ -159,8 +164,6 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 		set { render = value; }
 	}
 
-	string voxmlDataPath;
-
 	// Use this for initialization
 	protected override void Start () {
 		colors = new Color[]{Color.white,Color.white,Color.white,Color.white};
@@ -177,13 +180,11 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 		id = (GameObject.Find("BlocksWorld").GetComponents<VoxemeInspectorModalWindow>()).Length-1;
 		//Render = true;
 
-#if UNITY_EDITOR
-		voxmlDataPath = Application.dataPath.Remove (Application.dataPath.LastIndexOf ('/') + 1) + string.Format ("Data/voxml");
-#elif UNITY_STANDALONE
-		voxmlDataPath = Application.dataPath.Remove (Application.dataPath.LastIndexOf('/', Application.dataPath.LastIndexOf('/') - 1)) + string.Format ("Data/voxml");
-#endif
+		editable = (PlayerPrefs.GetInt ("Make Voxemes Editable") == 1);
 
 		base.Start ();
+
+		windowManager.OnNewModalWindow (this, new ModalWindowEventArgs(id));
 	}
 	
 	// Update is called once per frame
@@ -247,12 +248,12 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 //					markupCleared = false;
 //				}
 //			}
-			if (File.Exists (string.Format("{0}/{1}",voxmlDataPath,string.Format("{0}.xml", InspectorVoxeme)))) {
-				using (StreamReader sr = new StreamReader (string.Format("{0}/{1}",voxmlDataPath,string.Format("{0}.xml", InspectorVoxeme)))) {
+			if (File.Exists (string.Format("{0}/{1}",Data.voxmlDataPath,string.Format("{0}.xml", InspectorVoxeme)))) {
+				using (StreamReader sr = new StreamReader (string.Format("{0}/{1}",Data.voxmlDataPath,string.Format("{0}.xml", InspectorVoxeme)))) {
 					String markup = sr.ReadToEnd ();
 					if (!ObjectLoaded (markup)) {
 						loadedObject = LoadMarkup (markup);
-						inspectorTitle = InspectorVoxeme.Substring(InspectorVoxeme.LastIndexOf('/') + 1);
+						windowTitle = InspectorVoxeme.Substring(InspectorVoxeme.LastIndexOf('/') + 1);
 						markupCleared = false;
 					}
 				}
@@ -297,6 +298,12 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 			break;
 		}
 
+		if (editable) {
+			if (GUILayout.Button ("Save")) {
+				SaveMarkup(InspectorVoxeme, mlEntityType);
+			}
+		}
+
 		Vector2 textDimensions = GUI.skin.label.CalcSize (new GUIContent (inspectorTitle));
 		GUI.Label (new Rect (((2 * inspectorPosition.x + inspectorWidth) / 2) - textDimensions.x / 2, inspectorPosition.y, textDimensions.x, 25), inspectorTitle);
 
@@ -313,23 +320,74 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 		GUILayout.Label ("LEX");
 		GUILayout.BeginHorizontal (inspectorStyle);
 		GUILayout.Label ("Pred");
-		GUILayout.Box (mlPred, GUILayout.Width (inspectorWidth-100));
+
+		if (editable) {
+			mlPred = GUILayout.TextField (mlPred, 25, GUILayout.Width (inspectorWidth - 100));
+		} else {
+			GUILayout.Box (mlPred, GUILayout.Width (inspectorWidth - 100));
+		}
+
 		GUILayout.EndHorizontal ();
 		GUILayout.BeginVertical (inspectorStyle);
 		GUILayout.BeginHorizontal ();
 		GUILayout.Label ("Type");
 
 		GUILayout.BeginVertical ();
-		for (int i = 0; i < mlTypeCount; i++) {
-			GUILayout.BeginHorizontal ();
 
-			GUILayout.Box (mlTypes [i], GUILayout.Width (inspectorWidth - 130), GUILayout.ExpandWidth (true));
+		if (editable) {
+			for (int i = 0; i < mlTypeCount; i++) {
+				GUILayout.BeginHorizontal ();
+				if (mlTypeSelectVisible [i] == 0) {
+					GUILayout.BeginVertical (inspectorStyle);
+					mlTypeSelected [i] = -1;
+					mlTypeSelected [i] = GUILayout.SelectionGrid (mlTypeSelected [i], mlTypeOptions, 1, listStyle, GUILayout.Width (70), GUILayout.ExpandWidth (true));
+					if (mlTypeSelected [i] != -1) {
+						mlTypes [i] = mlTypeOptions [mlTypeSelected [i]];
+						mlTypeSelectVisible [i] = -1;
+					}
+					GUILayout.EndVertical ();
+				} else {
+					mlTypeSelectVisible [i] = GUILayout.SelectionGrid (mlTypeSelectVisible [i], new string[]{ mlTypes [i] }, 1, GUI.skin.button, GUILayout.Width (70), GUILayout.ExpandWidth (true));
+				}
+				if (i != 0) { // can't remove first type
+					mlRemoveType [i] = GUILayout.SelectionGrid (mlRemoveType [i], new string[]{ "-" }, 1, GUI.skin.button, GUILayout.ExpandWidth (true));
+				}
+				GUILayout.EndHorizontal ();
+			}
+		} else {
+			for (int i = 0; i < mlTypeCount; i++) {
+				GUILayout.BeginHorizontal ();
 
-			GUILayout.EndHorizontal ();
+				GUILayout.Box (mlTypes [i], GUILayout.Width (inspectorWidth - 130), GUILayout.ExpandWidth (true));
+
+				GUILayout.EndHorizontal ();
+			}
 		}
 		GUILayout.EndVertical ();
 
 		GUILayout.EndHorizontal ();
+
+		if (editable) {
+			mlAddType = GUILayout.SelectionGrid (mlAddType, new string[]{ "+" }, 1, GUI.skin.button, GUILayout.ExpandWidth (true));
+
+			if (mlAddType == 0) {	// add new type
+				mlTypeCount++;
+				mlTypes.Add ("");
+				mlTypeSelectVisible.Add (-1);
+				mlTypeSelected.Add (-1);
+				mlRemoveType.Add (-1);
+				mlAddType = -1;
+			}
+
+			for (int i = 0; i < mlTypeCount; i++) {
+				if (mlRemoveType [i] == 0) {
+					mlRemoveType [i] = -1;
+					mlTypes.RemoveAt (i);
+					mlRemoveType.RemoveAt (i);
+					mlTypeCount--;
+				}
+			}
+		}
 
 		GUILayout.EndVertical ();
 		GUILayout.EndVertical ();
@@ -339,67 +397,196 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 		GUILayout.BeginHorizontal (inspectorStyle);
 		GUILayout.Label ("Head");
 
-		GUILayout.Box (mlHead, GUILayout.Width (inspectorWidth-130), GUILayout.ExpandWidth (true));
+		GUILayout.BeginHorizontal (inspectorStyle);
+		if (editable) {
+			if (mlHeadSelectVisible == 0) {
+				GUILayout.BeginVertical (inspectorStyle);
+				mlHeadSelected = -1;
+				mlHeadSelected = GUILayout.SelectionGrid (mlHeadSelected, mlHeadOptions, 1, listStyle, GUILayout.Width (60), GUILayout.ExpandWidth (true));
+				if (mlHeadSelected != -1) {
+					mlHead = mlHeadOptions [mlHeadSelected];
+					mlHeadSelectVisible = -1;
+				}
+				GUILayout.EndVertical ();
+				mlHeadReentrancy = GUILayout.TextField (mlHeadReentrancy, 25, GUILayout.Width (20));
+			}
+			else {
+				mlHeadSelectVisible = GUILayout.SelectionGrid (mlHeadSelectVisible, new string[]{ mlHead }, 1, GUI.skin.button, GUILayout.Width (60), GUILayout.ExpandWidth (true));
+				mlHeadReentrancy = GUILayout.TextField (mlHeadReentrancy, 25, GUILayout.Width (20));
+			}
+		}
+		else {
+			GUILayout.Box (mlHead, GUILayout.Width (inspectorWidth - 130), GUILayout.ExpandWidth (true));
+			GUILayout.Box (mlHeadReentrancy, GUILayout.Width (20), GUILayout.ExpandWidth (true));
+		}
+		GUILayout.EndHorizontal ();
 
 		GUILayout.EndHorizontal ();
 		GUILayout.BeginVertical (inspectorStyle);
 		GUILayout.BeginHorizontal ();
 		GUILayout.Label ("Components");
+
+		if (editable) {
+			mlAddComponent = GUILayout.SelectionGrid (mlAddComponent, new string[]{ "+" }, 1, GUI.skin.button, GUILayout.ExpandWidth (true));
+		}
+
 		GUILayout.EndHorizontal ();
+
+		if (editable) {
+			if (mlAddComponent == 0) {	// add new component
+				mlComponentCount++;
+				mlComponents.Add ("");
+				mlComponentReentrancies.Add ("");
+				mlAddComponent = -1;
+				mlRemoveComponent.Add (-1);
+			}
+		}
 
 		GUILayout.BeginVertical (inspectorStyle);
 		for (int i = 0; i < mlComponentCount; i++) {
 			string componentName = mlComponents [i].Split (new char[]{ '[' }) [0];
 			//TextAsset ml = Resources.Load (componentName) as TextAsset;
-			if (File.Exists (string.Format ("{0}/{1}",voxmlDataPath,string.Format ("objects/{0}.xml", componentName)))) {
+			if (File.Exists (string.Format ("{0}/{1}", Data.voxmlDataPath, string.Format ("objects/{0}.xml", componentName)))) {
 				using (StreamReader sr = new StreamReader (
-					string.Format ("{0}/{1}",voxmlDataPath,string.Format ("objects/{0}.xml", componentName)))) {
+					                         string.Format ("{0}/{1}", Data.voxmlDataPath, string.Format ("objects/{0}.xml", componentName)))) {
 					String ml = sr.ReadToEnd ();
 					if (ml != null) {
 						float textSize = GUI.skin.label.CalcSize (new GUIContent (mlComponents [i])).x;
 						float padSize = GUI.skin.label.CalcSize (new GUIContent (" ")).x;
 						int padLength = (int)(((inspectorWidth - 85) - textSize) / (int)padSize);
-						if (GUILayout.Button (mlComponents [i].PadRight (padLength + mlComponents [i].Length - 3), GUILayout.Width (inspectorWidth - 85))) {
-							if (ml != null) {
+
+						GUILayout.BeginHorizontal (inspectorStyle);
+						bool componentButton = GUILayout.Button (mlComponents [i].PadRight (padLength + mlComponents [i].Length - 3), GUILayout.Width (inspectorWidth - 85));
+						mlComponentReentrancies [i] = GUILayout.TextField (mlComponentReentrancies [i], 25, GUILayout.Width (20));
+						if (editable) {
+							mlRemoveComponent.Add (-1);
+							mlRemoveComponent [i] = GUILayout.SelectionGrid (mlRemoveComponent [i], new string[]{ "-" }, 1, GUI.skin.button, GUILayout.ExpandWidth (true));
+						}
+						GUILayout.EndHorizontal ();
+				
+						if (componentButton) {
+//							if (ml != null) {
 								LoadMarkup (ml);
 								inspectorTitle = mlPred;
-							} 
-							else {
+//							}
+//							else {
+//								if (editable) {
+//									mlComponents [i] = GUILayout.TextField (mlComponents [i], 25, GUILayout.Width (inspectorWidth - 85));
+//									mlComponentReentrancies [i] = GUILayout.TextField (mlComponents [i], 25, GUILayout.Width (20));
+//									mlRemoveComponent.Add (-1);
+//									mlRemoveComponent [i] = GUILayout.SelectionGrid (mlRemoveComponent [i], new string[]{ "-" }, 1, GUI.skin.button, GUILayout.ExpandWidth (true));
+//								}
+//								else {
+//									GUILayout.Box (mlComponents [i], GUILayout.Width (inspectorWidth - 85));
+//									GUILayout.Box (mlComponentReentrancies [i], GUILayout.Width (20), GUILayout.ExpandWidth (true));
+//								}
 							}
-						}
-					} 
-					else {
-						GUILayout.Box (mlComponents [i], GUILayout.Width (inspectorWidth - 85));
+//						}
 					}
+					else {
+						if (editable) {
+							GUILayout.BeginHorizontal (inspectorStyle);
+							mlComponents [i] = GUILayout.TextField (mlComponents [i], 25, GUILayout.Width (inspectorWidth - 85));
+							mlComponentReentrancies [i] = GUILayout.TextField (mlComponents [i], 25, GUILayout.Width (20));
+							mlRemoveComponent.Add (-1);
+							mlRemoveComponent [i] = GUILayout.SelectionGrid (mlRemoveComponent [i], new string[]{ "-" }, 1, GUI.skin.button, GUILayout.ExpandWidth (true));
+							GUILayout.EndHorizontal ();
+						}
+						else {
+							GUILayout.Box (mlComponents [i], GUILayout.Width (inspectorWidth - 85));
+							GUILayout.Box (mlComponentReentrancies[i], GUILayout.Width (20), GUILayout.ExpandWidth (true));
+						}
+					}
+				}
+			}
+			else {
+				if (editable) {
+					GUILayout.BeginHorizontal (inspectorStyle);
+					mlComponents [i] = GUILayout.TextField (mlComponents [i], 25, GUILayout.Width (inspectorWidth - 85));
+					mlComponentReentrancies [i] = GUILayout.TextField (mlComponentReentrancies [i], 25, GUILayout.Width (20));
+					mlRemoveComponent.Add (-1);
+					mlRemoveComponent [i] = GUILayout.SelectionGrid (mlRemoveComponent [i], new string[]{ "-" }, 1, GUI.skin.button, GUILayout.ExpandWidth (true));
+					GUILayout.EndHorizontal ();
+				}
+				else {
+					GUILayout.Box (mlComponents [i], GUILayout.Width (inspectorWidth - 85));
+					GUILayout.Box (mlComponentReentrancies[i], GUILayout.Width (20), GUILayout.ExpandWidth (true));
 				}
 			}
 		}
 		GUILayout.EndVertical ();
+
+		if (editable) {
+			for (int i = 0; i < mlComponentCount; i++) {
+				if (mlRemoveComponent [i] == 0) {
+					mlRemoveComponent [i] = -1;
+					mlComponents.RemoveAt (i);
+					mlComponentReentrancies.RemoveAt (i);
+					mlRemoveComponent.RemoveAt (i);
+					mlComponentCount--;
+				}
+			}
+		}
 
 		GUILayout.EndVertical ();
 
 		GUILayout.BeginHorizontal (inspectorStyle);
 		GUILayout.Label ("Concavity");
 
-		GUILayout.Box (mlConcavity, GUILayout.Width (inspectorWidth-130), GUILayout.ExpandWidth (true));
+		if (editable) {
+			if (mlConcavitySelectVisible == 0) {
+				GUILayout.BeginVertical (inspectorStyle);
+				mlConcavitySelected = -1;
+				mlConcavitySelected = GUILayout.SelectionGrid (mlConcavitySelected, mlConcavityOptions, 1, listStyle, GUILayout.Width (70), GUILayout.ExpandWidth (true));
+				if (mlConcavitySelected != -1) {
+					mlConcavity = mlConcavityOptions [mlConcavitySelected];
+					mlConcavitySelectVisible = -1;
+				}
+				GUILayout.EndVertical ();
+			}
+			else {
+				mlConcavitySelectVisible = GUILayout.SelectionGrid (mlConcavitySelectVisible, new string[]{ mlConcavity }, 1, GUI.skin.button, GUILayout.Width (70), GUILayout.ExpandWidth (true));
+			}
+		}
+		else {
+			GUILayout.Box (mlConcavity, GUILayout.Width (inspectorWidth - 130), GUILayout.ExpandWidth (true));
+		}
 
 		GUILayout.EndHorizontal ();
 
 		GUILayout.BeginVertical (inspectorStyle);
 		GUILayout.Label ("Rotational Symmetry");
 		GUILayout.BeginHorizontal ();
-		GUILayout.Toggle (mlRotatSymX, "X");
-		GUILayout.Toggle (mlRotatSymY, "Y");
-		GUILayout.Toggle (mlRotatSymZ, "Z");
+
+		if (editable) {
+			mlRotatSymX = GUILayout.Toggle(mlRotatSymX,"X");
+			mlRotatSymY = GUILayout.Toggle(mlRotatSymY,"Y");
+			mlRotatSymZ = GUILayout.Toggle(mlRotatSymZ,"Z");
+		}
+		else {
+			GUILayout.Toggle (mlRotatSymX, "X");
+			GUILayout.Toggle (mlRotatSymY, "Y");
+			GUILayout.Toggle (mlRotatSymZ, "Z");
+		}
+
 		GUILayout.EndHorizontal ();
 		GUILayout.EndVertical ();
 
 		GUILayout.BeginVertical (inspectorStyle);
 		GUILayout.Label ("Reflectional Symmetry");
 		GUILayout.BeginHorizontal ();
-		GUILayout.Toggle (mlReflSymXY, "XY");
-		GUILayout.Toggle (mlReflSymXZ, "XZ");
-		GUILayout.Toggle (mlReflSymYZ, "YZ");
+
+		if (editable) {
+			mlReflSymXY = GUILayout.Toggle(mlReflSymXY,"XY");
+			mlReflSymXZ = GUILayout.Toggle(mlReflSymXZ,"XZ");
+			mlReflSymYZ = GUILayout.Toggle(mlReflSymYZ,"YZ");
+		}
+		else {
+			GUILayout.Toggle (mlReflSymXY, "XY");
+			GUILayout.Toggle (mlReflSymXZ, "XZ");
+			GUILayout.Toggle (mlReflSymYZ, "YZ");
+		}
+
 		GUILayout.EndHorizontal ();
 		GUILayout.EndVertical ();
 		GUILayout.EndVertical ();
@@ -410,13 +597,44 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 		GUILayout.BeginHorizontal ();
 		GUILayout.Label ("Intrinsic");
 
+		if (editable) {
+			mlAddIntrHabitat = GUILayout.SelectionGrid (mlAddIntrHabitat, new string[]{ "+" }, 1, GUI.skin.button, GUILayout.ExpandWidth (true));
+
+			if (mlAddIntrHabitat == 0) {	// add new intrinsic habitat formula
+				mlIntrHabitatCount++;
+				mlIntrHabitats.Add ("Name=Formula");
+				mlAddIntrHabitat = -1;
+			}
+		}
+
 		GUILayout.EndHorizontal ();
 
-		for (int i = 0; i < mlIntrHabitatCount; i++) {
-			GUILayout.BeginHorizontal ();
-			GUILayout.Box (mlIntrHabitats [i].Split (new char[]{ '=' }, 2) [0], GUILayout.Width (inspectorWidth - 150));
-			GUILayout.Box (mlIntrHabitats [i].Split (new char[]{ '=' }, 2) [1], GUILayout.Width (inspectorWidth - 140));
-			GUILayout.EndHorizontal ();
+		if (editable) {
+			for (int i = 0; i < mlIntrHabitatCount; i++) {
+				GUILayout.BeginHorizontal ();
+				mlIntrHabitats [i] = GUILayout.TextField (mlIntrHabitats [i].Split (new char[]{ '=' }) [0], 25, GUILayout.Width (50)) + "=" +
+				GUILayout.TextField (mlIntrHabitats [i].Split (new char[]{ '=' }) [1], 25, GUILayout.Width (60));
+				mlRemoveIntrHabitat.Add (-1);
+				mlRemoveIntrHabitat [i] = GUILayout.SelectionGrid (mlRemoveIntrHabitat [i], new string[]{ "-" }, 1, GUI.skin.button, GUILayout.ExpandWidth (true));
+				GUILayout.EndHorizontal ();
+			}
+
+			for (int i = 0; i < mlIntrHabitatCount; i++) {
+				if (mlRemoveIntrHabitat [i] == 0) {
+					mlRemoveIntrHabitat [i] = -1;
+					mlIntrHabitats.RemoveAt (i);
+					mlRemoveIntrHabitat.RemoveAt (i);
+					mlIntrHabitatCount--;
+				}
+			}
+		}
+		else {
+			for (int i = 0; i < mlIntrHabitatCount; i++) {
+				GUILayout.BeginHorizontal ();
+				GUILayout.Box (mlIntrHabitats [i].Split (new char[]{ '=' }, 2) [0], GUILayout.Width (inspectorWidth - 150));
+				GUILayout.Box (mlIntrHabitats [i].Split (new char[]{ '=' }, 2) [1], GUILayout.Width (inspectorWidth - 140));
+				GUILayout.EndHorizontal ();
+			}
 		}
 
 		GUILayout.EndVertical ();
@@ -425,13 +643,44 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 		GUILayout.BeginHorizontal ();
 		GUILayout.Label ("Extrinsic");
 
+		if (editable) {
+			mlAddExtrHabitat = GUILayout.SelectionGrid (mlAddExtrHabitat, new string[]{ "+" }, 1, GUI.skin.button, GUILayout.ExpandWidth (true));
+
+			if (mlAddExtrHabitat == 0) {	// add new extrinsic habitat formula
+				mlExtrHabitatCount++;
+				mlExtrHabitats.Add ("Name=Formula");
+				mlAddExtrHabitat = -1;
+			}
+		}
+
 		GUILayout.EndHorizontal ();
 
-		for (int i = 0; i < mlExtrHabitatCount; i++) {
-			GUILayout.BeginHorizontal ();
-			GUILayout.Box (mlExtrHabitats [i].Split (new char[]{ '=' }, 2) [0], GUILayout.Width (inspectorWidth - 150));
-			GUILayout.Box (mlExtrHabitats [i].Split (new char[]{ '=' }, 2) [1], GUILayout.Width (inspectorWidth - 140));
-			GUILayout.EndHorizontal ();
+		if (editable) {
+			for (int i = 0; i < mlExtrHabitatCount; i++) {
+				GUILayout.BeginHorizontal ();
+				mlExtrHabitats [i] = GUILayout.TextField (mlExtrHabitats [i].Split (new char[]{ '=' }) [0], 25, GUILayout.Width (50)) + "=" +
+				GUILayout.TextField (mlExtrHabitats [i].Split (new char[]{ '=' }) [1], 25, GUILayout.Width (60));
+				mlRemoveExtrHabitat.Add (-1);
+				mlRemoveExtrHabitat [i] = GUILayout.SelectionGrid (mlRemoveExtrHabitat [i], new string[]{ "-" }, 1, GUI.skin.button, GUILayout.ExpandWidth (true));
+				GUILayout.EndHorizontal ();
+			}
+
+			for (int i = 0; i < mlExtrHabitatCount; i++) {
+				if (mlRemoveExtrHabitat [i] == 0) {
+					mlRemoveExtrHabitat [i] = -1;
+					mlExtrHabitats.RemoveAt (i);
+					mlRemoveExtrHabitat.RemoveAt (i);
+					mlExtrHabitatCount--;
+				}
+			}
+		}
+		else {
+			for (int i = 0; i < mlExtrHabitatCount; i++) {
+				GUILayout.BeginHorizontal ();
+				GUILayout.Box (mlExtrHabitats [i].Split (new char[]{ '=' }, 2) [0], GUILayout.Width (inspectorWidth - 150));
+				GUILayout.Box (mlExtrHabitats [i].Split (new char[]{ '=' }, 2) [1], GUILayout.Width (inspectorWidth - 140));
+				GUILayout.EndHorizontal ();
+			}
 		}
 
 		GUILayout.EndVertical ();
@@ -442,10 +691,38 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 
 		GUILayout.BeginVertical (inspectorStyle);
 
-		for (int i = 0; i < mlAffordanceCount; i++) {
-			GUILayout.BeginHorizontal ();
-			GUILayout.Box (mlAffordances [i], GUILayout.Width (inspectorWidth - 85));
-			GUILayout.EndHorizontal ();
+		if (editable) {
+			for (int i = 0; i < mlAffordanceCount; i++) {
+				GUILayout.BeginHorizontal ();
+				mlAffordances [i] = GUILayout.TextField (mlAffordances [i], 50, GUILayout.Width (115));
+				mlRemoveAffordance.Add (-1);
+				mlRemoveAffordance [i] = GUILayout.SelectionGrid (mlRemoveAffordance [i], new string[]{ "-" }, 1, GUI.skin.button, GUILayout.ExpandWidth (true));
+				GUILayout.EndHorizontal ();
+			}
+
+			for (int i = 0; i < mlAffordanceCount; i++) {
+				if (mlRemoveAffordance [i] == 0) {
+					mlRemoveAffordance [i] = -1;
+					mlAffordances.RemoveAt (i);
+					mlRemoveAffordance.RemoveAt (i);
+					mlAffordanceCount--;
+				}
+			}
+
+			mlAddAffordance = GUILayout.SelectionGrid (mlAddAffordance, new string[]{ "+" }, 1, GUI.skin.button, GUILayout.ExpandWidth (true));
+
+			if (mlAddAffordance == 0) {	// add new affordance
+				mlAffordanceCount++;
+				mlAffordances.Add ("");
+				mlAddAffordance = -1;
+			}
+		}
+		else {
+			for (int i = 0; i < mlAffordanceCount; i++) {
+				GUILayout.BeginHorizontal ();
+				GUILayout.Box (mlAffordances [i], GUILayout.Width (inspectorWidth - 85));
+				GUILayout.EndHorizontal ();
+			}
 		}
 
 		GUILayout.EndVertical ();
@@ -456,19 +733,43 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 		GUILayout.BeginHorizontal (inspectorStyle);
 		GUILayout.Label ("Scale");
 
-		GUILayout.Box (mlScale, GUILayout.Width (inspectorWidth-130), GUILayout.ExpandWidth (true));
+		if (editable) {
+			if (mlScaleSelectVisible == 0) {
+				GUILayout.BeginVertical (inspectorStyle);
+				mlScaleSelected = -1;
+				mlScaleSelected = GUILayout.SelectionGrid (mlScaleSelected, mlScaleOptions, 1, listStyle, GUILayout.Width (70), GUILayout.ExpandWidth (true));
+				if (mlScaleSelected != -1) {
+					mlScale = mlScaleOptions [mlScaleSelected];
+					mlScaleSelectVisible = -1;
+				}
+				GUILayout.EndVertical ();
+			}
+			else {
+				mlScaleSelectVisible = GUILayout.SelectionGrid (mlScaleSelectVisible, new string[]{ mlScale }, 1, GUI.skin.button, GUILayout.Width (70), GUILayout.ExpandWidth (true));
+			}
+		}
+		else {
+			GUILayout.Box (mlScale, GUILayout.Width (inspectorWidth - 130), GUILayout.ExpandWidth (true));
+		}
 
 		GUILayout.EndHorizontal ();
 		GUILayout.BeginHorizontal (inspectorStyle);
 		GUILayout.Label ("Movable");
-		GUILayout.Toggle (mlMovable, "");
+
+		if (editable) {
+			mlMovable = GUILayout.Toggle (mlMovable, "");
+		}
+		else {
+			GUILayout.Toggle(mlMovable,"");
+		}
+
 		GUILayout.EndHorizontal ();
 		GUILayout.EndVertical ();
 
 		GUILayout.BeginVertical (inspectorStyle);
 		GUILayout.Label ("PARTICIPATION");
 		GUILayout.BeginVertical (inspectorStyle);
-		object[] programs = Directory.GetFiles (string.Format("{0}/programs",voxmlDataPath));
+		object[] programs = Directory.GetFiles (string.Format ("{0}/programs", Data.voxmlDataPath));
 		//object[] assets = Resources.LoadAll ("Programs");
 		foreach (object program in programs) {
 			if (program != null) {
@@ -483,7 +784,7 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 
 				foreach (string p in participations) {
 					using (StreamReader sr = new StreamReader (
-						string.Format ("{0}/{1}",voxmlDataPath,string.Format ("programs/{0}.xml", p)))) {
+						                        string.Format ("{0}/{1}", Data.voxmlDataPath, string.Format ("programs/{0}.xml", p)))) {
 						//TextAsset ml = Resources.Load ("Programs/" + p) as TextAsset;
 						String ml = sr.ReadToEnd ();
 						if (ml != null) {
@@ -503,7 +804,7 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 								else {
 								}
 							}
-						} 
+						}
 						else {
 							GUILayout.Box ((string)program, GUILayout.Width (inspectorWidth - 85));
 						}
@@ -736,6 +1037,76 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 		markupCleared = true;
 	}
 	
+	void SaveMarkup(string markupPath, VoxEntity.EntityType entityType) {
+		VoxML voxml = new VoxML ();
+		voxml.Entity.Type = entityType;
+
+		// assign VoxML values
+		// PRED
+		voxml.Lex.Pred = mlPred;
+		voxml.Lex.Type = System.String.Join ("*", mlTypes.ToArray ());
+
+		// TYPE
+		voxml.Type.Head = (mlHeadReentrancy != string.Empty) ? mlHead + string.Format ("[{0}]", mlHeadReentrancy) : mlHead;
+		for (int i = 0; i < mlComponentCount; i++) {
+			voxml.Type.Components.Add (new VoxTypeComponent ());
+			voxml.Type.Components [i].Value = (mlComponentReentrancies [i] != string.Empty) ? 
+				mlComponents [i] + string.Format("[{0}]",mlComponentReentrancies[i]) :  mlComponents [i];
+		}
+		voxml.Type.Concavity = (mlConcavityReentrancy != string.Empty) ? mlConcavity + string.Format ("[{0}]", mlConcavityReentrancy) :
+			mlConcavity;
+
+		List<string> rotatSyms = new List<string> ();
+		if (mlRotatSymX) {
+			rotatSyms.Add ("X");
+		}
+		if (mlRotatSymY) {
+			rotatSyms.Add ("Y");
+		}
+		if (mlRotatSymZ) {
+			rotatSyms.Add ("Z");
+		}
+		voxml.Type.RotatSym = System.String.Join (",", rotatSyms.ToArray ());
+
+		List<string> reflSyms = new List<string> ();
+		if (mlReflSymXY) {
+			reflSyms.Add ("XY");
+		}
+		if (mlReflSymXZ) {
+			reflSyms.Add ("XZ");
+		}
+		if (mlReflSymYZ) {
+			reflSyms.Add ("YZ");
+		}
+		voxml.Type.ReflSym = System.String.Join (",", reflSyms.ToArray ());
+
+		// HABITAT
+		for (int i = 0; i < mlIntrHabitatCount; i++) {
+			voxml.Habitat.Intrinsic.Add (new VoxHabitatIntr ());
+			voxml.Habitat.Intrinsic [i].Name = mlIntrHabitats [i].Split (new char[]{ '=' }) [0];
+			voxml.Habitat.Intrinsic [i].Value = mlIntrHabitats [i].Split (new char[]{ '=' }) [1];
+		}
+		for (int i = 0; i < mlExtrHabitatCount; i++) {
+			voxml.Habitat.Extrinsic.Add (new VoxHabitatExtr ());
+			voxml.Habitat.Extrinsic [i].Name = mlExtrHabitats [i].Split (new char[]{ '=' }) [0];
+			voxml.Habitat.Extrinsic [i].Value = mlExtrHabitats [i].Split (new char[]{ '=' }) [1];
+		}
+
+		// AFFORD_STR
+		for (int i = 0; i < mlAffordanceCount; i++) {
+			voxml.Afford_Str.Affordances.Add (new VoxAffordAffordance ());
+			voxml.Afford_Str.Affordances [i].Formula = mlAffordances [i];
+		}
+
+		// EMBODIMENT
+		voxml.Embodiment.Scale = mlScale;
+		voxml.Embodiment.Movable = mlMovable;
+
+
+		voxml.Save (Data.voxmlDataPath + "/" + markupPath + ".xml");
+		//		voxml.SaveToServer (obj.name + ".xml");
+	}
+
 	VoxML LoadMarkup(GameObject obj) {
 		VoxML voxml = new VoxML();
 		
@@ -798,13 +1169,16 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 		}
 
 		// TYPE
-		mlHead = voxml.Type.Head;
+		mlHead = voxml.Type.Head.Split('[')[0];
+		mlHeadReentrancy = voxml.Type.Head.Contains("[") ? voxml.Type.Head.Split ('[') [1].Replace("]","") : "";
 		mlComponents = new List<string>();
 		foreach (VoxTypeComponent c in voxml.Type.Components) {
-			mlComponents.Add (c.Value);
+			mlComponents.Add (c.Value.Split('[')[0]);
+			mlComponentReentrancies.Add(c.Value.Contains("[") ? c.Value.Split('[') [1].Replace("]","") : "");
 		}
 		mlComponentCount = mlComponents.Count;
-		mlConcavity = voxml.Type.Concavity;
+		mlConcavity = voxml.Type.Concavity.Split('[')[0];
+		mlConcavityReentrancy = voxml.Type.Concavity.Contains("[") ? voxml.Type.Concavity.Split ('[') [1].Replace("]","") : "";
 
 		List <string> rotatSyms = new List<string>(voxml.Type.RotatSym.Split (new char[]{','}));
 		mlRotatSymX = (rotatSyms.Contains("X"));

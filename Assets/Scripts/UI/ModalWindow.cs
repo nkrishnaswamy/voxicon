@@ -77,10 +77,14 @@ public class ModalWindow : FontManager
 				Render = false;
 			}
 			else {
-				windowManager.UnregisterWindow (this);
-				Destroy (this);
+				DestroyWindow ();
 			}
 		}
+	}
+
+	public virtual void DestroyWindow() {
+		windowManager.UnregisterWindow (this);
+		Destroy (this);
 	}
 }
 

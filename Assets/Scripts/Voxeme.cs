@@ -70,8 +70,6 @@ public class Voxeme : MonoBehaviour {
 	public Vector3 startRotation;
 	public Vector3 startScale;
 
-	string voxmlDataPath;
-
 	// Use this for initialization
 	void Start () {
 		// load in VoxML knowledge
@@ -87,14 +85,8 @@ public class Voxeme : MonoBehaviour {
 
 //		voxml = VoxML.LoadFromText (www.text);
 
-#if UNITY_EDITOR
-		voxmlDataPath = Application.dataPath.Remove (Application.dataPath.LastIndexOf ('/') + 1) + string.Format ("Data/voxml");
-#elif UNITY_STANDALONE
-		voxmlDataPath = Application.dataPath.Remove (Application.dataPath.LastIndexOf('/', Application.dataPath.LastIndexOf('/') - 1)) + string.Format ("/Data/voxml");
-#endif
-
 		using (StreamReader sr = new StreamReader(
-			string.Format("{0}/{1}",voxmlDataPath,string.Format("objects/{0}.xml",gameObject.name))))
+			string.Format("{0}/{1}",Data.voxmlDataPath,string.Format("objects/{0}.xml",gameObject.name))))
 		{
 			voxml = VoxML.LoadFromText (sr.ReadToEnd());
 		}
@@ -638,14 +630,20 @@ public class Voxeme : MonoBehaviour {
 
 		// set component as semantic head
 		string[] str = voxml.Type.Head.Split('[');
-		int i = Helper.StringToInt (str[1].Remove (str[1].IndexOf (']')));
-		if (opVox.Type.Components.FindIndex (c => c.Item3 == i) != -1) {
-			opVox.Type.Head = opVox.Type.Components.First (c => c.Item3 == i);
+		if (str.Length > 1) {
+			int i = Helper.StringToInt (str [1].Remove (str [1].IndexOf (']')));
+			if (opVox.Type.Components.FindIndex (c => c.Item3 == i) != -1) {
+				opVox.Type.Head = opVox.Type.Components.First (c => c.Item3 == i);
+			}
+			// if none, add entire game object as semantic head for voxeme
+			else {
+				opVox.Type.Head = new Triple<string,GameObject,int> (gameObject.name, gameObject, i);
+				opVox.Type.Components.Add (new Triple<string,GameObject,int> (gameObject.name, gameObject, i));
+			}
 		}
-		// if none, add entire game object as semantic head for voxeme
 		else {
-			opVox.Type.Head = new Triple<string,GameObject,int> (gameObject.name, gameObject, i);
-			opVox.Type.Components.Add (new Triple<string,GameObject,int> (gameObject.name, gameObject, i));
+			opVox.Type.Head = new Triple<string,GameObject,int> (gameObject.name, gameObject, -1);
+			opVox.Type.Components.Add (new Triple<string,GameObject,int> (gameObject.name, gameObject, -1));
 		}
 
 		// set concavity info

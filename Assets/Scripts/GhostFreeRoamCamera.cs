@@ -95,11 +95,13 @@ public class GhostFreeRoamCamera : MonoBehaviour
 
 		bool masked = false;	// assume mouse not masked by some open modal window
 		for (int i = 0; i < windowManager.windowManager.Count; i++) {
-			if (windowManager.windowManager[i] != null) {
-				if (!Helper.PointOutsideMaskedAreas (new Vector2 (Input.mousePosition.x, Screen.height - Input.mousePosition.y), 
-					new Rect[]{ windowManager.windowManager[i].windowRect }) && (windowManager.windowManager[i].Render)) {
-					masked = true;
-					break;
+			if (windowManager.windowManager.ContainsKey (i)) {
+				if (windowManager.windowManager [i] != null) {
+					if (!Helper.PointOutsideMaskedAreas (new Vector2 (Input.mousePosition.x, Screen.height - Input.mousePosition.y), 
+						   new Rect[]{ windowManager.windowManager [i].windowRect }) && (windowManager.windowManager [i].Render)) {
+						masked = true;
+						break;
+					}
 				}
 			}
 		}

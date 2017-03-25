@@ -28,6 +28,7 @@ public class Launcher : FontManager {
 	string startIndex;
 	string videoCaptureDB;
 	string videoOutputDir;
+	bool editableVoxemes;
 	bool eulaAccepted;
 
 	EULAModalWindow eulaWindow;
@@ -225,6 +226,9 @@ public class Launcher : FontManager {
 		GUILayout.EndVertical();
 		GUILayout.EndScrollView();
 		GUILayout.EndArea();
+
+		GUI.Label (new Rect (13*Screen.width/24, bgTop + 35 + (3*Screen.height/6) + 10*fontSizeModifier, 150*fontSizeModifier, 25*fontSizeModifier), "Make Voxemes Editable");
+		editableVoxemes = GUI.Toggle (new Rect ((13*Screen.width/24) + (150*fontSizeModifier), bgTop + 35 + (3*Screen.height/6) + 10*fontSizeModifier, 150, 25*fontSizeModifier), editableVoxemes, string.Empty);
 		
 		Vector2 textDimensions = GUI.skin.label.CalcSize(new GUIContent("Scenes"));
 		
@@ -295,6 +299,7 @@ public class Launcher : FontManager {
 		startIndex = PlayerPrefs.GetInt("Start Index").ToString();
 		videoCaptureDB = PlayerPrefs.GetString("Video Capture DB");
 		videoOutputDir = PlayerPrefs.GetString("Video Output Directory");
+		editableVoxemes = (PlayerPrefs.GetInt("Make Voxemes Editable") == 1);
 		eulaAccepted = (PlayerPrefs.GetInt("EULA Accepted") == 1);
 	}
 
@@ -363,6 +368,10 @@ public class Launcher : FontManager {
 					videoOutputDir = line.Split (',') [1].Trim();
 					break;
 
+				case "Make Voxemes Editable":
+					editableVoxemes = System.Convert.ToBoolean(line.Split (',') [1].Trim());
+					break;
+
 				default:
 					break;
 				}
@@ -395,6 +404,7 @@ public class Launcher : FontManager {
 		prefsDict.Add ("Start Index", PlayerPrefs.GetInt ("Start Index").ToString ());
 		prefsDict.Add ("Video Capture DB", PlayerPrefs.GetString("Video Capture DB"));
 		prefsDict.Add ("Video Output Directory", PlayerPrefs.GetString("Video Output Directory"));
+		prefsDict.Add ("Make Voxemes Editable", PlayerPrefs.GetInt("Make Voxemes Editable").ToString());
 
 		using (StreamWriter outputFile = new StreamWriter (Path.GetFullPath (Application.dataPath + "/" + path))) {
 			foreach (var entry in prefsDict) {
@@ -427,6 +437,7 @@ public class Launcher : FontManager {
 		PlayerPrefs.SetInt("Start Index", System.Convert.ToInt32(startIndex));
 		PlayerPrefs.SetString("Video Capture DB", videoCaptureDB);
 		PlayerPrefs.SetString("Video Output Directory", videoOutputDir);
+		PlayerPrefs.SetInt("Make Voxemes Editable", System.Convert.ToInt32(editableVoxemes));
 	}
 }
 

@@ -23,6 +23,14 @@ namespace Global {
 		};
 	}
 
+	static class Data {
+	#if UNITY_EDITOR
+		public static string voxmlDataPath = Application.dataPath.Remove (Application.dataPath.LastIndexOf ('/') + 1) + string.Format ("Data/voxml");
+	#elif UNITY_STANDALONE
+		public static string voxmlDataPath = Application.dataPath.Remove (Application.dataPath.LastIndexOf('/', Application.dataPath.LastIndexOf('/') - 1)) + string.Format ("/Data/voxml");
+	#endif
+	}
+
 	/// <summary>
 	/// Region class
 	/// </summary>
