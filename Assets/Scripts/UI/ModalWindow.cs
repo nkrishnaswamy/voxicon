@@ -22,13 +22,13 @@ public class ModalWindow : FontManager
 
 	// Use this for initialization
 	protected virtual void Start () {
-		windowManager = gameObject.GetComponent<ModalWindowManager> ();
+		windowManager = GameObject.Find("BlocksWorld").GetComponent<ModalWindowManager> ();
 
 		if (!windowManager.windowManager.ContainsKey (id)) {
 			windowManager.RegisterWindow (this);
 		}
 		else {
-			Debug.Log ("ModalWindow of id " + id.ToString () + "already exists on this object!");
+			Debug.Log ("ModalWindow of id " + id.ToString () + " already exists on this object!");
 			Destroy(this);
 		}
 	}

@@ -238,6 +238,12 @@ public class ModuleVoxemeCreation : ModalWindow {
 			go.SetActive (true);
 			go.name = go.name.Replace ("(Clone)", "");
 
+			int exisitingObjCount = objSelector.allVoxemes.FindAll (v => v.gameObject.name.StartsWith(go.name)).Count;
+			Debug.Log (exisitingObjCount);
+			if (exisitingObjCount > 0) {
+				go.name = go.name + (exisitingObjCount + 1).ToString ();
+			}
+
 			// store shaders
 			foreach (Renderer renderer in go.GetComponentsInChildren<Renderer> ()) {
 				defaultShaders [renderer] = renderer.material.shader;

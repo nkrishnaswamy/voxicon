@@ -177,7 +177,7 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 		listStyle.onHover.background = tex;
 		listStyle.padding.left = listStyle.padding.right = listStyle.padding.top = listStyle.padding.bottom = 4;
 
-		id = (GameObject.Find("BlocksWorld").GetComponents<VoxemeInspectorModalWindow>()).Length-1;
+		id = (GameObject.Find("BlocksWorld").GetComponent<ModalWindowManager>().windowManager).Count;
 		//Render = true;
 
 		editable = (PlayerPrefs.GetInt ("Make Voxemes Editable") == 1);
