@@ -1,3 +1,9 @@
 [submodule "VoxSim"]
 	path = VoxSim
 	url = https://github.com/VoxML/VoxSim.git
+[submodule "VoxSim-plugin"]
+	path = VoxSim-plugin
+	url = https://github.com/VoxML/VoxSim-plugin.git
+[submodule "VoxSim-Commander"]
+	path = VoxSim-Commander
+	url = https://github.com/VoxML/VoxSim-Commander.git
