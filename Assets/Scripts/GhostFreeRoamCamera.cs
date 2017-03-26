@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Linq;
 
 using Global;
 
@@ -105,8 +106,16 @@ public class GhostFreeRoamCamera : MonoBehaviour
 				}
 			}
 		}
+
 		if (masked) {
 			return;
+		}
+		else {
+			// if a modal window is resizing
+			//  then mouse may be outside of masked area but we still don't want to move the camera
+			if (windowManager.windowManager.Values.Where (w => w.isResizing).ToList ().Count > 0) {
+				return;
+			}
 		}
 
 		if (allowMovement)
