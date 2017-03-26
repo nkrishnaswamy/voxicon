@@ -135,7 +135,17 @@ public class ModuleVoxemeCreation : ModalWindow {
 							    (Mathf.Abs (selectRayhit.point.z - Helper.GetObjectWorldSize (sandboxSurface).max.z) >= Helper.GetObjectWorldSize (selectedObject).extents.z)) {
 								selectedObject.transform.position = new Vector3 (selectRayhit.point.x,
 									preds.ON (new object[] { sandboxSurface }).y + surfacePlacementOffset, selectRayhit.point.z);
-								selectedObject.GetComponent<Voxeme> ().targetPosition = selectedObject.transform.position;
+								Voxeme voxComponent = selectedObject.GetComponent<Voxeme> ();
+								voxComponent.targetPosition = selectedObject.transform.position;
+
+								foreach (Voxeme child in voxComponent.children) {
+									if (child.isActiveAndEnabled) {
+										if (child.gameObject != voxComponent.gameObject) {
+											child.transform.localPosition = voxComponent.parentToChildPositionOffset [child.gameObject];
+											child.targetPosition = child.transform.position;
+										}
+									}
+								}
 							}
 						}
 					}
