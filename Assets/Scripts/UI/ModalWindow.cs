@@ -24,6 +24,8 @@ public class ModalWindow : FontManager
 	protected virtual void Start () {
 		windowManager = GameObject.Find("BlocksWorld").GetComponent<ModalWindowManager> ();
 
+		id = windowManager.windowManager.Count;
+
 		if (!windowManager.windowManager.ContainsKey (id)) {
 			windowManager.RegisterWindow (this);
 		}
@@ -80,6 +82,9 @@ public class ModalWindow : FontManager
 				DestroyWindow ();
 			}
 		}
+
+		//makes GUI window draggable
+		GUI.DragWindow (new Rect (0, 0, 10000, 20));
 	}
 
 	public virtual void DestroyWindow() {

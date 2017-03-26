@@ -177,7 +177,6 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 		listStyle.onHover.background = tex;
 		listStyle.padding.left = listStyle.padding.right = listStyle.padding.top = listStyle.padding.bottom = 4;
 
-		id = (GameObject.Find("BlocksWorld").GetComponent<ModalWindowManager>().windowManager).Count;
 		//Render = true;
 
 		editable = (PlayerPrefs.GetInt ("Make Voxemes Editable") == 1);
@@ -261,7 +260,34 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 			else {
 				if (!markupCleared) {
 					InitNewMarkup ();
-					loadedObject = new VoxML ();
+					//loadedObject = new VoxML ();
+		
+					switch (InspectorVoxeme.Remove(InspectorVoxeme.LastIndexOf('/'))) {
+					case "objects":
+						mlEntityType = VoxEntity.EntityType.Object;
+						break;
+
+					case "programs":
+						mlEntityType = VoxEntity.EntityType.Program;
+						break;
+
+					case "attributes":
+						mlEntityType = VoxEntity.EntityType.Attribute;
+						break;
+
+					case "relations":
+						mlEntityType = VoxEntity.EntityType.Relation;
+						break;
+
+					case "functions":
+						mlEntityType = VoxEntity.EntityType.Function;
+						break;
+
+					default:
+						break;
+					}
+
+					windowTitle = InspectorVoxeme.Substring(InspectorVoxeme.LastIndexOf('/') + 1);
 				}
 			}
 //#endif
@@ -302,12 +328,13 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 			if (GUILayout.Button ("Save")) {
 				SaveMarkup(InspectorVoxeme, mlEntityType);
 			}
+			else if (GUILayout.Button ("Import")) {
+				ImportMarkup(InspectorVoxeme, mlEntityType);
+			}
 		}
 
 		Vector2 textDimensions = GUI.skin.label.CalcSize (new GUIContent (inspectorTitle));
 		GUI.Label (new Rect (((2 * inspectorPosition.x + inspectorWidth) / 2) - textDimensions.x / 2, inspectorPosition.y, textDimensions.x, 25), inspectorTitle);
-
-		GUI.DragWindow (new Rect (0, 0, 10000, 20));
 	}
 
 	void DisplayObjectMarkup() {
@@ -543,13 +570,16 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 					mlConcavitySelectVisible = -1;
 				}
 				GUILayout.EndVertical ();
+				mlConcavityReentrancy = GUILayout.TextField (mlConcavityReentrancy, 25, GUILayout.Width (20));
 			}
 			else {
 				mlConcavitySelectVisible = GUILayout.SelectionGrid (mlConcavitySelectVisible, new string[]{ mlConcavity }, 1, GUI.skin.button, GUILayout.Width (70), GUILayout.ExpandWidth (true));
+				mlConcavityReentrancy = GUILayout.TextField (mlConcavityReentrancy, 25, GUILayout.Width (20));
 			}
 		}
 		else {
 			GUILayout.Box (mlConcavity, GUILayout.Width (inspectorWidth - 130), GUILayout.ExpandWidth (true));
+			GUILayout.Box (mlConcavityReentrancy, GUILayout.Width (20), GUILayout.ExpandWidth (true));
 		}
 
 		GUILayout.EndHorizontal ();
@@ -1037,6 +1067,30 @@ public class VoxemeInspectorModalWindow : ModalWindow {
 		markupCleared = true;
 	}
 	
+	void ImportMarkup(string cloneToPath, VoxEntity.EntityType entityType) {
+		ImportMarkupModalWindow importWindow = gameObject.AddComponent<ImportMarkupModalWindow> ();
+		//LoadMarkup (ml.text);
+		//newInspector.DrawInspector = true;
+		float xPos = InspectorPosition.x + 235 > Screen.width ? InspectorPosition.x - 235 : InspectorPosition.x + 235;
+		importWindow.windowRect = new Rect (xPos, InspectorPosition.y, 230, (InspectorPosition.y + 300 > Screen.height) ? Screen.height - InspectorPosition.y : 300);
+		importWindow.windowTitle = "Import VoxML";
+		importWindow.entityType = entityType;
+		importWindow.ItemSelected += ImportVoxML;
+		importWindow.Render = true;
+	}
+
+	void ImportVoxML(object sender, EventArgs e) {
+		if (File.Exists (((ImportMarkupEventArgs)e).ImportPath)) {
+			using (StreamReader sr = new StreamReader (((ImportMarkupEventArgs)e).ImportPath)) {
+				String markup = sr.ReadToEnd ();
+				if (!ObjectLoaded (markup)) {
+					loadedObject = LoadMarkup (markup);
+					//windowTitle = InspectorVoxeme.Substring (InspectorVoxeme.LastIndexOf ('/') + 1);
+				}
+			}
+		}
+	}
+
 	void SaveMarkup(string markupPath, VoxEntity.EntityType entityType) {
 		VoxML voxml = new VoxML ();
 		voxml.Entity.Type = entityType;

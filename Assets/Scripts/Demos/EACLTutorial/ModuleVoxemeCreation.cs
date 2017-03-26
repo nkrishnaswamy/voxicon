@@ -141,6 +141,15 @@ public class ModuleVoxemeCreation : ModalWindow {
 					}
 				}
 			}
+
+			if (Input.GetKeyDown (KeyCode.Return)) {
+				actionButtonText = "Add";
+				placementState = PlacementState.Add;
+				selected = -1;
+				cameraControl.allowRotation = true;
+				selectedObject.GetComponent<Rigging> ().ActivatePhysics (true);
+				SetShader (selectedObject, ShaderType.Default);
+			}
 		}
 		else if (placementState == PlacementState.Add) {
 			if (Input.GetMouseButton (0)) {
@@ -227,8 +236,6 @@ public class ModuleVoxemeCreation : ModalWindow {
 		scrollPosition = GUILayout.BeginScrollView (scrollPosition);
 		selected = GUILayout.SelectionGrid(selected, listItems, 1, buttonStyle, GUILayout.ExpandWidth(true));
 		GUILayout.EndScrollView ();
-		//makes GUI window draggable
-		GUI.DragWindow (new Rect (0, 0, 10000, 20));
 
 		if (selected != -1) {
 			render = false;
